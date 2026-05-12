@@ -1,6 +1,6 @@
 import { Anchor, Badge, Box, Button, Container, Divider, Group, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 
-export default function HomePage() {
+export default function JobInfoPage() {
   return (
     <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "32px 0" }}>
       <Container size="1200px">
@@ -15,32 +15,41 @@ export default function HomePage() {
           </Group>
 
           <Group gap="xl" style={{ flexWrap: "wrap" }}>
-            <Anchor href="#" color="dimmed" size="sm">
-              Homepage
+            <Anchor href="/job-search-with-ai" color="dimmed" size="sm">
+              Job search
             </Anchor>
             <Anchor href="#" color="dimmed" size="sm">
-              Our services
+              Job details
             </Anchor>
             <Anchor href="#" color="dimmed" size="sm">
-              Our team
+              Company
             </Anchor>
             <Anchor href="#" color="dimmed" size="sm">
-              Our clients
+              Location
             </Anchor>
             <Anchor href="#" color="dimmed" size="sm">
-              Consultation
+              Apply
             </Anchor>
           </Group>
 
           <Group gap="md" align="center">
             <Button radius="xl" size="sm" color="blue" variant="filled" style={{ backgroundColor: "#8c5d39" }}>
-              Job search with AI
+              Check compatibility
             </Button>
             <Button variant="outline" radius="xl" size="sm">
               EN
             </Button>
           </Group>
         </Group>
+
+        <Box style={{ marginBottom: 28 }}>
+          <Title order={2} style={{ color: "#623a26", fontWeight: 700, marginBottom: 8 }}>
+            Job Info Page
+          </Title>
+          <Text color="dimmed" size="sm">
+            Detailed job information, compatibility assessment, and next-step actions for this role.
+          </Text>
+        </Box>
 
         <Paper shadow="xl" radius="xl" p="xl" style={{ backgroundColor: "#fff1e7" }}>
           <Stack gap="xl">
