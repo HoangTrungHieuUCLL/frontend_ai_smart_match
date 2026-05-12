@@ -1,4 +1,4 @@
-import { Anchor, Badge, Box, Button, Container, Divider, Group, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { Anchor, Badge, Box, Button, Container, Divider, Grid, Group, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 
 export default function HomePage() {
   return (
@@ -33,7 +33,7 @@ export default function HomePage() {
           </Group>
 
           <Group gap="md" align="center">
-            <Button radius="xl" size="sm" color="blue" variant="filled" style={{ backgroundColor: "#8c5d39" }}>
+            <Button radius="xl" size="sm" color="brown" variant="filled" style={{ backgroundColor: "#8c5d39" }}>
               Job search with AI
             </Button>
             <Button variant="outline" radius="xl" size="sm">
@@ -61,7 +61,7 @@ export default function HomePage() {
                   <Text color="dimmed" size="sm">
                     See how the role matches your profile and decide if it is the right fit.
                   </Text>
-                  <Button fullWidth radius="xl" variant="outline" color="blue" style={{ borderColor: "#8c5d39", color: "#8c5d39" }}>
+                  <Button fullWidth radius="xl" variant="outline" color="brown" style={{ borderColor: "#8c5d39", color: "#8c5d39" }}>
                     How much does this job suit me?
                   </Button>
                 </Stack>
@@ -83,7 +83,7 @@ export default function HomePage() {
                   <Text color="dimmed" size="sm">
                     The system has your profile and can compare it with job requirements automatically.
                   </Text>
-                  <Button fullWidth radius="xl" color="blue" style={{ backgroundColor: "#8c5d39" }}>
+                  <Button fullWidth radius="xl" color="brown" style={{ backgroundColor: "#8c5d39" }}>
                     Let's ask AI
                   </Button>
                 </Stack>
@@ -105,7 +105,7 @@ export default function HomePage() {
                   <Text color="dimmed" size="sm">
                     This job is highly compatible with your profile based on skills and experience.
                   </Text>
-                  <Button fullWidth radius="xl" variant="outline" color="blue" style={{ borderColor: "#8c5d39", color: "#8c5d39" }}>
+                  <Button fullWidth radius="xl" variant="outline" color="brown" style={{ borderColor: "#8c5d39", color: "#8c5d39" }}>
                     How compatible am I to this job?
                   </Button>
                 </Stack>
@@ -144,10 +144,10 @@ export default function HomePage() {
                   </Group>
 
                   <Group gap="xs" wrap="nowrap">
-                    <Button radius="xl" variant="outline" size="xs" color="blue" style={{ borderColor: "#8c5d39", color: "#8c5d39" }}>
+                    <Button radius="xl" variant="outline" size="xs" color="brown" style={{ borderColor: "#8c5d39", color: "#8c5d39" }}>
                       Upload your CV
                     </Button>
-                    <Button radius="xl" size="xs" color="blue" style={{ backgroundColor: "#8c5d39" }}>
+                    <Button radius="xl" size="xs" color="brown" style={{ backgroundColor: "#8c5d39" }}>
                       Save
                     </Button>
                     <Button radius="xl" variant="outline" size="xs">
@@ -179,6 +179,7 @@ export default function HomePage() {
                   </Text>
                   <Text color="dimmed" size="sm" component="div">
                     • Install ELV systems, including security cameras (CCTV), Queue Management Systems, Car Parking Control Systems, PABX (telephone exchange) systems, and monitoring/measurement systems.
+                    <br />• Perform other tasks as assigned by management.
                   </Text>
 
                   <Text size="sm" style={{ fontWeight: 600 }}>
@@ -194,6 +195,7 @@ export default function HomePage() {
                   </Text>
                   <Text color="dimmed" size="sm" component="div">
                     • Base Salary: 9,000,000 – 12,000,000 VND
+
                   </Text>
 
                   <Text size="sm" style={{ fontWeight: 600 }}>
