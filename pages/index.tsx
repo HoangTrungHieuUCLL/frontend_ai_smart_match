@@ -4,44 +4,6 @@ export default function JobInfoPage() {
   return (
     <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "32px 0" }}>
       <Container size="1200px">
-        <Group justify="space-between" align="center" gap="xl" style={{ marginBottom: 32 }}>
-          <Group gap="xs" align="center">
-            <Text size="xl" style={{ color: "#623a26", fontWeight: 700 }}>
-              HRNEXT
-            </Text>
-            <Text color="dimmed" size="sm">
-              outsourcing agency
-            </Text>
-          </Group>
-
-          <Group gap="xl" style={{ flexWrap: "wrap" }}>
-            <Anchor href="/job-search-with-ai" color="dimmed" size="sm">
-              Job search
-            </Anchor>
-            <Anchor href="#" color="dimmed" size="sm">
-              Job details
-            </Anchor>
-            <Anchor href="#" color="dimmed" size="sm">
-              Company
-            </Anchor>
-            <Anchor href="#" color="dimmed" size="sm">
-              Location
-            </Anchor>
-            <Anchor href="#" color="dimmed" size="sm">
-              Apply
-            </Anchor>
-          </Group>
-
-          <Group gap="md" align="center">
-            <Button radius="xl" size="sm" color="blue" variant="filled" style={{ backgroundColor: "#8c5d39" }}>
-              Check compatibility
-            </Button>
-            <Button variant="outline" radius="xl" size="sm">
-              EN
-            </Button>
-          </Group>
-        </Group>
-
         <Box style={{ marginBottom: 28 }}>
           <Title order={2} style={{ color: "#623a26", fontWeight: 700, marginBottom: 8 }}>
             Job Info Page
