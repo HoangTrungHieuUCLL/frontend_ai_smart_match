@@ -37,9 +37,9 @@ export const Header = () => {
             <Image 
                 src={"/logo.png"} 
                 alt={"HRNEXT logo"} 
-                h={45} 
+                h={70} 
                 w="auto"
-                style={{ flexShrink: 0 }}
+                style={{ flexShrink: 0, minWidth: 120 }}
             />
 
             {/* Navigation Items */}
