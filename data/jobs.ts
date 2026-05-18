@@ -133,7 +133,7 @@ export const jobs: Job[] = [
     requirements: [
       "Fluent English and German.",
       "Experience in consultative sales.",
-      "Strong customer service orientation.",
+      "Strong customer services orientation.",
     ],
     benefits: [
       "Performance bonus",
@@ -260,7 +260,7 @@ export const jobs: Job[] = [
     posted: "4 days ago",
     description: "Provide technical assistance to customers and troubleshoot issues.",
     responsibilities: ["Answer support tickets.", "Resolve technical problems.", "Document resolutions."],
-    requirements: ["Customer service skills.", "Technical knowledge.", "Patience and clarity."],
+    requirements: ["Customer services skills.", "Technical knowledge.", "Patience and clarity."],
     benefits: ["Health insurance.", "Performance bonus.", "Training support."],
     locationHours: ["Location: HCMC", "Working hours: Monday - Friday, 08:30 - 17:30"],
   },
