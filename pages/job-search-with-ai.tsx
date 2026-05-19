@@ -36,9 +36,6 @@ export default function JobSearchWithAIPage() {
               Browse job listings, save the ones you like, and open the details page for each role.
             </Text>
           </Stack>
-          <Anchor href="/" color="dimmed" size="sm">
-            View job info page
-          </Anchor>
         </Group>
 
         <Stack gap="md">
