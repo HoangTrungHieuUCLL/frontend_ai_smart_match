@@ -1,15 +1,38 @@
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Badge, Box, Button, Container, Divider, Group, Paper, Stack, Text, Title } from "@mantine/core";
-import { jobs } from "../../data/jobs";
+import { Job } from "../../types";
+import JobService from "../../services/JobService";
 
 const BROWN = "#774326";
+
+const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) ?? [];
 
 export default function JobInfoDetailPage() {
   const router = useRouter();
   const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
-  const job = jobs.find((item) => item.id === id);
+  const [job, setJob] = useState<Job | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!job) {
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchJob = async () => {
+      setLoading(true);
+      try {
+        const response = await JobService.getJobById(Number(id));
+        setJob(response);
+      } catch (error) {
+        setJob(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJob();
+  }, [id]);
+
+  if (loading) {
     return (
       <Container size="800px" style={{ padding: "48px 0" }}>
         <Text>Loading job details...</Text>
@@ -17,29 +40,50 @@ export default function JobInfoDetailPage() {
     );
   }
 
+  if (!job) {
+    return (
+      <Container size="800px" style={{ padding: "48px 0" }}>
+        <Text>Job not found.</Text>
+      </Container>
+    );
+  }
+
+  const responsibilities = splitLines(job.responsibilities);
+  const requirements = splitLines(job.requirements);
+  const benefits = splitLines(job.offers);
+  const notes = splitLines(job.notes);
+
   return (
     <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
       <Container size="1200px">
         <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
-          <Stack spacing={4}>
+          <Stack gap={4}>
             <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
-              {job.title}
+              {job.position}
             </Title>
             <Text color="dimmed" size="sm">
               Detailed job information, compatibility assessment, and next-step actions for this role.
             </Text>
           </Stack>
-          <Button radius="xl" variant="outline" size="sm" style={{ borderColor: BROWN, color: BROWN }} onClick={() => router.push("/job-search-with-ai")}>Back to listings</Button>
+          <Button
+            radius="xl"
+            variant="outline"
+            size="sm"
+            style={{ borderColor: BROWN, color: BROWN }}
+            onClick={() => router.push("/job-search-with-ai")}
+          >
+            Back to listings
+          </Button>
         </Group>
 
         <Paper shadow="xl" radius="xl" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(119, 67, 38, 0.12)", padding: 24 }}>
-          <Stack spacing="lg">
-            <Group spacing="lg" align="stretch" wrap="wrap" style={{ marginBottom: 24 }}>
+          <Stack gap="lg">
+            <Group justify="space-between" align="stretch" wrap="wrap" style={{ marginBottom: 24 }}>
               {[
                 {
                   number: "1",
                   title: "Job description",
-                  description: "See how the role matches your profile and decide if it is the right fit.",
+                  description: job.overview,
                   button: "How much does this job suit me?",
                 },
                 {
@@ -70,8 +114,8 @@ export default function JobInfoDetailPage() {
                     justifyContent: "space-between",
                   }}
                 >
-                  <Stack spacing="md">
-                    <Group position="apart" align="center">
+                  <Stack gap="md">
+                    <Group justify="apart" align="center">
                       <Box
                         style={{
                           width: 34,
@@ -102,7 +146,7 @@ export default function JobInfoDetailPage() {
                         </Text>
                       </Box>
                     </Group>
-                    <Stack spacing={4}>
+                    <Stack gap={4}>
                       <Text size="sm" style={{ fontWeight: 700, color: BROWN, textTransform: "uppercase" }}>
                         {card.title}
                       </Text>
@@ -119,38 +163,43 @@ export default function JobInfoDetailPage() {
             </Group>
 
             <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
-              <Stack spacing="lg">
-                <Group position="apart" align="flex-start" wrap="nowrap">
-                  <Group align="center" spacing="md">
+              <Stack gap="lg">
+                <Group justify="apart" align="flex-start" wrap="nowrap">
+                  <Group align="center" gap="md">
                     <Box
                       style={{
                         width: 96,
                         height: 96,
                         borderRadius: 24,
-                        backgroundColor: job.logoBackground,
+                        backgroundColor: "#f6f1ee",
                         display: "grid",
                         placeItems: "center",
-                        color: "#ffffff",
+                        color: BROWN,
                         fontWeight: 700,
                         fontSize: 28,
                       }}
                     >
-                      {job.logo}
+                      {job.company_name
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((part) => part[0])
+                        .join("")}
                     </Box>
-                    <Stack spacing={4}>
-                      <Text size="xl" weight={700} style={{ fontWeight: 700 }}>
-                        {job.title}
+                    <Stack gap={4}>
+                      <Text size="xl" style={{ fontWeight: 700 }}>
+                        {job.position}
                       </Text>
                       <Text color="dimmed" size="sm">
-                        {job.experience}
+                        {job.overview}
                       </Text>
                       <Text color="dimmed" size="xs">
-                        {job.company} • {job.posted}
+                        {job.company_name} • {job.date}
                       </Text>
                     </Stack>
                   </Group>
 
-                  <Group spacing="xs" wrap="nowrap">
+                  <Group gap="xs" wrap="nowrap">
                     <Button radius="xl" variant="outline" size="sm" style={{ borderColor: BROWN, color: BROWN }}>
                       Upload your CV
                     </Button>
@@ -163,30 +212,30 @@ export default function JobInfoDetailPage() {
                   </Group>
                 </Group>
 
-                <Group spacing="xs">
+                <Group gap="xs">
                   <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
                     {job.location}
                   </Badge>
                   <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                    {job.category}
+                    {job.type}
                   </Badge>
                 </Group>
 
                 <Divider />
 
-                <Stack spacing="sm">
+                <Stack gap="sm">
                   <Text size="lg" style={{ fontWeight: 700 }}>
                     Job description
                   </Text>
                   <Text color="dimmed" size="sm">
-                    {job.description}
+                    {job.overview}
                   </Text>
 
                   <Text size="sm" style={{ fontWeight: 600 }}>
                     Key Responsibilities:
                   </Text>
-                  <Stack spacing={4}>
-                    {job.responsibilities.map((item, index) => (
+                  <Stack gap={4}>
+                    {responsibilities.map((item, index) => (
                       <Text key={index} color="dimmed" size="sm" component="div">
                         • {item}
                       </Text>
@@ -196,8 +245,8 @@ export default function JobInfoDetailPage() {
                   <Text size="sm" style={{ fontWeight: 600 }}>
                     Candidate Requirements:
                   </Text>
-                  <Stack spacing={4}>
-                    {job.requirements.map((item, index) => (
+                  <Stack gap={4}>
+                    {requirements.map((item, index) => (
                       <Text key={index} color="dimmed" size="sm" component="div">
                         • {item}
                       </Text>
@@ -207,8 +256,8 @@ export default function JobInfoDetailPage() {
                   <Text size="sm" style={{ fontWeight: 600 }}>
                     Benefits & Compensation:
                   </Text>
-                  <Stack spacing={4}>
-                    {job.benefits.map((item, index) => (
+                  <Stack gap={4}>
+                    {benefits.map((item, index) => (
                       <Text key={index} color="dimmed" size="sm" component="div">
                         • {item}
                       </Text>
@@ -216,10 +265,10 @@ export default function JobInfoDetailPage() {
                   </Stack>
 
                   <Text size="sm" style={{ fontWeight: 600 }}>
-                    Work Location & Hours:
+                    Notes:
                   </Text>
-                  <Stack spacing={4}>
-                    {job.locationHours.map((item, index) => (
+                  <Stack gap={4}>
+                    {notes.map((item, index) => (
                       <Text key={index} color="dimmed" size="sm" component="div">
                         • {item}
                       </Text>
