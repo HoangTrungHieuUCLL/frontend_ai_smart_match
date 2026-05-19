@@ -5,6 +5,7 @@ import JobListing from "../components/JobListing";
 import { Job } from "../types";
 import JobService from '../services/JobService';
 import CVUploadButton from "../components/CVUploadButton";
+import { getCvFormErrors, isCvFormValid } from "../utils/cvValidation";
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
@@ -18,6 +19,8 @@ export default function JobSearchWithAIPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const pageCount = Math.max(1, Math.ceil(jobs.length / JOBS_PER_PAGE));
+  const formErrors = getCvFormErrors(formData);
+  const canContinue = isCvFormValid(formData);
   const currentJobs = useMemo(
     () => jobs.slice((page - 1) * JOBS_PER_PAGE, page * JOBS_PER_PAGE),
     [jobs, page]
@@ -49,7 +52,7 @@ export default function JobSearchWithAIPage() {
   };
 
   const handleFormSubmit = () => {
-    if (formData.familyName && formData.givenName && formData.email) {
+    if (canContinue) {
       setStep("upload");
     }
   };
@@ -140,7 +143,11 @@ export default function JobSearchWithAIPage() {
       <Modal
         opened={uploadModalOpen}
         onClose={handleCloseModal}
-        title={step === "form" ? "Upload your CV" : "Select PDF file"}
+        title={
+          <Text size="xl" fw={800}>
+            {step === "form" ? "Upload your CV" : "Upload your PDF"}
+          </Text>
+        }
         centered
         size="md"
       >
@@ -149,31 +156,40 @@ export default function JobSearchWithAIPage() {
             <TextInput
               label="Family name"
               placeholder="Enter your family name"
+              radius="md"
               value={formData.familyName}
+              error={formData.familyName ? formErrors.familyName : undefined}
               onChange={(e) => setFormData({ ...formData, familyName: e.currentTarget.value })}
             />
             <TextInput
               label="Middle name"
               placeholder="Enter your middle name"
+              radius="md"
               value={formData.middleName}
+              error={formErrors.middleName}
               onChange={(e) => setFormData({ ...formData, middleName: e.currentTarget.value })}
             />
             <TextInput
               label="Given name"
               placeholder="Enter your given name"
+              radius="md"
               value={formData.givenName}
+              error={formData.givenName ? formErrors.givenName : undefined}
               onChange={(e) => setFormData({ ...formData, givenName: e.currentTarget.value })}
             />
             <TextInput
               label="Email address"
               placeholder="Enter your email"
               type="email"
+              radius="md"
               value={formData.email}
+              error={formData.email ? formErrors.email : undefined}
               onChange={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
             />
             <Button
               fullWidth
-              radius="xl"
+              radius="md"
+              disabled={!canContinue}
               style={{ backgroundColor: BROWN, borderColor: BROWN }}
               onClick={handleFormSubmit}
             >
@@ -206,7 +222,7 @@ export default function JobSearchWithAIPage() {
             )}
             <Button
               fullWidth
-              radius="xl"
+              radius="md"
               style={{ backgroundColor: BROWN, borderColor: BROWN }}
               onClick={handleUploadSubmit}
             >

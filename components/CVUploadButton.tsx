@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, CSSProperties } from "react";
-import { Box, Button, Group, Text } from "@mantine/core";
+import { Box, Button, Group, Image, Text } from "@mantine/core";
 
 const BROWN = "#9a5d35";
 
@@ -34,17 +34,13 @@ export default function CVUploadButton({ label = "Upload your CV", style, ...pro
             width: 24,
             height: 24,
             borderRadius: "50%",
-            backgroundColor: "#ffffff",
-            color: BROWN,
             display: "grid",
             placeItems: "center",
             flexShrink: 0,
-            fontSize: 23,
-            fontWeight: 800,
-            lineHeight: 1,
+            overflow: "hidden",
           }}
         >
-          +
+          <Image src="/add.png" alt="" w={24} h={24} fit="cover" />
         </Box>
 
         <Text component="span" size="sm" fw={700} style={{ flex: 1, textAlign: "left", color: "#ffffff" }}>

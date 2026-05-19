@@ -5,6 +5,7 @@ import { Dropzone } from "@mantine/dropzone";
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
 import CVUploadButton from "../../components/CVUploadButton";
+import { getCvFormErrors, isCvFormValid } from "../../utils/cvValidation";
 
 const BROWN = "#774326";
 
@@ -19,6 +20,8 @@ export default function JobInfoDetailPage() {
   const [step, setStep] = useState<"form" | "upload">("form");
   const [formData, setFormData] = useState({ familyName: "", middleName: "", givenName: "", email: "" });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const formErrors = getCvFormErrors(formData);
+  const canContinue = isCvFormValid(formData);
 
   useEffect(() => {
     if (!id) return;
@@ -51,7 +54,7 @@ export default function JobInfoDetailPage() {
   };
 
   const handleFormSubmit = () => {
-    if (formData.familyName && formData.givenName && formData.email) {
+    if (canContinue) {
       setStep("upload");
     }
   };
@@ -355,7 +358,11 @@ export default function JobInfoDetailPage() {
       <Modal
         opened={uploadModalOpen}
         onClose={handleCloseModal}
-        title={step === "form" ? "Upload your CV" : "Select PDF file"}
+        title={
+          <Text size="xl" fw={800}>
+            {step === "form" ? "Upload your CV" : "Upload your PDF"}
+          </Text>
+        }
         centered
         size="md"
       >
@@ -364,31 +371,40 @@ export default function JobInfoDetailPage() {
             <TextInput
               label="Family name"
               placeholder="Enter your family name"
+              radius="md"
               value={formData.familyName}
+              error={formData.familyName ? formErrors.familyName : undefined}
               onChange={(e) => setFormData({ ...formData, familyName: e.currentTarget.value })}
             />
             <TextInput
               label="Middle name"
               placeholder="Enter your middle name"
+              radius="md"
               value={formData.middleName}
+              error={formErrors.middleName}
               onChange={(e) => setFormData({ ...formData, middleName: e.currentTarget.value })}
             />
             <TextInput
               label="Given name"
               placeholder="Enter your given name"
+              radius="md"
               value={formData.givenName}
+              error={formData.givenName ? formErrors.givenName : undefined}
               onChange={(e) => setFormData({ ...formData, givenName: e.currentTarget.value })}
             />
             <TextInput
               label="Email address"
               placeholder="Enter your email"
               type="email"
+              radius="md"
               value={formData.email}
+              error={formData.email ? formErrors.email : undefined}
               onChange={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
             />
             <Button
               fullWidth
-              radius="xl"
+              radius="md"
+              disabled={!canContinue}
               style={{ backgroundColor: BROWN, borderColor: BROWN }}
               onClick={handleFormSubmit}
             >
@@ -421,7 +437,7 @@ export default function JobInfoDetailPage() {
             )}
             <Button
               fullWidth
-              radius="xl"
+              radius="md"
               style={{ backgroundColor: BROWN, borderColor: BROWN }}
               onClick={handleUploadSubmit}
             >
