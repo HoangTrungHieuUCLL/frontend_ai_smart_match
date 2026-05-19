@@ -1,4 +1,5 @@
 import React from "react";
+import { useRouter } from "next/router";
 import { Job } from "../types";
 import {
     Badge,
@@ -9,17 +10,12 @@ import {
     Stack,
     Text
 } from "@mantine/core";
-import { router } from "next/client";
 
 interface Props {
     job: Job;
 }
 
 const BROWN = "#774326";
-
-const handleLearnMore = (jobId: number) => {
-    router.push(`/job-info/${jobId}`);
-};
 
 const handleSave = (title: string) => {
     if (typeof window !== "undefined") {
@@ -38,11 +34,17 @@ const getInitials = (name: string) =>
         .split(" ")
         .filter(Boolean)
         .slice(0, 2)
-        .map(n => n[0])
+        .map((n) => n[0])
         .join("")
         .toUpperCase();
 
 const JobListing: React.FC<Props> = ({ job }) => {
+    const router = useRouter();
+
+    const handleLearnMore = (jobId: number) => {
+        router.push(`/job-info/${jobId}`);
+    };
+
     return (
         <Paper
             withBorder

@@ -1,10 +1,8 @@
-import {useEffect, useMemo, useState} from "react";
-import { useRouter } from "next/router";
-import { Anchor, Badge, Box, Button, Container, Divider, Group, Paper, Stack, Text, Title } from "@mantine/core";
-import { jobs } from "../data/jobs";
+import { useEffect, useMemo, useState } from "react";
+import { Badge, Box, Button, Container, Divider, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import JobListing from "../components/JobListing";
-import {Job} from "../types";
-import JobService from "../services/JobService";
+import { Job } from "../types";
+import JobService from '../services/JobService';
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
@@ -13,16 +11,24 @@ export default function JobSearchWithAIPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [page, setPage] = useState(1);
 
-  const pageCount = Math.ceil(jobs.length / JOBS_PER_PAGE);
+  const pageCount = Math.max(1, Math.ceil(jobs.length / JOBS_PER_PAGE));
+  const currentJobs = useMemo(
+    () => jobs.slice((page - 1) * JOBS_PER_PAGE, page * JOBS_PER_PAGE),
+    [jobs, page]
+  );
 
   useEffect(() => {
     const fetchJobs = async () => {
-      const response = await JobService.getAllJobs();
-      setJobs(response);
-    }
+      try {
+        const response = await JobService.getAllJobs();
+        setJobs(response);
+      } catch (error) {
+        console.error("Failed to fetch jobs", error);
+      }
+    };
 
     fetchJobs();
-  })
+  }, []);
 
   return (
     <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
@@ -39,8 +45,8 @@ export default function JobSearchWithAIPage() {
         </Group>
 
         <Stack gap="md">
-          {jobs.map((job) => (
-              <JobListing job={job} />
+          {currentJobs.map((job) => (
+            <JobListing key={job.id} job={job} />
           ))}
         </Stack>
 
