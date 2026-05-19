@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { Badge, Box, Button, Container, Divider, Group, Paper, Stack, Text, Title } from "@mantine/core";
+import { Badge, Box, Button, Container, Divider, Group, Paper, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
+import { Dropzone } from "@mantine/dropzone";
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
+import CVUploadButton from "../../components/CVUploadButton";
+import { getCvFormErrors, isCvFormValid } from "../../utils/cvValidation";
 
 const BROWN = "#774326";
 
@@ -13,6 +16,12 @@ export default function JobInfoDetailPage() {
   const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [step, setStep] = useState<"form" | "upload">("form");
+  const [formData, setFormData] = useState({ familyName: "", middleName: "", givenName: "", email: "" });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const formErrors = getCvFormErrors(formData);
+  const canContinue = isCvFormValid(formData);
 
   useEffect(() => {
     if (!id) return;
@@ -22,7 +31,7 @@ export default function JobInfoDetailPage() {
       try {
         const response = await JobService.getJobById(Number(id));
         setJob(response);
-      } catch (error) {
+      } catch {
         setJob(null);
       } finally {
         setLoading(false);
@@ -31,6 +40,62 @@ export default function JobInfoDetailPage() {
 
     fetchJob();
   }, [id]);
+
+  const handleOpenModal = () => {
+    setUploadModalOpen(true);
+    setStep("form");
+    setFormData({ familyName: "", middleName: "", givenName: "", email: "" });
+    setUploadedFile(null);
+  };
+
+  const handleCloseModal = () => {
+    setUploadModalOpen(false);
+    setStep("form");
+  };
+
+  const handleFormSubmit = () => {
+    if (canContinue) {
+      setStep("upload");
+    }
+  };
+
+  const handleFileDrop = (files: File[]) => {
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type === "application/pdf" && file.size <= 5 * 1024 * 1024) {
+        setUploadedFile(file);
+      } else if (file.type !== "application/pdf") {
+        alert("Only PDF files are allowed");
+      } else {
+        alert("File size must not exceed 5MB");
+      }
+    }
+  };
+
+  const handleUploadSubmit = async () => {
+    if (!uploadedFile) {
+      alert("Please select a file");
+      return;
+    }
+
+    try {
+      const response = await JobService.uploadCv({
+        ...formData,
+        cv: uploadedFile,
+      });
+
+      if (response.ok) {
+        alert("CV uploaded successfully!");
+        console.log("CV file uploaded:", uploadedFile.name);
+        handleCloseModal();
+      } else {
+        alert("Failed to upload CV");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Error uploading CV");
+    }
+  };
 
   if (loading) {
     return (
@@ -141,7 +206,7 @@ export default function JobInfoDetailPage() {
                           cursor: "pointer",
                         }}
                       >
-                        <Text size="sm" sx={{ lineHeight: 1 }}>
+                        <Text size="sm" style={{ lineHeight: 1 }}>
                           ×
                         </Text>
                       </Box>
@@ -164,19 +229,21 @@ export default function JobInfoDetailPage() {
 
             <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
               <Stack gap="lg">
-                <Group justify="apart" align="flex-start" wrap="nowrap">
-                  <Group align="center" gap="md">
+                <Group justify="apart" align="flex-start" wrap="wrap">
+                  <Group align="center" gap="md" wrap="nowrap" style={{ flex: "1 1 520px", minWidth: 0 }}>
                     <Box
                       style={{
-                        width: 96,
-                        height: 96,
+                        width: 128,
+                        height: 128,
+                        minWidth: 128,
                         borderRadius: 24,
                         backgroundColor: "#f6f1ee",
                         display: "grid",
                         placeItems: "center",
                         color: BROWN,
                         fontWeight: 700,
-                        fontSize: 28,
+                        fontSize: 38,
+                        flexShrink: 0,
                       }}
                     >
                       {job.company_name
@@ -199,14 +266,21 @@ export default function JobInfoDetailPage() {
                     </Stack>
                   </Group>
 
-                  <Group gap="xs" wrap="nowrap">
-                    <Button radius="xl" variant="outline" size="sm" style={{ borderColor: BROWN, color: BROWN }}>
-                      Upload your CV
-                    </Button>
-                    <Button radius="xl" size="sm" style={{ backgroundColor: BROWN, borderColor: BROWN }}>
+                  <Group gap="sm" justify="flex-end" wrap="wrap" style={{ flex: "0 1 460px", minWidth: 0 }}>
+                    <CVUploadButton onClick={handleOpenModal} style={{ width: 260, flexShrink: 0 }} />
+                    <Button
+                      radius="xl"
+                      size="sm"
+                      style={{ minWidth: 78, backgroundColor: BROWN, borderColor: BROWN, flexShrink: 0 }}
+                    >
                       Save
                     </Button>
-                    <Button radius="xl" variant="outline" size="sm">
+                    <Button
+                      radius="xl"
+                      variant="outline"
+                      size="sm"
+                      style={{ minWidth: 82, flexShrink: 0 }}
+                    >
                       Share
                     </Button>
                   </Group>
@@ -280,6 +354,98 @@ export default function JobInfoDetailPage() {
           </Stack>
         </Paper>
       </Container>
+
+      <Modal
+        opened={uploadModalOpen}
+        onClose={handleCloseModal}
+        title={
+          <Text size="xl" fw={800}>
+            {step === "form" ? "Upload your CV" : "Upload your PDF"}
+          </Text>
+        }
+        centered
+        size="md"
+      >
+        {step === "form" ? (
+          <Stack gap="md">
+            <TextInput
+              label="Family name"
+              placeholder="Enter your family name"
+              radius="md"
+              value={formData.familyName}
+              error={formData.familyName ? formErrors.familyName : undefined}
+              onChange={(e) => setFormData({ ...formData, familyName: e.currentTarget.value })}
+            />
+            <TextInput
+              label="Middle name"
+              placeholder="Enter your middle name"
+              radius="md"
+              value={formData.middleName}
+              error={formErrors.middleName}
+              onChange={(e) => setFormData({ ...formData, middleName: e.currentTarget.value })}
+            />
+            <TextInput
+              label="Given name"
+              placeholder="Enter your given name"
+              radius="md"
+              value={formData.givenName}
+              error={formData.givenName ? formErrors.givenName : undefined}
+              onChange={(e) => setFormData({ ...formData, givenName: e.currentTarget.value })}
+            />
+            <TextInput
+              label="Email address"
+              placeholder="Enter your email"
+              type="email"
+              radius="md"
+              value={formData.email}
+              error={formData.email ? formErrors.email : undefined}
+              onChange={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
+            />
+            <Button
+              fullWidth
+              radius="md"
+              disabled={!canContinue}
+              style={{ backgroundColor: BROWN, borderColor: BROWN }}
+              onClick={handleFormSubmit}
+            >
+              Continue
+            </Button>
+          </Stack>
+        ) : (
+          <Stack gap="md">
+            <Dropzone
+              onDrop={handleFileDrop}
+              accept={["application/pdf"]}
+              maxSize={5 * 1024 * 1024}
+              multiple={false}
+            >
+              <Group justify="center" gap="xl" style={{ minHeight: 220, pointerEvents: "none" }}>
+                <Stack gap={0} align="center">
+                  <Text size="xl" fw={500}>
+                    Drop your PDF here
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    or click to browse (max 5MB)
+                  </Text>
+                </Stack>
+              </Group>
+            </Dropzone>
+            {uploadedFile && (
+              <Text size="sm" c="green">
+                File selected: {uploadedFile.name}
+              </Text>
+            )}
+            <Button
+              fullWidth
+              radius="md"
+              style={{ backgroundColor: BROWN, borderColor: BROWN }}
+              onClick={handleUploadSubmit}
+            >
+              Upload CV
+            </Button>
+          </Stack>
+        )}
+      </Modal>
     </Box>
   );
 }

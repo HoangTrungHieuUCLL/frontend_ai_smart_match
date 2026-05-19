@@ -106,7 +106,7 @@ export const Footer = () => {
 
         {/* Copyright */}
         <Box style={{ borderTop: "1px solid rgba(255, 255, 255, 0.2)", paddingTop: "lg" }}>
-          <Text c="white" size="sm" align="center">
+          <Text c="white" size="sm" ta="center">
             © 2025. All copyrights belong to HR Next.vn
           </Text>
         </Box>
