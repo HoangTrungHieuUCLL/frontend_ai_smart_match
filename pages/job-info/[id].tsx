@@ -34,21 +34,20 @@ export default function JobInfoDetailPage() {
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [compatabilityScore, setCompatabilityScore] = useState<number | null>(null);
 
+    const fetchJob = async () => {
+        setLoading(true);
+        try {
+            const response = await JobService.getJobById(Number(id));
+            setJob(response);
+        } catch {
+            setJob(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (!id) return;
-
-        const fetchJob = async () => {
-            setLoading(true);
-            try {
-                const response = await JobService.getJobById(Number(id));
-                setJob(response);
-            } catch {
-                setJob(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchJob();
     }, [id]);
 
@@ -72,6 +71,14 @@ export default function JobInfoDetailPage() {
     const requirements = splitLines(job.requirements);
     const benefits = splitLines(job.offers);
     const notes = splitLines(job.notes);
+
+    const handleModalClose = (score?: number) => {
+        setModalOpen(false);
+
+        if (score !== undefined) {
+            setCompatabilityScore(score);
+        }
+    };
 
   return (
     <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
@@ -300,11 +307,19 @@ export default function JobInfoDetailPage() {
                 </Paper>
             </Container>
 
-            <CVUploadModal opened={modalOpen}
-                           onClose={() => {
-                               setCompatabilityScore(Math.floor(Math.random() * 101));
-                               setModalOpen(false);
-                           }}
+            <CVUploadModal
+                opened={modalOpen}
+                onClose={(scores) => {
+                    setModalOpen(false);
+
+                    const match = scores?.find(
+                        (s) => s.job_id === job.id
+                    );
+
+                    setCompatabilityScore(
+                        match?.compatability_score ?? null
+                    );
+                }}
             />
         </Box>
     );
