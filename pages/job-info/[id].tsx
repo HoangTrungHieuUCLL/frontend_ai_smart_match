@@ -73,114 +73,80 @@ export default function JobInfoDetailPage() {
     const benefits = splitLines(job.offers);
     const notes = splitLines(job.notes);
 
-    return (
-        <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
-            <Container size="1200px">
-                <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
+  return (
+    <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
+      <Container size="1200px">
+        <Paper style={{backgroundColor: "#f7f2ef"}}>
+          <Stack gap="lg">
+            <Group justify="space-between" align="stretch" wrap="wrap" style={{ marginBottom: 24 }}>
+              {[
+                {
+                  number: "1",
+                  title: "Job description",
+                  description: job.overview,
+                  button: "How much does this job suit me?",
+                },
+                {
+                  number: "2",
+                  title: "Your CV uploaded.",
+                  description: "The system has your profile and can compare it with job requirements automatically.",
+                  button: "Let's ask AI",
+                },
+                {
+                  number: "3",
+                  title: "Match score",
+                  description: "This job is highly compatible with your profile based on skills and experience.",
+                  button: "How compatible am I to this job?",
+                },
+              ].map((card) => (
+                <Paper
+                  key={card.number}
+                  withBorder
+                  radius="xl"
+                  p="lg"
+                  style={{
+                    flex: "1 1 280px",
+                    minWidth: 280,
+                    backgroundColor: "#ffffff",
+                    borderColor: "rgba(119, 67, 38, 0.16)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Stack gap="md">
+                    <Group justify="apart" align="center">
+                      <Box
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: "50%",
+                          backgroundColor: BROWN,
+                          color: "#ffffff",
+                          display: "grid",
+                          placeItems: "center",
+                          fontWeight: 700,
+                          paddingTop: 1,
+                        }}
+                      >
+                        {card.number}
+                      </Box>
+                    </Group>
                     <Stack gap={4}>
-                        <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
-                            {job.position}
-                        </Title>
-                        <Text color="dimmed" size="sm">
-                            Detailed job information, compatibility assessment, and next-step actions for this role.
-                        </Text>
+                      <Text size="sm" style={{ fontWeight: 700, color: BROWN, textTransform: "uppercase" }}>
+                        {card.title}
+                      </Text>
+                      <Text color="dimmed" size="sm">
+                        {card.description}
+                      </Text>
                     </Stack>
-                    <Button
-                        radius="xl"
-                        variant="outline"
-                        size="sm"
-                        style={{ borderColor: BROWN, color: BROWN }}
-                        onClick={() => router.push("/job-search-with-ai")}
-                    >
-                        Back to listings
-                    </Button>
-                </Group>
-
-                <Paper shadow="xl" radius="xl" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(119, 67, 38, 0.12)", padding: 24 }}>
-                    <Stack gap="lg">
-                        <Group justify="space-between" align="stretch" wrap="wrap" style={{ marginBottom: 24 }}>
-                            {[
-                                {
-                                    number: "1",
-                                    title: "Job description",
-                                    description: job.overview,
-                                    button: "How much does this job suit me?",
-                                },
-                                {
-                                    number: "2",
-                                    title: "Your CV uploaded.",
-                                    description: "The system has your profile and can compare it with job requirements automatically.",
-                                    button: "Let's ask AI",
-                                },
-                                {
-                                    number: "3",
-                                    title: "Match score",
-                                    description: "This job is highly compatible with your profile based on skills and experience.",
-                                    button: "How compatible am I to this job?",
-                                },
-                            ].map((card) => (
-                                <Paper
-                                    key={card.number}
-                                    withBorder
-                                    radius="md"
-                                    p="lg"
-                                    style={{
-                                        flex: "1 1 280px",
-                                        minWidth: 280,
-                                        backgroundColor: "#fdf7ef",
-                                        borderColor: "rgba(119, 67, 38, 0.16)",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "space-between",
-                                    }}
-                                >
-                                    <Stack gap="md">
-                                        <Group justify="apart" align="center">
-                                            <Box
-                                                style={{
-                                                    width: 34,
-                                                    height: 34,
-                                                    borderRadius: "50%",
-                                                    backgroundColor: BROWN,
-                                                    color: "#ffffff",
-                                                    display: "grid",
-                                                    placeItems: "center",
-                                                    fontWeight: 700,
-                                                }}
-                                            >
-                                                {card.number}
-                                            </Box>
-                                            <Box
-                                                style={{
-                                                    width: 28,
-                                                    height: 28,
-                                                    borderRadius: "50%",
-                                                    border: `1px solid ${BROWN}`,
-                                                    display: "grid",
-                                                    placeItems: "center",
-                                                    cursor: "pointer",
-                                                }}
-                                            >
-                                                <Text size="sm" style={{ lineHeight: 1 }}>
-                                                    ×
-                                                </Text>
-                                            </Box>
-                                        </Group>
-                                        <Stack gap={4}>
-                                            <Text size="sm" style={{ fontWeight: 700, color: BROWN, textTransform: "uppercase" }}>
-                                                {card.title}
-                                            </Text>
-                                            <Text color="dimmed" size="sm">
-                                                {card.description}
-                                            </Text>
-                                        </Stack>
-                                    </Stack>
-                                    <Button radius="xl" style={{ backgroundColor: BROWN, borderColor: BROWN, marginTop: 16 }}>
-                                        {card.button}
-                                    </Button>
-                                </Paper>
-                            ))}
-                        </Group>
+                  </Stack>
+                  <Button radius="xl" style={{ backgroundColor: BROWN, borderColor: BROWN, marginTop: 16 }}>
+                    {card.button}
+                  </Button>
+                </Paper>
+              ))}
+            </Group>
 
                         <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
                             <Stack gap="lg">
