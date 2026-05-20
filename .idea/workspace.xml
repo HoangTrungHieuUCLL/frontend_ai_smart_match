@@ -5,11 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f819cda6-f115-4246-b863-2bfa440ff185" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/public/xicon.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/CVUploadButton.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/CVUploadButton.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/CVUploadModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/CVUploadModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/JobListing.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/JobListing.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/header.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/job-info/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/pages/job-info/[id].tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/job-search-with-ai.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/pages/job-search-with-ai.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,6 +28,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="dev" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -58,7 +66,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "36-cs-placeholder",
+    "git-widget-placeholder": "Merging 36-cs-placeholder",
     "ignore.virus.scanning.warn.message": "true",
     "javascript.preferred.runtime.type.id": "node",
     "js.debugger.nextJs.config.created.client": "true",

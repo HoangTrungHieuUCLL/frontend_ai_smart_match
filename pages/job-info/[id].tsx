@@ -184,7 +184,7 @@ export default function JobInfoDetailPage() {
 
             <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
               <Stack gap="lg">
-                <Group justify="apart" align="center" wrap="wrap">
+                <Group justify="apart" align="flex-start" wrap="wrap">
                   <Group align="center" gap="md" wrap="nowrap" style={{ flex: "1 1 520px", minWidth: 0 }}>
                     <Box
                       style={{
@@ -212,6 +212,9 @@ export default function JobInfoDetailPage() {
                       <Text size="xl" style={{ fontWeight: 700 }}>
                         {job.position}
                       </Text>
+                      <Text color="dimmed" size="sm">
+                        {job.overview}
+                      </Text>
                       <Text color="dimmed" size="xs">
                         {job.company_name} • {job.date}
                       </Text>
@@ -227,51 +230,33 @@ export default function JobInfoDetailPage() {
                     </Stack>
                   </Group>
 
-                    <Group gap="md">
-                        {compatabilityScore !== null && (
-                            <RingProgress
-                                size={130}
-                                thickness={11}
-                                roundCaps
-                                label={
-                                    <Text
-                                        size="sm"
-                                        ta="center"
-                                        style={{ pointerEvents: 'none' }}
-                                        fw={700}
-                                    >
-                                        {compatabilityScore}% <Text size="xs">match</Text>
-                                    </Text>
-                                }
-                                sections={[
-                                    {
-                                        value: compatabilityScore,
-                                        color: compatabilityScore >= 70 ? '#34C759' : '#FF383C',
-                                    },
-                                ]}
-                            />
-                        )}
+                  <Group gap="sm" justify="flex-end" wrap="wrap" style={{ flex: "0 1 460px", minWidth: 0 }}>
+                    <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
+                    <Button
+                      radius="xl"
+                      size="sm"
+                      style={{ minWidth: 78, backgroundColor: BROWN, borderColor: BROWN, flexShrink: 0 }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      radius="xl"
+                      variant="outline"
+                      size="sm"
+                      style={{ minWidth: 82, flexShrink: 0 }}
+                    >
+                      Share
+                    </Button>
+                  </Group>
+                </Group>
 
-                        <Stack gap="sm" justify="flex-end">
-                            <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
-                            <Group grow>
-                                <Button
-                                    variant="filled"
-                                    size="sm"
-                                    color={BROWN}
-                                >
-                                    Save
-                                </Button>
-                                <Button
-                                    variant="light"
-                                    size="sm"
-                                    color={BROWN}
-                                >
-                                    Share
-                                </Button>
-                            </Group>
-                        </Stack>
-                    </Group>
+                <Group gap="xs">
+                  <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
+                    {job.location}
+                  </Badge>
+                  <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
+                    {job.type}
+                  </Badge>
                 </Group>
 
                 <Divider />

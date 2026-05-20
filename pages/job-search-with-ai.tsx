@@ -27,7 +27,6 @@ export default function JobSearchWithAIPage() {
         fetchJobs();
     }, []);
 
-    // assign default score handling (after modal updates)
     const scoredJobs = useMemo(() => {
         return jobs.map((job) => ({
             ...job,
@@ -35,17 +34,13 @@ export default function JobSearchWithAIPage() {
         }));
     }, [jobs]);
 
-    // sort AFTER scores exist
     const sortedJobs = useMemo(() => {
         return [...scoredJobs].sort(
             (a, b) => (b.compatability_score ?? 0) - (a.compatability_score ?? 0)
         );
     }, [scoredJobs]);
 
-    const pageCount = Math.max(
-        1,
-        Math.ceil(sortedJobs.length / JOBS_PER_PAGE)
-    );
+    const pageCount = Math.max(1, Math.ceil(sortedJobs.length / JOBS_PER_PAGE));
 
     const currentJobs = useMemo(() => {
         return sortedJobs.slice(
