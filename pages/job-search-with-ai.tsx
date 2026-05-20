@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Container, Group, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
+import { ActionIcon, Box, Button, Container, Group, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
@@ -9,6 +9,12 @@ import { getCvFormErrors, isCvFormValid } from "../utils/cvValidation";
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
+const SINGLE_PDF_MESSAGE = "Please upload only one PDF file.";
+const REPLACE_PDF_MESSAGE = "Remove the selected PDF before choosing another one.";
+
+type FileRejection = {
+  errors: readonly { code: string }[];
+};
 
 export default function JobSearchWithAIPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -17,6 +23,7 @@ export default function JobSearchWithAIPage() {
   const [step, setStep] = useState<"form" | "upload">("form");
   const [formData, setFormData] = useState({ familyName: "", middleName: "", givenName: "", email: "" });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
 
   const pageCount = Math.max(1, Math.ceil(jobs.length / JOBS_PER_PAGE));
   const formErrors = getCvFormErrors(formData);
@@ -44,6 +51,7 @@ export default function JobSearchWithAIPage() {
     setStep("form");
     setFormData({ familyName: "", middleName: "", givenName: "", email: "" });
     setUploadedFile(null);
+    setFileError("");
   };
 
   const handleCloseModal = () => {
@@ -58,21 +66,40 @@ export default function JobSearchWithAIPage() {
   };
 
   const handleFileDrop = (files: File[]) => {
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.type === "application/pdf" && file.size <= 5 * 1024 * 1024) {
-        setUploadedFile(file);
-        void handleUploadSubmit(file);
-      } else if (file.type !== "application/pdf") {
-        alert("Only PDF files are allowed");
-      } else {
-        alert("File size must not exceed 5MB");
-      }
+    if (files.length > 1) {
+      setFileError(SINGLE_PDF_MESSAGE);
+      return;
+    }
+
+    if (uploadedFile) {
+      setFileError(REPLACE_PDF_MESSAGE);
+      return;
+    }
+
+    if (files.length === 1) {
+      setUploadedFile(files[0]);
+      setFileError("");
     }
   };
 
-  const handleUploadSubmit = async (fileToUpload = uploadedFile) => {
-    if (!fileToUpload) {
+  const handleFileReject = (fileRejections: FileRejection[]) => {
+    if (fileRejections.length > 1 || fileRejections.some((rejection) => rejection.errors.some((error) => error.code === "too-many-files"))) {
+      setFileError(SINGLE_PDF_MESSAGE);
+      return;
+    }
+
+    const firstErrorCode = fileRejections[0]?.errors[0]?.code;
+
+    if (firstErrorCode === "file-too-large") {
+      setFileError("File size must not exceed 5MB");
+      return;
+    }
+
+    setFileError("Only PDF files are allowed");
+  };
+
+  const handleUploadSubmit = async () => {
+    if (!uploadedFile) {
       alert("Please select a file");
       return;
     }
@@ -80,12 +107,12 @@ export default function JobSearchWithAIPage() {
     try {
       const response = await JobService.uploadCv({
         ...formData,
-        cv: fileToUpload,
+        cv: uploadedFile,
       });
 
       if (response.ok) {
         alert("CV uploaded successfully!");
-        console.log("CV file uploaded:", fileToUpload.name);
+        console.log("CV file uploaded:", uploadedFile.name);
         handleCloseModal();
       } else {
         alert("Failed to upload CV");
@@ -246,9 +273,10 @@ export default function JobSearchWithAIPage() {
           <Stack gap="md">
             <Dropzone
               onDrop={handleFileDrop}
+              onReject={handleFileReject}
               accept={["application/pdf"]}
               maxSize={5 * 1024 * 1024}
-              multiple={false}
+              multiple
             >
               <Group justify="center" gap="xl" style={{ minHeight: 220, pointerEvents: "none" }}>
                 <Stack gap={0} align="center">
@@ -261,11 +289,76 @@ export default function JobSearchWithAIPage() {
                 </Stack>
               </Group>
             </Dropzone>
-            {uploadedFile && (
-              <Text size="sm" c="green">
-                File selected: {uploadedFile.name}
-              </Text>
+            {fileError && (
+              <Group
+                gap="sm"
+                wrap="nowrap"
+                style={{
+                  border: "1px solid rgba(119, 67, 38, 0.22)",
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                  backgroundColor: "#fff4ed",
+                  color: BROWN,
+                }}
+              >
+                <Box
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    backgroundColor: BROWN,
+                    color: "#ffffff",
+                    display: "grid",
+                    placeItems: "center",
+                    fontWeight: 800,
+                    flexShrink: 0,
+                  }}
+                >
+                  !
+                </Box>
+                <Text size="sm" fw={600}>
+                  {fileError}
+                </Text>
+              </Group>
             )}
+            {uploadedFile && (
+              <Group
+                justify="space-between"
+                gap="sm"
+                wrap="nowrap"
+                style={{
+                  border: "1px solid rgba(119, 67, 38, 0.18)",
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                  backgroundColor: "#fdf7ef",
+                }}
+              >
+                <Text size="sm" c="green" lineClamp={1}>
+                  File selected: {uploadedFile.name}
+                </Text>
+                <ActionIcon
+                  variant="subtle"
+                  radius="xl"
+                  color="brown"
+                  aria-label="Remove selected PDF"
+                  onClick={() => {
+                    setUploadedFile(null);
+                    setFileError("");
+                  }}
+                >
+                  ×
+                </ActionIcon>
+              </Group>
+            )}
+            <Button
+              fullWidth
+              radius="md"
+              disabled={!uploadedFile}
+              style={{ backgroundColor: BROWN, borderColor: BROWN }}
+              onClick={handleUploadSubmit}
+            >
+              Upload CV
+            </Button>
           </Stack>
         )}
       </Modal>
