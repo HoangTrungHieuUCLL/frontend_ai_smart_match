@@ -1,6 +1,20 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { Badge, Box, Button, Container, Divider, Group, Paper, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
+import {
+    Badge,
+    Box,
+    Button,
+    Container,
+    Divider,
+    Group,
+    Paper,
+    Stack,
+    Text,
+    Title,
+    Modal,
+    TextInput,
+    RingProgress
+} from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
@@ -18,6 +32,7 @@ export default function JobInfoDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [compatabilityScore, setCompatabilityScore] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -169,7 +184,7 @@ export default function JobInfoDetailPage() {
 
             <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
               <Stack gap="lg">
-                <Group justify="apart" align="flex-start" wrap="wrap">
+                <Group justify="apart" align="center" wrap="wrap">
                   <Group align="center" gap="md" wrap="nowrap" style={{ flex: "1 1 520px", minWidth: 0 }}>
                     <Box
                       style={{
@@ -212,24 +227,51 @@ export default function JobInfoDetailPage() {
                     </Stack>
                   </Group>
 
-                  <Group gap="sm" justify="flex-end" wrap="wrap" style={{ flex: "0 1 460px", minWidth: 0 }}>
-                    <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
-                    <Button
-                      radius="xl"
-                      size="sm"
-                      style={{ minWidth: 78, backgroundColor: BROWN, borderColor: BROWN, flexShrink: 0 }}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      radius="xl"
-                      variant="outline"
-                      size="sm"
-                      style={{ minWidth: 82, flexShrink: 0 }}
-                    >
-                      Share
-                    </Button>
-                  </Group>
+                    <Group gap="md">
+                        {compatabilityScore !== null && (
+                            <RingProgress
+                                size={130}
+                                thickness={11}
+                                roundCaps
+                                label={
+                                    <Text
+                                        size="sm"
+                                        ta="center"
+                                        style={{ pointerEvents: 'none' }}
+                                        fw={700}
+                                    >
+                                        {compatabilityScore}% <Text size="xs">match</Text>
+                                    </Text>
+                                }
+                                sections={[
+                                    {
+                                        value: compatabilityScore,
+                                        color: compatabilityScore >= 70 ? '#34C759' : '#FF383C',
+                                    },
+                                ]}
+                            />
+                        )}
+
+                        <Stack gap="sm" justify="flex-end">
+                            <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
+                            <Group grow>
+                                <Button
+                                    variant="filled"
+                                    size="sm"
+                                    color={BROWN}
+                                >
+                                    Save
+                                </Button>
+                                <Button
+                                    variant="light"
+                                    size="sm"
+                                    color={BROWN}
+                                >
+                                    Share
+                                </Button>
+                            </Group>
+                        </Stack>
+                    </Group>
                 </Group>
 
                 <Divider />
