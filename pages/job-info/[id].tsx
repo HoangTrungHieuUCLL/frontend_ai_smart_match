@@ -197,12 +197,18 @@ export default function JobInfoDetailPage() {
                       <Text size="xl" style={{ fontWeight: 700 }}>
                         {job.position}
                       </Text>
-                      <Text color="dimmed" size="sm">
-                        {job.overview}
-                      </Text>
                       <Text color="dimmed" size="xs">
                         {job.company_name} • {job.date}
                       </Text>
+
+                        <Group gap="xs" mt="sm">
+                            <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
+                                {job.location}
+                            </Badge>
+                            <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
+                                {job.type}
+                            </Badge>
+                        </Group>
                     </Stack>
                   </Group>
 
@@ -224,15 +230,6 @@ export default function JobInfoDetailPage() {
                       Share
                     </Button>
                   </Group>
-                </Group>
-
-                <Group gap="xs">
-                  <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                    {job.location}
-                  </Badge>
-                  <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                    {job.type}
-                  </Badge>
                 </Group>
 
                 <Divider />

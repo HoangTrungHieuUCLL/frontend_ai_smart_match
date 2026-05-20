@@ -6,9 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="f819cda6-f115-4246-b863-2bfa440ff185" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/job-info/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/pages/job-info/[id].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/job-search-with-ai.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/pages/job-search-with-ai.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,7 +55,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "dev",
+    "git-widget-placeholder": "36-cs-placeholder",
     "ignore.virus.scanning.warn.message": "true",
     "javascript.preferred.runtime.type.id": "node",
     "js.debugger.nextJs.config.created.client": "true",
@@ -106,7 +104,7 @@
       <workItem from="1778591961502" duration="399000" />
       <workItem from="1779105508408" duration="2172000" />
       <workItem from="1779183673433" duration="129000" />
-      <workItem from="1779268721632" duration="1151000" />
+      <workItem from="1779268721632" duration="1771000" />
     </task>
     <servers />
   </component>
