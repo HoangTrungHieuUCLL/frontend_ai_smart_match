@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Container, Group, Image, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
+import { Box, Button, Container, Group, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
@@ -145,7 +145,42 @@ export default function JobSearchWithAIPage() {
         opened={uploadModalOpen}
         onClose={handleCloseModal}
         closeButtonProps={{
-          icon: <Image src="/xicon.png" alt="" w={32} h={32} fit="contain" />,
+          icon: (
+            <Box
+              aria-hidden="true"
+              style={{
+                position: "relative",
+                width: 22,
+                height: 22,
+                transform: "rotate(45deg)",
+              }}
+            >
+              <Box
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: 0,
+                  width: 7,
+                  height: "100%",
+                  borderRadius: 999,
+                  backgroundColor: "#ffffff",
+                  transform: "translateX(-50%)",
+                }}
+              />
+              <Box
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: "50%",
+                  width: "100%",
+                  height: 7,
+                  borderRadius: 999,
+                  backgroundColor: "#ffffff",
+                  transform: "translateY(-50%)",
+                }}
+              />
+            </Box>
+          ),
           size: 40,
           radius: "xl",
           style: {
