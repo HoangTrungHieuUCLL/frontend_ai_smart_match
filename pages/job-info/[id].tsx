@@ -122,27 +122,7 @@ export default function JobInfoDetailPage() {
   return (
     <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
       <Container size="1200px">
-        <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
-          <Stack gap={4}>
-            <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
-              {job.position}
-            </Title>
-            <Text color="dimmed" size="sm">
-              Detailed job information, compatibility assessment, and next-step actions for this role.
-            </Text>
-          </Stack>
-          <Button
-            radius="xl"
-            variant="outline"
-            size="sm"
-            style={{ borderColor: BROWN, color: BROWN }}
-            onClick={() => router.push("/job-search-with-ai")}
-          >
-            Back to listings
-          </Button>
-        </Group>
-
-        <Paper shadow="xl" radius="xl" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(119, 67, 38, 0.12)", padding: 24 }}>
+        <Paper style={{backgroundColor: "#f7f2ef"}}>
           <Stack gap="lg">
             <Group justify="space-between" align="stretch" wrap="wrap" style={{ marginBottom: 24 }}>
               {[
@@ -168,12 +148,12 @@ export default function JobInfoDetailPage() {
                 <Paper
                   key={card.number}
                   withBorder
-                  radius="md"
+                  radius="xl"
                   p="lg"
                   style={{
                     flex: "1 1 280px",
                     minWidth: 280,
-                    backgroundColor: "#fdf7ef",
+                    backgroundColor: "#ffffff",
                     borderColor: "rgba(119, 67, 38, 0.16)",
                     display: "flex",
                     flexDirection: "column",
@@ -192,24 +172,10 @@ export default function JobInfoDetailPage() {
                           display: "grid",
                           placeItems: "center",
                           fontWeight: 700,
+                          paddingTop: 1,
                         }}
                       >
                         {card.number}
-                      </Box>
-                      <Box
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: "50%",
-                          border: `1px solid ${BROWN}`,
-                          display: "grid",
-                          placeItems: "center",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Text size="sm" style={{ lineHeight: 1 }}>
-                          ×
-                        </Text>
                       </Box>
                     </Group>
                     <Stack gap={4}>
@@ -280,7 +246,7 @@ export default function JobInfoDetailPage() {
                       radius="xl"
                       variant="outline"
                       size="sm"
-                      style={{ minWidth: 82, flexShrink: 0 }}
+                      style={{ minWidth: 82, flexShrink: 0, color: BROWN, borderColor: BROWN }}
                     >
                       Share
                     </Button>
