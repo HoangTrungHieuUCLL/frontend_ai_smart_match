@@ -334,7 +334,12 @@ export default function JobInfoDetailPage() {
         </Paper>
       </Container>
 
-        <CVUploadModal opened={modalOpen} onClose={() => setModalOpen(false)} />
+        <CVUploadModal opened={modalOpen}
+                       onClose={() => {
+                           setCompatabilityScore(Math.floor(Math.random() * 101));
+                           setModalOpen(false);
+                       }}
+        />
     </Box>
   );
 }
