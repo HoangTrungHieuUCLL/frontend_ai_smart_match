@@ -11,4 +11,5 @@ export interface Job {
     offers: string;
     salary: string;
     notes: string;
+    compatability_score: number | null;
 }
