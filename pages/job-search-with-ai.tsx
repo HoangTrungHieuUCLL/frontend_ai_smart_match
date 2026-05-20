@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Container, Group, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
+import { Box, Button, Container, Group, Image, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
@@ -62,6 +62,7 @@ export default function JobSearchWithAIPage() {
       const file = files[0];
       if (file.type === "application/pdf" && file.size <= 5 * 1024 * 1024) {
         setUploadedFile(file);
+        void handleUploadSubmit(file);
       } else if (file.type !== "application/pdf") {
         alert("Only PDF files are allowed");
       } else {
@@ -70,8 +71,8 @@ export default function JobSearchWithAIPage() {
     }
   };
 
-  const handleUploadSubmit = async () => {
-    if (!uploadedFile) {
+  const handleUploadSubmit = async (fileToUpload = uploadedFile) => {
+    if (!fileToUpload) {
       alert("Please select a file");
       return;
     }
@@ -79,12 +80,12 @@ export default function JobSearchWithAIPage() {
     try {
       const response = await JobService.uploadCv({
         ...formData,
-        cv: uploadedFile,
+        cv: fileToUpload,
       });
 
       if (response.ok) {
         alert("CV uploaded successfully!");
-        console.log("CV file uploaded:", uploadedFile.name);
+        console.log("CV file uploaded:", fileToUpload.name);
         handleCloseModal();
       } else {
         alert("Failed to upload CV");
@@ -143,6 +144,16 @@ export default function JobSearchWithAIPage() {
       <Modal
         opened={uploadModalOpen}
         onClose={handleCloseModal}
+        closeButtonProps={{
+          icon: <Image src="/xicon.png" alt="" w={32} h={32} fit="contain" />,
+          size: 40,
+          radius: "xl",
+          style: {
+            backgroundColor: BROWN,
+            color: "#ffffff",
+            border: "none",
+          },
+        }}
         title={
           <Text size="xl" fw={800}>
             {step === "form" ? "Upload your CV" : "Upload your PDF"}
@@ -220,14 +231,6 @@ export default function JobSearchWithAIPage() {
                 File selected: {uploadedFile.name}
               </Text>
             )}
-            <Button
-              fullWidth
-              radius="md"
-              style={{ backgroundColor: BROWN, borderColor: BROWN }}
-              onClick={handleUploadSubmit}
-            >
-              Upload CV
-            </Button>
           </Stack>
         )}
       </Modal>

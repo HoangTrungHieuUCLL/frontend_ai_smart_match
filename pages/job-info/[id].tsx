@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { Badge, Box, Button, Container, Divider, Group, Paper, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
+import { Badge, Box, Button, Container, Divider, Group, Image, Paper, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
@@ -64,6 +64,7 @@ export default function JobInfoDetailPage() {
       const file = files[0];
       if (file.type === "application/pdf" && file.size <= 5 * 1024 * 1024) {
         setUploadedFile(file);
+        void handleUploadSubmit(file);
       } else if (file.type !== "application/pdf") {
         alert("Only PDF files are allowed");
       } else {
@@ -72,8 +73,8 @@ export default function JobInfoDetailPage() {
     }
   };
 
-  const handleUploadSubmit = async () => {
-    if (!uploadedFile) {
+  const handleUploadSubmit = async (fileToUpload = uploadedFile) => {
+    if (!fileToUpload) {
       alert("Please select a file");
       return;
     }
@@ -81,12 +82,12 @@ export default function JobInfoDetailPage() {
     try {
       const response = await JobService.uploadCv({
         ...formData,
-        cv: uploadedFile,
+        cv: fileToUpload,
       });
 
       if (response.ok) {
         alert("CV uploaded successfully!");
-        console.log("CV file uploaded:", uploadedFile.name);
+        console.log("CV file uploaded:", fileToUpload.name);
         handleCloseModal();
       } else {
         alert("Failed to upload CV");
@@ -358,6 +359,16 @@ export default function JobInfoDetailPage() {
       <Modal
         opened={uploadModalOpen}
         onClose={handleCloseModal}
+        closeButtonProps={{
+          icon: <Image src="/xicon.png" alt="" w={32} h={32} fit="contain" />,
+          size: 40,
+          radius: "xl",
+          style: {
+            backgroundColor: BROWN,
+            color: "#ffffff",
+            border: "none",
+          },
+        }}
         title={
           <Text size="xl" fw={800}>
             {step === "form" ? "Upload your CV" : "Upload your PDF"}
@@ -435,14 +446,6 @@ export default function JobInfoDetailPage() {
                 File selected: {uploadedFile.name}
               </Text>
             )}
-            <Button
-              fullWidth
-              radius="md"
-              style={{ backgroundColor: BROWN, borderColor: BROWN }}
-              onClick={handleUploadSubmit}
-            >
-              Upload CV
-            </Button>
           </Stack>
         )}
       </Modal>

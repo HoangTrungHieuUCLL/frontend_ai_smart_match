@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, CSSProperties } from "react";
 import { Box, Button, Group, Image, Text } from "@mantine/core";
 
-const BROWN = "#9a5d35";
+const BROWN = "#774326";
 
 type CVUploadButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "style"> & {
   label?: string;
