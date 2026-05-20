@@ -27,304 +27,319 @@ const BROWN = "#774326";
 const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) ?? [];
 
 export default function JobInfoDetailPage() {
-  const router = useRouter();
-  const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
-  const [job, setJob] = useState<Job | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [compatabilityScore, setCompatabilityScore] = useState<number | null>(null);
+    const router = useRouter();
+    const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
+    const [job, setJob] = useState<Job | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
+    const [compatabilityScore, setCompatabilityScore] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!id) return;
+    useEffect(() => {
+        if (!id) return;
 
-    const fetchJob = async () => {
-      setLoading(true);
-      try {
-        const response = await JobService.getJobById(Number(id));
-        setJob(response);
-      } catch {
-        setJob(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+        const fetchJob = async () => {
+            setLoading(true);
+            try {
+                const response = await JobService.getJobById(Number(id));
+                setJob(response);
+            } catch {
+                setJob(null);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    fetchJob();
-  }, [id]);
+        fetchJob();
+    }, [id]);
 
-  if (loading) {
+    if (loading) {
+        return (
+            <Container size="800px" style={{ padding: "48px 0" }}>
+                <Text>Loading job details...</Text>
+            </Container>
+        );
+    }
+
+    if (!job) {
+        return (
+            <Container size="800px" style={{ padding: "48px 0" }}>
+                <Text>Job not found.</Text>
+            </Container>
+        );
+    }
+
+    const responsibilities = splitLines(job.responsibilities);
+    const requirements = splitLines(job.requirements);
+    const benefits = splitLines(job.offers);
+    const notes = splitLines(job.notes);
+
     return (
-      <Container size="800px" style={{ padding: "48px 0" }}>
-        <Text>Loading job details...</Text>
-      </Container>
-    );
-  }
-
-  if (!job) {
-    return (
-      <Container size="800px" style={{ padding: "48px 0" }}>
-        <Text>Job not found.</Text>
-      </Container>
-    );
-  }
-
-  const responsibilities = splitLines(job.responsibilities);
-  const requirements = splitLines(job.requirements);
-  const benefits = splitLines(job.offers);
-  const notes = splitLines(job.notes);
-
-  return (
-    <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
-      <Container size="1200px">
-        <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
-          <Stack gap={4}>
-            <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
-              {job.position}
-            </Title>
-            <Text color="dimmed" size="sm">
-              Detailed job information, compatibility assessment, and next-step actions for this role.
-            </Text>
-          </Stack>
-          <Button
-            radius="xl"
-            variant="outline"
-            size="sm"
-            style={{ borderColor: BROWN, color: BROWN }}
-            onClick={() => router.push("/job-search-with-ai")}
-          >
-            Back to listings
-          </Button>
-        </Group>
-
-        <Paper shadow="xl" radius="xl" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(119, 67, 38, 0.12)", padding: 24 }}>
-          <Stack gap="lg">
-            <Group justify="space-between" align="stretch" wrap="wrap" style={{ marginBottom: 24 }}>
-              {[
-                {
-                  number: "1",
-                  title: "Job description",
-                  description: job.overview,
-                  button: "How much does this job suit me?",
-                },
-                {
-                  number: "2",
-                  title: "Your CV uploaded.",
-                  description: "The system has your profile and can compare it with job requirements automatically.",
-                  button: "Let's ask AI",
-                },
-                {
-                  number: "3",
-                  title: "Match score",
-                  description: "This job is highly compatible with your profile based on skills and experience.",
-                  button: "How compatible am I to this job?",
-                },
-              ].map((card) => (
-                <Paper
-                  key={card.number}
-                  withBorder
-                  radius="md"
-                  p="lg"
-                  style={{
-                    flex: "1 1 280px",
-                    minWidth: 280,
-                    backgroundColor: "#fdf7ef",
-                    borderColor: "rgba(119, 67, 38, 0.16)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Stack gap="md">
-                    <Group justify="apart" align="center">
-                      <Box
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: "50%",
-                          backgroundColor: BROWN,
-                          color: "#ffffff",
-                          display: "grid",
-                          placeItems: "center",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {card.number}
-                      </Box>
-                      <Box
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: "50%",
-                          border: `1px solid ${BROWN}`,
-                          display: "grid",
-                          placeItems: "center",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Text size="sm" style={{ lineHeight: 1 }}>
-                          ×
+        <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
+            <Container size="1200px">
+                <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
+                    <Stack gap={4}>
+                        <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
+                            {job.position}
+                        </Title>
+                        <Text color="dimmed" size="sm">
+                            Detailed job information, compatibility assessment, and next-step actions for this role.
                         </Text>
-                      </Box>
-                    </Group>
-                    <Stack gap={4}>
-                      <Text size="sm" style={{ fontWeight: 700, color: BROWN, textTransform: "uppercase" }}>
-                        {card.title}
-                      </Text>
-                      <Text color="dimmed" size="sm">
-                        {card.description}
-                      </Text>
                     </Stack>
-                  </Stack>
-                  <Button radius="xl" style={{ backgroundColor: BROWN, borderColor: BROWN, marginTop: 16 }}>
-                    {card.button}
-                  </Button>
-                </Paper>
-              ))}
-            </Group>
-
-            <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
-              <Stack gap="lg">
-                <Group justify="apart" align="flex-start" wrap="wrap">
-                  <Group align="center" gap="md" wrap="nowrap" style={{ flex: "1 1 520px", minWidth: 0 }}>
-                    <Box
-                      style={{
-                        width: 128,
-                        height: 128,
-                        minWidth: 128,
-                        borderRadius: 24,
-                        backgroundColor: "#f6f1ee",
-                        display: "grid",
-                        placeItems: "center",
-                        color: BROWN,
-                        fontWeight: 700,
-                        fontSize: 38,
-                        flexShrink: 0,
-                      }}
+                    <Button
+                        radius="xl"
+                        variant="outline"
+                        size="sm"
+                        style={{ borderColor: BROWN, color: BROWN }}
+                        onClick={() => router.push("/job-search-with-ai")}
                     >
-                      {job.company_name
-                        .split(" ")
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .map((part) => part[0])
-                        .join("")}
-                    </Box>
-                    <Stack gap={4}>
-                      <Text size="xl" style={{ fontWeight: 700 }}>
-                        {job.position}
-                      </Text>
-                      <Text color="dimmed" size="sm">
-                        {job.overview}
-                      </Text>
-                      <Text color="dimmed" size="xs">
-                        {job.company_name} • {job.date}
-                      </Text>
+                        Back to listings
+                    </Button>
+                </Group>
 
-                        <Group gap="xs" mt="sm">
-                            <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                                {job.location}
-                            </Badge>
-                            <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                                {job.type}
-                            </Badge>
+                <Paper shadow="xl" radius="xl" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(119, 67, 38, 0.12)", padding: 24 }}>
+                    <Stack gap="lg">
+                        <Group justify="space-between" align="stretch" wrap="wrap" style={{ marginBottom: 24 }}>
+                            {[
+                                {
+                                    number: "1",
+                                    title: "Job description",
+                                    description: job.overview,
+                                    button: "How much does this job suit me?",
+                                },
+                                {
+                                    number: "2",
+                                    title: "Your CV uploaded.",
+                                    description: "The system has your profile and can compare it with job requirements automatically.",
+                                    button: "Let's ask AI",
+                                },
+                                {
+                                    number: "3",
+                                    title: "Match score",
+                                    description: "This job is highly compatible with your profile based on skills and experience.",
+                                    button: "How compatible am I to this job?",
+                                },
+                            ].map((card) => (
+                                <Paper
+                                    key={card.number}
+                                    withBorder
+                                    radius="md"
+                                    p="lg"
+                                    style={{
+                                        flex: "1 1 280px",
+                                        minWidth: 280,
+                                        backgroundColor: "#fdf7ef",
+                                        borderColor: "rgba(119, 67, 38, 0.16)",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "space-between",
+                                    }}
+                                >
+                                    <Stack gap="md">
+                                        <Group justify="apart" align="center">
+                                            <Box
+                                                style={{
+                                                    width: 34,
+                                                    height: 34,
+                                                    borderRadius: "50%",
+                                                    backgroundColor: BROWN,
+                                                    color: "#ffffff",
+                                                    display: "grid",
+                                                    placeItems: "center",
+                                                    fontWeight: 700,
+                                                }}
+                                            >
+                                                {card.number}
+                                            </Box>
+                                            <Box
+                                                style={{
+                                                    width: 28,
+                                                    height: 28,
+                                                    borderRadius: "50%",
+                                                    border: `1px solid ${BROWN}`,
+                                                    display: "grid",
+                                                    placeItems: "center",
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                <Text size="sm" style={{ lineHeight: 1 }}>
+                                                    ×
+                                                </Text>
+                                            </Box>
+                                        </Group>
+                                        <Stack gap={4}>
+                                            <Text size="sm" style={{ fontWeight: 700, color: BROWN, textTransform: "uppercase" }}>
+                                                {card.title}
+                                            </Text>
+                                            <Text color="dimmed" size="sm">
+                                                {card.description}
+                                            </Text>
+                                        </Stack>
+                                    </Stack>
+                                    <Button radius="xl" style={{ backgroundColor: BROWN, borderColor: BROWN, marginTop: 16 }}>
+                                        {card.button}
+                                    </Button>
+                                </Paper>
+                            ))}
                         </Group>
+
+                        <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
+                            <Stack gap="lg">
+                                <Group justify="apart" align="center" wrap="wrap">
+                                    <Group align="center" gap="md" wrap="nowrap" style={{ flex: "1 1 520px", minWidth: 0 }}>
+                                        <Box
+                                            style={{
+                                                width: 128,
+                                                height: 128,
+                                                minWidth: 128,
+                                                borderRadius: 24,
+                                                backgroundColor: "#f6f1ee",
+                                                display: "grid",
+                                                placeItems: "center",
+                                                color: BROWN,
+                                                fontWeight: 700,
+                                                fontSize: 38,
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            {job.company_name
+                                                .split(" ")
+                                                .filter(Boolean)
+                                                .slice(0, 2)
+                                                .map((part) => part[0])
+                                                .join("")}
+                                        </Box>
+                                        <Stack gap={4}>
+                                            <Text size="xl" style={{ fontWeight: 700 }}>
+                                                {job.position}
+                                            </Text>
+                                            <Text color="dimmed" size="xs">
+                                                {job.company_name} • {job.date}
+                                            </Text>
+
+                                            <Group gap="xs" mt="sm">
+                                                <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
+                                                    {job.location}
+                                                </Badge>
+                                                <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
+                                                    {job.type}
+                                                </Badge>
+                                            </Group>
+                                        </Stack>
+                                    </Group>
+
+                                    <Group gap="md">
+                                        {compatabilityScore !== null && (
+                                            <RingProgress
+                                                size={130}
+                                                thickness={11}
+                                                roundCaps
+                                                label={
+                                                    <Text
+                                                        size="sm"
+                                                        ta="center"
+                                                        style={{ pointerEvents: 'none' }}
+                                                        fw={700}
+                                                    >
+                                                        {compatabilityScore}% <Text size="xs">match</Text>
+                                                    </Text>
+                                                }
+                                                sections={[
+                                                    {
+                                                        value: compatabilityScore,
+                                                        color: compatabilityScore >= 70 ? '#34C759' : '#FF383C',
+                                                    },
+                                                ]}
+                                            />
+                                        )}
+
+                                        <Stack gap="sm" justify="flex-end">
+                                            <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
+                                            <Group grow>
+                                                <Button
+                                                    variant="filled"
+                                                    size="sm"
+                                                    color={BROWN}
+                                                >
+                                                    Save
+                                                </Button>
+                                                <Button
+                                                    variant="light"
+                                                    size="sm"
+                                                    color={BROWN}
+                                                >
+                                                    Share
+                                                </Button>
+                                            </Group>
+                                        </Stack>
+                                    </Group>
+                                </Group>
+
+                                <Divider />
+
+                                <Stack gap="sm">
+                                    <Text size="lg" style={{ fontWeight: 700 }}>
+                                        Job description
+                                    </Text>
+                                    <Text color="dimmed" size="sm">
+                                        {job.overview}
+                                    </Text>
+
+                                    <Text size="sm" style={{ fontWeight: 600 }}>
+                                        Key Responsibilities:
+                                    </Text>
+                                    <Stack gap={4}>
+                                        {responsibilities.map((item, index) => (
+                                            <Text key={index} color="dimmed" size="sm" component="div">
+                                                • {item}
+                                            </Text>
+                                        ))}
+                                    </Stack>
+
+                                    <Text size="sm" style={{ fontWeight: 600 }}>
+                                        Candidate Requirements:
+                                    </Text>
+                                    <Stack gap={4}>
+                                        {requirements.map((item, index) => (
+                                            <Text key={index} color="dimmed" size="sm" component="div">
+                                                • {item}
+                                            </Text>
+                                        ))}
+                                    </Stack>
+
+                                    <Text size="sm" style={{ fontWeight: 600 }}>
+                                        Benefits & Compensation:
+                                    </Text>
+                                    <Stack gap={4}>
+                                        {benefits.map((item, index) => (
+                                            <Text key={index} color="dimmed" size="sm" component="div">
+                                                • {item}
+                                            </Text>
+                                        ))}
+                                    </Stack>
+
+                                    <Text size="sm" style={{ fontWeight: 600 }}>
+                                        Notes:
+                                    </Text>
+                                    <Stack gap={4}>
+                                        {notes.map((item, index) => (
+                                            <Text key={index} color="dimmed" size="sm" component="div">
+                                                • {item}
+                                            </Text>
+                                        ))}
+                                    </Stack>
+                                </Stack>
+                            </Stack>
+                        </Paper>
                     </Stack>
-                  </Group>
+                </Paper>
+            </Container>
 
-                  <Group gap="sm" justify="flex-end" wrap="wrap" style={{ flex: "0 1 460px", minWidth: 0 }}>
-                    <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
-                    <Button
-                      radius="xl"
-                      size="sm"
-                      style={{ minWidth: 78, backgroundColor: BROWN, borderColor: BROWN, flexShrink: 0 }}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      radius="xl"
-                      variant="outline"
-                      size="sm"
-                      style={{ minWidth: 82, flexShrink: 0 }}
-                    >
-                      Share
-                    </Button>
-                  </Group>
-                </Group>
-
-                <Group gap="xs">
-                  <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                    {job.location}
-                  </Badge>
-                  <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                    {job.type}
-                  </Badge>
-                </Group>
-
-                <Divider />
-
-                <Stack gap="sm">
-                  <Text size="lg" style={{ fontWeight: 700 }}>
-                    Job description
-                  </Text>
-                  <Text color="dimmed" size="sm">
-                    {job.overview}
-                  </Text>
-
-                  <Text size="sm" style={{ fontWeight: 600 }}>
-                    Key Responsibilities:
-                  </Text>
-                  <Stack gap={4}>
-                    {responsibilities.map((item, index) => (
-                      <Text key={index} color="dimmed" size="sm" component="div">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Stack>
-
-                  <Text size="sm" style={{ fontWeight: 600 }}>
-                    Candidate Requirements:
-                  </Text>
-                  <Stack gap={4}>
-                    {requirements.map((item, index) => (
-                      <Text key={index} color="dimmed" size="sm" component="div">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Stack>
-
-                  <Text size="sm" style={{ fontWeight: 600 }}>
-                    Benefits & Compensation:
-                  </Text>
-                  <Stack gap={4}>
-                    {benefits.map((item, index) => (
-                      <Text key={index} color="dimmed" size="sm" component="div">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Stack>
-
-                  <Text size="sm" style={{ fontWeight: 600 }}>
-                    Notes:
-                  </Text>
-                  <Stack gap={4}>
-                    {notes.map((item, index) => (
-                      <Text key={index} color="dimmed" size="sm" component="div">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Stack>
-                </Stack>
-              </Stack>
-            </Paper>
-          </Stack>
-        </Paper>
-      </Container>
-
-        <CVUploadModal opened={modalOpen}
-                       onClose={() => {
-                           setCompatabilityScore(Math.floor(Math.random() * 101));
-                           setModalOpen(false);
-                       }}
-        />
-    </Box>
-  );
+            <CVUploadModal opened={modalOpen}
+                           onClose={() => {
+                               setCompatabilityScore(Math.floor(Math.random() * 101));
+                               setModalOpen(false);
+                           }}
+            />
+        </Box>
+    );
 }
