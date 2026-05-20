@@ -1,150 +1,77 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { ActionIcon, Badge, Box, Button, Container, Divider, Group, Paper, Stack, Text, Title, Modal, TextInput } from "@mantine/core";
+import {
+    Badge,
+    Box,
+    Button,
+    Container,
+    Divider,
+    Group,
+    Paper,
+    Stack,
+    Text,
+    Title,
+    Modal,
+    TextInput,
+    RingProgress
+} from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
 import CVUploadButton from "../../components/CVUploadButton";
 import { getCvFormErrors, isCvFormValid } from "../../utils/cvValidation";
+import CVUploadModal from "../../components/CVUploadModal";
 
 const BROWN = "#774326";
-const SINGLE_PDF_MESSAGE = "Please upload only one PDF file.";
-const REPLACE_PDF_MESSAGE = "Remove the selected PDF before choosing another one.";
-
-type FileRejection = {
-  errors: readonly { code: string }[];
-};
 
 const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) ?? [];
 
 export default function JobInfoDetailPage() {
-  const router = useRouter();
-  const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
-  const [job, setJob] = useState<Job | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [step, setStep] = useState<"form" | "upload">("form");
-  const [formData, setFormData] = useState({ familyName: "", middleName: "", givenName: "", email: "" });
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [fileError, setFileError] = useState("");
-  const formErrors = getCvFormErrors(formData);
-  const canContinue = isCvFormValid(formData);
+    const router = useRouter();
+    const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
+    const [job, setJob] = useState<Job | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
+    const [compatabilityScore, setCompatabilityScore] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!id) return;
+    useEffect(() => {
+        if (!id) return;
 
-    const fetchJob = async () => {
-      setLoading(true);
-      try {
-        const response = await JobService.getJobById(Number(id));
-        setJob(response);
-      } catch {
-        setJob(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+        const fetchJob = async () => {
+            setLoading(true);
+            try {
+                const response = await JobService.getJobById(Number(id));
+                setJob(response);
+            } catch {
+                setJob(null);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    fetchJob();
-  }, [id]);
+        fetchJob();
+    }, [id]);
 
-  const handleOpenModal = () => {
-    setUploadModalOpen(true);
-    setStep("form");
-    setFormData({ familyName: "", middleName: "", givenName: "", email: "" });
-    setUploadedFile(null);
-    setFileError("");
-  };
-
-  const handleCloseModal = () => {
-    setUploadModalOpen(false);
-    setStep("form");
-  };
-
-  const handleFormSubmit = () => {
-    if (canContinue) {
-      setStep("upload");
-    }
-  };
-
-  const handleFileDrop = (files: File[]) => {
-    if (files.length > 1) {
-      setFileError(SINGLE_PDF_MESSAGE);
-      return;
+    if (loading) {
+        return (
+            <Container size="800px" style={{ padding: "48px 0" }}>
+                <Text>Loading job details...</Text>
+            </Container>
+        );
     }
 
-    if (uploadedFile) {
-      setFileError(REPLACE_PDF_MESSAGE);
-      return;
+    if (!job) {
+        return (
+            <Container size="800px" style={{ padding: "48px 0" }}>
+                <Text>Job not found.</Text>
+            </Container>
+        );
     }
 
-    if (files.length === 1) {
-      setUploadedFile(files[0]);
-      setFileError("");
-    }
-  };
-
-  const handleFileReject = (fileRejections: FileRejection[]) => {
-    if (fileRejections.length > 1 || fileRejections.some((rejection) => rejection.errors.some((error) => error.code === "too-many-files"))) {
-      setFileError(SINGLE_PDF_MESSAGE);
-      return;
-    }
-
-    const firstErrorCode = fileRejections[0]?.errors[0]?.code;
-
-    if (firstErrorCode === "file-too-large") {
-      setFileError("File size must not exceed 5MB");
-      return;
-    }
-
-    setFileError("Only PDF files are allowed");
-  };
-
-  const handleUploadSubmit = async () => {
-    if (!uploadedFile) {
-      alert("Please select a file");
-      return;
-    }
-
-    try {
-      const response = await JobService.uploadCv({
-        ...formData,
-        cv: uploadedFile,
-      });
-
-      if (response.ok) {
-        alert("CV uploaded successfully!");
-        console.log("CV file uploaded:", uploadedFile.name);
-        handleCloseModal();
-      } else {
-        alert("Failed to upload CV");
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      alert("Error uploading CV");
-    }
-  };
-
-  if (loading) {
-    return (
-      <Container size="800px" style={{ padding: "48px 0" }}>
-        <Text>Loading job details...</Text>
-      </Container>
-    );
-  }
-
-  if (!job) {
-    return (
-      <Container size="800px" style={{ padding: "48px 0" }}>
-        <Text>Job not found.</Text>
-      </Container>
-    );
-  }
-
-  const responsibilities = splitLines(job.responsibilities);
-  const requirements = splitLines(job.requirements);
-  const benefits = splitLines(job.offers);
-  const notes = splitLines(job.notes);
+    const responsibilities = splitLines(job.responsibilities);
+    const requirements = splitLines(job.requirements);
+    const benefits = splitLines(job.offers);
+    const notes = splitLines(job.notes);
 
   return (
     <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
@@ -221,328 +148,164 @@ export default function JobInfoDetailPage() {
               ))}
             </Group>
 
-            <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
-              <Stack gap="lg">
-                <Group justify="apart" align="flex-start" wrap="wrap">
-                  <Group align="center" gap="md" wrap="nowrap" style={{ flex: "1 1 520px", minWidth: 0 }}>
-                    <Box
-                      style={{
-                        width: 128,
-                        height: 128,
-                        minWidth: 128,
-                        borderRadius: 24,
-                        backgroundColor: "#f6f1ee",
-                        display: "grid",
-                        placeItems: "center",
-                        color: BROWN,
-                        fontWeight: 700,
-                        fontSize: 38,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {job.company_name
-                        .split(" ")
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .map((part) => part[0])
-                        .join("")}
-                    </Box>
-                    <Stack gap={4}>
-                      <Text size="xl" style={{ fontWeight: 700 }}>
-                        {job.position}
-                      </Text>
-                      <Text color="dimmed" size="sm">
-                        {job.overview}
-                      </Text>
-                      <Text color="dimmed" size="xs">
-                        {job.company_name} • {job.date}
-                      </Text>
+                        <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
+                            <Stack gap="lg">
+                                <Group justify="apart" align="center" wrap="wrap">
+                                    <Group align="center" gap="md" wrap="nowrap" style={{ flex: "1 1 520px", minWidth: 0 }}>
+                                        <Box
+                                            style={{
+                                                width: 128,
+                                                height: 128,
+                                                minWidth: 128,
+                                                borderRadius: 24,
+                                                backgroundColor: "#f6f1ee",
+                                                display: "grid",
+                                                placeItems: "center",
+                                                color: BROWN,
+                                                fontWeight: 700,
+                                                fontSize: 38,
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            {job.company_name
+                                                .split(" ")
+                                                .filter(Boolean)
+                                                .slice(0, 2)
+                                                .map((part) => part[0])
+                                                .join("")}
+                                        </Box>
+                                        <Stack gap={4}>
+                                            <Text size="xl" style={{ fontWeight: 700 }}>
+                                                {job.position}
+                                            </Text>
+                                            <Text color="dimmed" size="xs">
+                                                {job.company_name} • {job.date}
+                                            </Text>
+
+                                            <Group gap="xs" mt="sm">
+                                                <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
+                                                    {job.location}
+                                                </Badge>
+                                                <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
+                                                    {job.type}
+                                                </Badge>
+                                            </Group>
+                                        </Stack>
+                                    </Group>
+
+                                    <Group gap="md">
+                                        {compatabilityScore !== null && (
+                                            <RingProgress
+                                                size={130}
+                                                thickness={11}
+                                                roundCaps
+                                                label={
+                                                    <Text
+                                                        size="sm"
+                                                        ta="center"
+                                                        style={{ pointerEvents: 'none' }}
+                                                        fw={700}
+                                                    >
+                                                        {compatabilityScore}% <Text size="xs">match</Text>
+                                                    </Text>
+                                                }
+                                                sections={[
+                                                    {
+                                                        value: compatabilityScore,
+                                                        color: compatabilityScore >= 70 ? '#34C759' : '#FF383C',
+                                                    },
+                                                ]}
+                                            />
+                                        )}
+
+                                        <Stack gap="sm" justify="flex-end">
+                                            <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
+                                            <Group grow>
+                                                <Button
+                                                    variant="filled"
+                                                    size="sm"
+                                                    color={BROWN}
+                                                >
+                                                    Save
+                                                </Button>
+                                                <Button
+                                                    variant="light"
+                                                    size="sm"
+                                                    color={BROWN}
+                                                >
+                                                    Share
+                                                </Button>
+                                            </Group>
+                                        </Stack>
+                                    </Group>
+                                </Group>
+
+                                <Divider />
+
+                                <Stack gap="sm">
+                                    <Text size="lg" style={{ fontWeight: 700 }}>
+                                        Job description
+                                    </Text>
+                                    <Text color="dimmed" size="sm">
+                                        {job.overview}
+                                    </Text>
+
+                                    <Text size="sm" style={{ fontWeight: 600 }}>
+                                        Key Responsibilities:
+                                    </Text>
+                                    <Stack gap={4}>
+                                        {responsibilities.map((item, index) => (
+                                            <Text key={index} color="dimmed" size="sm" component="div">
+                                                • {item}
+                                            </Text>
+                                        ))}
+                                    </Stack>
+
+                                    <Text size="sm" style={{ fontWeight: 600 }}>
+                                        Candidate Requirements:
+                                    </Text>
+                                    <Stack gap={4}>
+                                        {requirements.map((item, index) => (
+                                            <Text key={index} color="dimmed" size="sm" component="div">
+                                                • {item}
+                                            </Text>
+                                        ))}
+                                    </Stack>
+
+                                    <Text size="sm" style={{ fontWeight: 600 }}>
+                                        Benefits & Compensation:
+                                    </Text>
+                                    <Stack gap={4}>
+                                        {benefits.map((item, index) => (
+                                            <Text key={index} color="dimmed" size="sm" component="div">
+                                                • {item}
+                                            </Text>
+                                        ))}
+                                    </Stack>
+
+                                    <Text size="sm" style={{ fontWeight: 600 }}>
+                                        Notes:
+                                    </Text>
+                                    <Stack gap={4}>
+                                        {notes.map((item, index) => (
+                                            <Text key={index} color="dimmed" size="sm" component="div">
+                                                • {item}
+                                            </Text>
+                                        ))}
+                                    </Stack>
+                                </Stack>
+                            </Stack>
+                        </Paper>
                     </Stack>
-                  </Group>
+                </Paper>
+            </Container>
 
-                  <Group gap="sm" justify="flex-end" wrap="wrap" style={{ flex: "0 1 460px", minWidth: 0 }}>
-                    <CVUploadButton onClick={handleOpenModal} style={{ width: 260, flexShrink: 0 }} />
-                    <Button
-                      radius="xl"
-                      size="sm"
-                      style={{ minWidth: 78, backgroundColor: BROWN, borderColor: BROWN, flexShrink: 0 }}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      radius="xl"
-                      variant="outline"
-                      size="sm"
-                      style={{ minWidth: 82, flexShrink: 0, color: BROWN, borderColor: BROWN }}
-                    >
-                      Share
-                    </Button>
-                  </Group>
-                </Group>
-
-                <Group gap="xs">
-                  <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                    {job.location}
-                  </Badge>
-                  <Badge radius="xl" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                    {job.type}
-                  </Badge>
-                </Group>
-
-                <Divider />
-
-                <Stack gap="sm">
-                  <Text size="lg" style={{ fontWeight: 700 }}>
-                    Job description
-                  </Text>
-                  <Text color="dimmed" size="sm">
-                    {job.overview}
-                  </Text>
-
-                  <Text size="sm" style={{ fontWeight: 600 }}>
-                    Key Responsibilities:
-                  </Text>
-                  <Stack gap={4}>
-                    {responsibilities.map((item, index) => (
-                      <Text key={index} color="dimmed" size="sm" component="div">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Stack>
-
-                  <Text size="sm" style={{ fontWeight: 600 }}>
-                    Candidate Requirements:
-                  </Text>
-                  <Stack gap={4}>
-                    {requirements.map((item, index) => (
-                      <Text key={index} color="dimmed" size="sm" component="div">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Stack>
-
-                  <Text size="sm" style={{ fontWeight: 600 }}>
-                    Benefits & Compensation:
-                  </Text>
-                  <Stack gap={4}>
-                    {benefits.map((item, index) => (
-                      <Text key={index} color="dimmed" size="sm" component="div">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Stack>
-
-                  <Text size="sm" style={{ fontWeight: 600 }}>
-                    Notes:
-                  </Text>
-                  <Stack gap={4}>
-                    {notes.map((item, index) => (
-                      <Text key={index} color="dimmed" size="sm" component="div">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Stack>
-                </Stack>
-              </Stack>
-            </Paper>
-          </Stack>
-        </Paper>
-      </Container>
-
-      <Modal
-        opened={uploadModalOpen}
-        onClose={handleCloseModal}
-        closeButtonProps={{
-          icon: (
-            <Box
-              aria-hidden="true"
-              style={{
-                position: "relative",
-                width: 22,
-                height: 22,
-                transform: "rotate(45deg)",
-              }}
-            >
-              <Box
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  top: 0,
-                  width: 7,
-                  height: "100%",
-                  borderRadius: 999,
-                  backgroundColor: "#ffffff",
-                  transform: "translateX(-50%)",
-                }}
-              />
-              <Box
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: "50%",
-                  width: "100%",
-                  height: 7,
-                  borderRadius: 999,
-                  backgroundColor: "#ffffff",
-                  transform: "translateY(-50%)",
-                }}
-              />
-            </Box>
-          ),
-          size: 40,
-          radius: "xl",
-          style: {
-            backgroundColor: BROWN,
-            color: "#ffffff",
-            border: "none",
-          },
-        }}
-        title={
-          <Text size="xl" fw={800}>
-            {step === "form" ? "Upload your CV" : "Upload your PDF"}
-          </Text>
-        }
-        centered
-        size="md"
-      >
-        {step === "form" ? (
-          <Stack gap="md">
-            <TextInput
-              label="Family name"
-              placeholder="Enter your family name"
-              radius="md"
-              value={formData.familyName}
-              error={formData.familyName ? formErrors.familyName : undefined}
-              onChange={(e) => setFormData({ ...formData, familyName: e.currentTarget.value })}
+            <CVUploadModal opened={modalOpen}
+                           onClose={() => {
+                               setCompatabilityScore(Math.floor(Math.random() * 101));
+                               setModalOpen(false);
+                           }}
             />
-            <TextInput
-              label="Middle name"
-              placeholder="Enter your middle name"
-              radius="md"
-              value={formData.middleName}
-              error={formErrors.middleName}
-              onChange={(e) => setFormData({ ...formData, middleName: e.currentTarget.value })}
-            />
-            <TextInput
-              label="Given name"
-              placeholder="Enter your given name"
-              radius="md"
-              value={formData.givenName}
-              error={formData.givenName ? formErrors.givenName : undefined}
-              onChange={(e) => setFormData({ ...formData, givenName: e.currentTarget.value })}
-            />
-            <TextInput
-              label="Email address"
-              placeholder="Enter your email"
-              type="email"
-              radius="md"
-              value={formData.email}
-              error={formData.email ? formErrors.email : undefined}
-              onChange={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
-            />
-            <Button
-              fullWidth
-              radius="md"
-              disabled={!canContinue}
-              style={{ backgroundColor: BROWN, borderColor: BROWN }}
-              onClick={handleFormSubmit}
-            >
-              Continue
-            </Button>
-          </Stack>
-        ) : (
-          <Stack gap="md">
-            <Dropzone
-              onDrop={handleFileDrop}
-              onReject={handleFileReject}
-              accept={["application/pdf"]}
-              maxSize={5 * 1024 * 1024}
-              multiple
-            >
-              <Group justify="center" gap="xl" style={{ minHeight: 220, pointerEvents: "none" }}>
-                <Stack gap={0} align="center">
-                  <Text size="xl" fw={500}>
-                    Drop your PDF here
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    or click to browse (max 5MB)
-                  </Text>
-                </Stack>
-              </Group>
-            </Dropzone>
-            {fileError && (
-              <Group
-                gap="sm"
-                wrap="nowrap"
-                style={{
-                  border: "1px solid rgba(119, 67, 38, 0.22)",
-                  borderRadius: 8,
-                  padding: "10px 12px",
-                  backgroundColor: "#fff4ed",
-                  color: BROWN,
-                }}
-              >
-                <Box
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: "50%",
-                    backgroundColor: BROWN,
-                    color: "#ffffff",
-                    display: "grid",
-                    placeItems: "center",
-                    fontWeight: 800,
-                    flexShrink: 0,
-                  }}
-                >
-                  !
-                </Box>
-                <Text size="sm" fw={600}>
-                  {fileError}
-                </Text>
-              </Group>
-            )}
-            {uploadedFile && (
-              <Group
-                justify="space-between"
-                gap="sm"
-                wrap="nowrap"
-                style={{
-                  border: "1px solid rgba(119, 67, 38, 0.18)",
-                  borderRadius: 8,
-                  padding: "10px 12px",
-                  backgroundColor: "#fdf7ef",
-                }}
-              >
-                <Text size="sm" c="green" lineClamp={1}>
-                  File selected: {uploadedFile.name}
-                </Text>
-                <ActionIcon
-                  variant="subtle"
-                  radius="xl"
-                  color="brown"
-                  aria-label="Remove selected PDF"
-                  onClick={() => {
-                    setUploadedFile(null);
-                    setFileError("");
-                  }}
-                >
-                  ×
-                </ActionIcon>
-              </Group>
-            )}
-            <Button
-              fullWidth
-              radius="md"
-              disabled={!uploadedFile}
-              style={{ backgroundColor: BROWN, borderColor: BROWN }}
-              onClick={handleUploadSubmit}
-            >
-              Upload CV
-            </Button>
-          </Stack>
-        )}
-      </Modal>
-    </Box>
-  );
+        </Box>
+    );
 }

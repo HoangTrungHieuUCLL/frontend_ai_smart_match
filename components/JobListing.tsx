@@ -8,7 +8,8 @@ import {
     Group,
     Paper,
     Stack,
-    Text
+    Text,
+    RingProgress
 } from "@mantine/core";
 
 interface Props {
@@ -93,19 +94,43 @@ const JobListing: React.FC<Props> = ({ job }) => {
                                 </Text>
                             </Group>
                         </Stack>
+
+                        {job.compatability_score != null && (
+                            <RingProgress
+                                size={60}
+                                thickness={6}
+                                roundCaps
+                                sections={[
+                                    {
+                                        value: job.compatability_score,
+                                        color:
+                                            job.compatability_score >= 70
+                                                ? "#34C759"
+                                                : "#FF383C",
+                                    },
+                                ]}
+                                label={
+                                    <Text size="xs" ta="center" fw={700}>
+                                        {job.compatability_score}%
+                                    </Text>
+                                }
+                            />
+                        )}
                     </Group>
 
-                    <Badge
-                        radius="xl"
-                        variant="outline"
-                        style={{
-                            borderColor: BROWN,
-                            color: BROWN,
-                            fontWeight: 500,
-                        }}
-                    >
-                        {job.type}
-                    </Badge>
+                    <Group gap="sm" align="center">
+                        <Badge
+                            radius="xl"
+                            variant="outline"
+                            style={{
+                                borderColor: BROWN,
+                                color: BROWN,
+                                fontWeight: 500,
+                            }}
+                        >
+                            {job.type}
+                        </Badge>
+                    </Group>
                 </Group>
 
                 {/* BODY */}
