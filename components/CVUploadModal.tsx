@@ -13,9 +13,14 @@ type FileRejection = {
     errors: readonly { code: string }[];
 };
 
+type Score = {
+    job_id: number;
+    compatability_score: number;
+};
+
 type Props = {
     opened: boolean;
-    onClose: (updatedJobs?: Job[]) => void;
+    onClose: (scores?: Score[]) => void;
 };
 
 export default function CVUploadModal({ opened, onClose }: Props) {
@@ -85,22 +90,22 @@ export default function CVUploadModal({ opened, onClose }: Props) {
     };
 
     const handleUploadSubmit = async () => {
-        if (!uploadedFile) {
-            alert("Please select a file");
-            return;
-        }
+        if (!uploadedFile) return;
 
         try {
-            const response = await JobService.uploadCv({ ...formData, cv: uploadedFile });
+            const response = await JobService.uploadCv({
+                ...formData,
+                cv: uploadedFile,
+            });
+            const responseJson = await response.json();
 
-            if (response.ok) {
-                alert("CV uploaded successfully!");
-                reset();
-            } else {
-                alert("Failed to upload CV");
-            }
+            localStorage.setItem("compatabilityScores", JSON.stringify(responseJson));
+
+            reset();
+            onClose(responseJson);
+
         } catch (error) {
-            console.error("Upload error:", error);
+            console.error(error);
             alert("Error uploading CV");
         }
     };
