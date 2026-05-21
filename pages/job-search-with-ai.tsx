@@ -16,16 +16,16 @@ export default function JobSearchWithAIPage() {
     const [page, setPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
 
-    useEffect(() => {
-        const fetchJobs = async () => {
-            try {
-                const response = await JobService.getAllJobs();
-                setJobs(response);
-            } catch (error) {
-                console.error("Failed to fetch jobs", error);
-            }
-        };
+    const fetchJobs = async () => {
+        try {
+            const response = await JobService.getAllJobs();
+            setJobs(response);
+        } catch (error) {
+            console.error("Failed to fetch jobs", error);
+        }
+    };
 
+    useEffect(() => {
         fetchJobs();
     }, []);
 
@@ -99,14 +99,24 @@ export default function JobSearchWithAIPage() {
 
             <CVUploadModal
                 opened={modalOpen}
-                onClose={() => {
-                    const updatedJobs = jobs.map((job) => ({
-                        ...job,
-                        compatability_score: Math.floor(Math.random() * 101),
-                    }));
-
-                    setJobs(updatedJobs);
+                onClose={(scores) => {
                     setModalOpen(false);
+
+                    if (!scores) return;
+
+                    setJobs((prevJobs) =>
+                        prevJobs.map((job) => {
+                            const scoreMatch = scores.find(
+                                (s) => s.job_id === job.id
+                            );
+
+                            return {
+                                ...job,
+                                compatability_score:
+                                    scoreMatch?.compatability_score ?? null,
+                            };
+                        })
+                    );
                 }}
             />
         </Box>

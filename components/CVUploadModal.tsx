@@ -3,7 +3,6 @@ import { ActionIcon, Box, Button, Group, Modal, Stack, Text, TextInput } from "@
 import { Dropzone } from "@mantine/dropzone";
 import JobService from "../services/JobService";
 import { getCvFormErrors, isCvFormValid } from "../utils/cvValidation";
-import { Job } from "../types";
 import { useTranslation } from "../contexts/I18nContext";
 
 const BROWN = "#774326";
@@ -12,9 +11,14 @@ type FileRejection = {
     errors: readonly { code: string }[];
 };
 
+type Score = {
+    job_id: number;
+    compatability_score: number;
+};
+
 type Props = {
     opened: boolean;
-    onClose: (updatedJobs?: Job[]) => void;
+    onClose: (scores?: Score[]) => void;
 };
 
 export default function CVUploadModal({ opened, onClose }: Props) {
@@ -103,15 +107,23 @@ export default function CVUploadModal({ opened, onClose }: Props) {
         }
 
         try {
-            const response = await JobService.uploadCv({ ...formData, cv: uploadedFile });
+            const response = await JobService.uploadCv({
+                ...formData,
+                cv: uploadedFile,
+            });
 
-            if (response.ok) {
-                alert(t("upload.success"));
-                reset();
-                onClose();
-            } else {
+            if (!response.ok) {
                 alert(t("upload.failed"));
+                return;
             }
+
+            const responseJson = await response.json();
+
+            localStorage.setItem("compatabilityScores", JSON.stringify(responseJson));
+
+            alert(t("upload.success"));
+            reset();
+            onClose(responseJson);
         } catch (error) {
             console.error("Upload error:", error);
             alert(t("upload.error"));
