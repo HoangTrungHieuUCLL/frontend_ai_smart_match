@@ -4,6 +4,7 @@ import { MantineProvider, Box } from "@mantine/core";
 import { theme } from "../theme";
 import { Header } from "../components/header";
 import { Footer } from "../components/footer";
+import { I18nProvider } from "../contexts/I18nContext";
 
 export default function App({ Component, pageProps }: any) {
   return (
@@ -19,13 +20,15 @@ export default function App({ Component, pageProps }: any) {
         <link rel="shortcut icon" href="/logo.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
       </Head>
-      <Box style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-        <Header />
-        <Box style={{ flex: 1 }}>
-          <Component {...pageProps} />
+      <I18nProvider>
+        <Box style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+          <Header />
+          <Box style={{ flex: 1 }}>
+            <Component {...pageProps} />
+          </Box>
+          <Footer />
         </Box>
-        <Footer />
-      </Box>
+      </I18nProvider>
     </MantineProvider>
   );
 }

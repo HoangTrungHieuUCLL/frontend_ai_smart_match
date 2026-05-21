@@ -10,17 +10,13 @@ import {
     Paper,
     Stack,
     Text,
-    Title,
-    Modal,
-    TextInput,
     RingProgress
 } from "@mantine/core";
-import { Dropzone } from "@mantine/dropzone";
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
 import CVUploadButton from "../../components/CVUploadButton";
-import { getCvFormErrors, isCvFormValid } from "../../utils/cvValidation";
 import CVUploadModal from "../../components/CVUploadModal";
+import { useTranslation } from "../../contexts/I18nContext";
 
 const BROWN = "#774326";
 
@@ -28,6 +24,7 @@ const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.tr
 
 export default function JobInfoDetailPage() {
     const router = useRouter();
+    const { t } = useTranslation();
     const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
     const [job, setJob] = useState<Job | null>(null);
     const [loading, setLoading] = useState(true);
@@ -55,7 +52,7 @@ export default function JobInfoDetailPage() {
     if (loading) {
         return (
             <Container size="800px" style={{ padding: "48px 0" }}>
-                <Text>Loading job details...</Text>
+                <Text>{t("jobInfo.loading")}</Text>
             </Container>
         );
     }
@@ -63,7 +60,7 @@ export default function JobInfoDetailPage() {
     if (!job) {
         return (
             <Container size="800px" style={{ padding: "48px 0" }}>
-                <Text>Job not found.</Text>
+                <Text>{t("jobInfo.notFound")}</Text>
             </Container>
         );
     }
@@ -82,21 +79,21 @@ export default function JobInfoDetailPage() {
               {[
                 {
                   number: "1",
-                  title: "Job description",
+                  title: t("jobInfo.cardJobDescription"),
                   description: job.overview,
-                  button: "How much does this job suit me?",
+                  button: t("jobInfo.suitMe"),
                 },
                 {
                   number: "2",
-                  title: "Your CV uploaded.",
-                  description: "The system has your profile and can compare it with job requirements automatically.",
-                  button: "Let's ask AI",
+                  title: t("jobInfo.cardCvUploaded"),
+                  description: t("jobInfo.cardCvDescription"),
+                  button: t("jobInfo.askAi"),
                 },
                 {
                   number: "3",
-                  title: "Match score",
-                  description: "This job is highly compatible with your profile based on skills and experience.",
-                  button: "How compatible am I to this job?",
+                  title: t("jobInfo.cardMatchScore"),
+                  description: t("jobInfo.cardMatchDescription"),
+                  button: t("jobInfo.compatible"),
                 },
               ].map((card) => (
                 <Paper
@@ -206,7 +203,7 @@ export default function JobInfoDetailPage() {
                                                         style={{ pointerEvents: 'none' }}
                                                         fw={700}
                                                     >
-                                                        {compatabilityScore}% <Text size="xs">match</Text>
+                                                        {compatabilityScore}% <Text size="xs">{t("jobInfo.match")}</Text>
                                                     </Text>
                                                 }
                                                 sections={[
@@ -226,14 +223,14 @@ export default function JobInfoDetailPage() {
                                                     size="sm"
                                                     color={BROWN}
                                                 >
-                                                    Save
+                                                    {t("jobInfo.save")}
                                                 </Button>
                                                 <Button
                                                     variant="light"
                                                     size="sm"
                                                     color={BROWN}
                                                 >
-                                                    Share
+                                                    {t("jobInfo.share")}
                                                 </Button>
                                             </Group>
                                         </Stack>
