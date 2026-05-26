@@ -11,24 +11,13 @@ import {
     Text,
     RingProgress
 } from "@mantine/core";
+import { useTranslation } from "../contexts/I18nContext";
 
 interface Props {
     job: Job;
 }
 
 const BROWN = "#774326";
-
-const handleSave = (title: string) => {
-    if (typeof window !== "undefined") {
-        window.alert(`Saved ${title}`);
-    }
-};
-
-const handleShare = (title: string) => {
-    if (typeof window !== "undefined") {
-        window.alert(`Share ${title}`);
-    }
-};
 
 const getInitials = (name: string) =>
     name
@@ -41,6 +30,7 @@ const getInitials = (name: string) =>
 
 const JobListing: React.FC<Props> = ({ job }) => {
     const router = useRouter();
+    const { t } = useTranslation();
 
     const handleLearnMore = (jobId: number) => {
         router.push(`/job-info/${jobId}`);
@@ -147,7 +137,7 @@ const JobListing: React.FC<Props> = ({ job }) => {
                             style={{ backgroundColor: BROWN }}
                             onClick={() => handleLearnMore(job.id)}
                         >
-                            Learn more
+                            {t("jobListing.learnMore")}
                         </Button>
 
                         <Button
@@ -155,9 +145,9 @@ const JobListing: React.FC<Props> = ({ job }) => {
                             size="xs"
                             variant="light"
                             color="gray"
-                            onClick={() => handleSave(job.position)}
+                            onClick={() => window.alert(t("jobListing.savedAlert", { title: job.position }))}
                         >
-                            Save
+                            {t("jobListing.save")}
                         </Button>
                     </Group>
 
@@ -166,9 +156,9 @@ const JobListing: React.FC<Props> = ({ job }) => {
                         size="xs"
                         variant="subtle"
                         color="gray"
-                        onClick={() => handleShare(job.position)}
+                        onClick={() => window.alert(t("jobListing.shareAlert", { title: job.position }))}
                     >
-                        Share
+                        {t("jobListing.share")}
                     </Button>
                 </Group>
 

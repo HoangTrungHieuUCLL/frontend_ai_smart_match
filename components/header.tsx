@@ -1,17 +1,17 @@
 import {Button, Group, Image, Text, Select, Avatar} from "@mantine/core";
-import { useState } from "react";
 import { useRouter } from "next/router";
+import { Language, useTranslation } from "../contexts/I18nContext";
 
 export const Header = () => {
     const router = useRouter();
-    const [language, setLanguage] = useState<string | null>("EN");
+    const { language, setLanguage, t } = useTranslation();
 
     const navItems = [
-        { label: "Homepage", href: "/" },
-        { label: "Our services", href: "#" },
-        { label: "Our team", href: "#" },
-        { label: "Our clients", href: "#" },
-        { label: "Consultation", href: "#" }
+        { label: t("nav.homepage"), href: "/" },
+        { label: t("nav.services"), href: "#" },
+        { label: t("nav.team"), href: "#" },
+        { label: t("nav.clients"), href: "#" },
+        { label: t("nav.consultation"), href: "#" }
     ];
 
     const handleNavClick = (href: string) => {
@@ -76,7 +76,7 @@ export const Header = () => {
                     }}
                     onClick={handleJobSearchClick}
                 >
-                    Job search with AI
+                    {t("nav.jobSearch")}
                 </Button>
 
                 {/* User Avatar */}
@@ -91,7 +91,11 @@ export const Header = () => {
                 {/* Language Selector */}
                 <Select
                     value={language}
-                    onChange={setLanguage}
+                    onChange={(value) => {
+                        if (value === "EN" || value === "VN") {
+                            setLanguage(value as Language);
+                        }
+                    }}
                     data={[
                         { value: "EN", label: "EN" },
                         { value: "VN", label: "VN" }

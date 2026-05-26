@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, CSSProperties } from "react";
 import { Box, Button, Group, Image, Text } from "@mantine/core";
+import { useTranslation } from "../contexts/I18nContext";
 
 const BROWN = "#774326";
 
@@ -8,7 +9,9 @@ type CVUploadButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "style"
   style?: CSSProperties;
 };
 
-export default function CVUploadButton({ label = "Upload your CV", style, ...props }: CVUploadButtonProps) {
+export default function CVUploadButton({ label, style, ...props }: CVUploadButtonProps) {
+  const { t } = useTranslation();
+
   return (
     <Button
       radius="xl"
@@ -44,7 +47,7 @@ export default function CVUploadButton({ label = "Upload your CV", style, ...pro
         </Box>
 
         <Text component="span" size="sm" fw={700} style={{ flex: 1, textAlign: "left", color: "#ffffff" }}>
-          {label}
+          {label ?? t("upload.cvButton")}
         </Text>
 
         <Box

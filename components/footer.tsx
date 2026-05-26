@@ -1,6 +1,8 @@
 import { Box, Container, Group, Stack, Text, ActionIcon } from "@mantine/core";
+import { useTranslation } from "../contexts/I18nContext";
 
 export const Footer = () => {
+  const { t } = useTranslation();
   const socialLinks = [
     { 
       label: "Instagram", 
@@ -47,7 +49,7 @@ export const Footer = () => {
           {/* Contact */}
           <Stack gap="xs">
             <Text fw={600} c="white" size="sm">
-              Contact
+              {t("footer.contact")}
             </Text>
             <Text c="white" size="sm">
               (+84) 79-728-1685
@@ -60,7 +62,7 @@ export const Footer = () => {
           {/* Director */}
           <Stack gap="xs">
             <Text fw={600} c="white" size="sm">
-              Director
+              {t("footer.director")}
             </Text>
             <Text c="white" size="sm">
               Pham Cong Phong
@@ -70,7 +72,7 @@ export const Footer = () => {
           {/* Address */}
           <Stack gap="xs">
             <Text fw={600} c="white" size="sm">
-              Address
+              {t("footer.address")}
             </Text>
             <Text c="white" size="sm">
               3F, Vietduc Complex Building
@@ -83,7 +85,7 @@ export const Footer = () => {
           {/* Social Media */}
           <Stack gap="xs" align="flex-start">
             <Text fw={600} c="white" size="sm">
-              Follow HRNEXT.vn on
+              {t("footer.follow")}
             </Text>
             <Group gap="sm">
               {socialLinks.map((social) => (
@@ -107,7 +109,7 @@ export const Footer = () => {
         {/* Copyright */}
         <Box style={{ borderTop: "1px solid rgba(255, 255, 255, 0.2)", paddingTop: "lg" }}>
           <Text c="white" size="sm" ta="center">
-            © 2025. All copyrights belong to HR Next.vn
+            {t("footer.copyright")}
           </Text>
         </Box>
       </Container>

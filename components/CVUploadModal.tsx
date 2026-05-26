@@ -1,13 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActionIcon, Box, Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import JobService from "../services/JobService";
 import { getCvFormErrors, isCvFormValid } from "../utils/cvValidation";
-import { Job } from "../types";
+import { useTranslation } from "../contexts/I18nContext";
 
 const BROWN = "#774326";
-const SINGLE_PDF_MESSAGE = "Please upload only one PDF file.";
-const REPLACE_PDF_MESSAGE = "Remove the selected PDF before choosing another one.";
 
 type FileRejection = {
     errors: readonly { code: string }[];
@@ -24,6 +22,7 @@ type Props = {
 };
 
 export default function CVUploadModal({ opened, onClose }: Props) {
+    const { t } = useTranslation();
     const [step, setStep] = useState<"form" | "upload">("form");
     const [formData, setFormData] = useState({
         familyName: "",
@@ -34,8 +33,20 @@ export default function CVUploadModal({ opened, onClose }: Props) {
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [fileError, setFileError] = useState("");
 
-    const formErrors = getCvFormErrors(formData);
-    const canContinue = isCvFormValid(formData);
+    const validationMessages = useMemo(
+        () => ({
+            familyNameLabel: t("upload.familyName"),
+            givenNameLabel: t("upload.givenName"),
+            middleNameLabel: t("upload.middleName"),
+            required: (label: string) => t("validation.required", { label }),
+            nameLetters: (label: string) => t("validation.nameLetters", { label }),
+            emailRequired: t("validation.emailRequired"),
+            emailInvalid: t("validation.emailInvalid"),
+        }),
+        [t]
+    );
+    const formErrors = getCvFormErrors(formData, validationMessages);
+    const canContinue = isCvFormValid(formData, validationMessages);
 
     const reset = () => {
         setStep("form");
@@ -55,12 +66,12 @@ export default function CVUploadModal({ opened, onClose }: Props) {
 
     const handleFileDrop = (files: File[]) => {
         if (files.length > 1) {
-            setFileError(SINGLE_PDF_MESSAGE);
+            setFileError(t("upload.singlePdf"));
             return;
         }
 
         if (uploadedFile) {
-            setFileError(REPLACE_PDF_MESSAGE);
+            setFileError(t("upload.replacePdf"));
             return;
         }
 
@@ -75,38 +86,47 @@ export default function CVUploadModal({ opened, onClose }: Props) {
             fileRejections.length > 1 ||
             fileRejections.some((r) => r.errors.some((e) => e.code === "too-many-files"))
         ) {
-            setFileError(SINGLE_PDF_MESSAGE);
+            setFileError(t("upload.singlePdf"));
             return;
         }
 
         const firstErrorCode = fileRejections[0]?.errors[0]?.code;
 
         if (firstErrorCode === "file-too-large") {
-            setFileError("File size must not exceed 5MB");
+            setFileError(t("upload.maxSize"));
             return;
         }
 
-        setFileError("Only PDF files are allowed");
+        setFileError(t("upload.onlyPdf"));
     };
 
     const handleUploadSubmit = async () => {
-        if (!uploadedFile) return;
+        if (!uploadedFile) {
+            setFileError(t("upload.selectFile"));
+            return;
+        }
 
         try {
             const response = await JobService.uploadCv({
                 ...formData,
                 cv: uploadedFile,
             });
+
+            if (!response.ok) {
+                alert(t("upload.failed"));
+                return;
+            }
+
             const responseJson = await response.json();
 
             localStorage.setItem("compatabilityScores", JSON.stringify(responseJson));
 
+            alert(t("upload.success"));
             reset();
             onClose(responseJson);
-
         } catch (error) {
-            console.error(error);
-            alert("Error uploading CV");
+            console.error("Upload error:", error);
+            alert(t("upload.error"));
         }
     };
 
@@ -118,7 +138,7 @@ export default function CVUploadModal({ opened, onClose }: Props) {
             size="md"
             title={
                 <Text size="xl" fw={800}>
-                    {step === "form" ? "Upload your CV" : "Upload your PDF"}
+                    {step === "form" ? t("upload.modalCvTitle") : t("upload.modalPdfTitle")}
                 </Text>
             }
             closeButtonProps={{
@@ -130,25 +150,29 @@ export default function CVUploadModal({ opened, onClose }: Props) {
             {step === "form" ? (
                 <Stack gap="md">
                     <TextInput
-                        label="Family name"
+                        label={t("upload.familyName")}
+                        placeholder={t("upload.familyNamePlaceholder")}
                         value={formData.familyName}
                         error={formErrors.familyName}
                         onChange={(e) => setFormData({ ...formData, familyName: e.currentTarget.value })}
                     />
                     <TextInput
-                        label="Middle name"
+                        label={t("upload.middleName")}
+                        placeholder={t("upload.middleNamePlaceholder")}
                         value={formData.middleName}
                         error={formErrors.middleName}
                         onChange={(e) => setFormData({ ...formData, middleName: e.currentTarget.value })}
                     />
                     <TextInput
-                        label="Given name"
+                        label={t("upload.givenName")}
+                        placeholder={t("upload.givenNamePlaceholder")}
                         value={formData.givenName}
                         error={formErrors.givenName}
                         onChange={(e) => setFormData({ ...formData, givenName: e.currentTarget.value })}
                     />
                     <TextInput
-                        label="Email address"
+                        label={t("upload.email")}
+                        placeholder={t("upload.emailPlaceholder")}
                         type="email"
                         value={formData.email}
                         error={formErrors.email}
@@ -161,7 +185,7 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                         style={{ backgroundColor: BROWN }}
                         onClick={handleFormSubmit}
                     >
-                        Continue
+                        {t("upload.continue")}
                     </Button>
                 </Stack>
             ) : (
@@ -175,8 +199,8 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                     >
                         <Group justify="center" style={{ minHeight: 220 }}>
                             <Stack align="center">
-                                <Text size="md">Drop PDF or click to browse</Text>
-                                <Text size="xs" c="dimmed">Max 5MB</Text>
+                                <Text size="md">{t("upload.dropPdf")}</Text>
+                                <Text size="xs" c="dimmed">{t("upload.browsePdf")}</Text>
                             </Stack>
                         </Group>
                     </Dropzone>
@@ -225,13 +249,13 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                             }}
                         >
                             <Text size="sm" c="green" lineClamp={1}>
-                                File selected: {uploadedFile.name}
+                                {t("upload.fileSelected", { fileName: uploadedFile.name })}
                             </Text>
                             <ActionIcon
                                 variant="subtle"
                                 radius="xl"
                                 color="brown"
-                                aria-label="Remove selected PDF"
+                                aria-label={t("upload.removeSelectedPdf")}
                                 onClick={() => {
                                     setUploadedFile(null);
                                     setFileError("");
@@ -249,7 +273,7 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                         onClick={handleUploadSubmit}
                         style={{ backgroundColor: BROWN }}
                     >
-                        Upload
+                        {t("upload.submit")}
                     </Button>
                 </Stack>
             )}

@@ -5,11 +5,13 @@ import { Job } from "../types";
 import JobService from "../services/JobService";
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
+import { useTranslation } from "../contexts/I18nContext";
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
 
 export default function JobSearchWithAIPage() {
+    const { t } = useTranslation();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [page, setPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
@@ -55,10 +57,10 @@ export default function JobSearchWithAIPage() {
                 <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
                     <Stack gap={4}>
                         <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
-                            Job Search with AI
+                            {t("jobSearch.title")}
                         </Title>
                         <Text size="sm" c="dimmed">
-                            Browse job listings, save the ones you like, and open the details page for each role.
+                            {t("jobSearch.subtitle")}
                         </Text>
                     </Stack>
 
@@ -91,7 +93,7 @@ export default function JobSearchWithAIPage() {
                 </Group>
 
                 <Text size="xs" c="dimmed" mt={12}>
-                    Page {page} of {pageCount}. Showing up to {JOBS_PER_PAGE} jobs per page.
+                    {t("jobSearch.pageStatus", { page, pageCount, jobsPerPage: JOBS_PER_PAGE })}
                 </Text>
             </Container>
 
