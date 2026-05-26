@@ -6,9 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="f819cda6-f115-4246-b863-2bfa440ff185" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/CVUploadModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/CVUploadModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/job-info/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/pages/job-info/[id].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/job-search-with-ai.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/pages/job-search-with-ai.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/JobService.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/services/JobService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,12 +38,12 @@
     &quot;assignee&quot;: &quot;ErenDerinbayUCLL&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "git@github.com:HoangTrungHieuUCLL/frontend_ai_smart_match_team19.git",
-    "accountId": "cd589c63-9d26-488b-b75c-3ec7fc38cc26"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:HoangTrungHieuUCLL/frontend_ai_smart_match_team19.git&quot;,
+    &quot;accountId&quot;: &quot;cd589c63-9d26-488b-b75c-3ec7fc38cc26&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 8
@@ -62,7 +63,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "36-cs-placeholder",
+    "git-widget-placeholder": "dev",
     "ignore.virus.scanning.warn.message": "true",
     "javascript.preferred.runtime.type.id": "node",
     "js.debugger.nextJs.config.created.client": "true",
@@ -85,6 +86,11 @@
         <entry key="com.intellij.reactbuddy.storybook" value="false" />
       </map>
     </option>
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
   </component>
   <component name="RunManager" selected="npm.Next.js: server-side">
     <configuration name="Next.js: debug client-side" type="JavascriptDebugType" uri="http://localhost:3000/">
@@ -113,6 +119,7 @@
       <workItem from="1779183673433" duration="129000" />
       <workItem from="1779268721632" duration="5331000" />
       <workItem from="1779283107606" duration="1837000" />
+      <workItem from="1779789310748" duration="5226000" />
     </task>
     <servers />
   </component>
