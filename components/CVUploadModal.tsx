@@ -1,9 +1,12 @@
-import { useMemo, useState } from "react";
-import { ActionIcon, Box, Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
-import { Dropzone } from "@mantine/dropzone";
+import {useMemo, useState} from "react";
+import {ActionIcon, Box, Button, Group, Modal, Stack, Text, TextInput, Title} from "@mantine/core";
+import {Dropzone} from "@mantine/dropzone";
 import JobService from "../services/JobService";
-import { getCvFormErrors, isCvFormValid } from "../utils/cvValidation";
-import { useTranslation } from "../contexts/I18nContext";
+import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
+import {useTranslation} from "../contexts/I18nContext";
+import CvService from "../services/CvService";
+import {CV} from "../types";
+import CVUploadConfirmation from "./CVUploadConfirmation";
 
 const BROWN = "#774326";
 
@@ -17,12 +20,12 @@ type Score = {
 };
 
 type Props = {
-    opened: boolean;
-    onClose: (scores?: Score[]) => void;
+    opened: boolean,
+    onClose: (scores: Score[]) => void
 };
 
-export default function CVUploadModal({ opened, onClose }: Props) {
-    const { t } = useTranslation();
+export default function CVUploadModal({opened, onClose}: Props) {
+    const {t} = useTranslation();
     const [step, setStep] = useState<"form" | "upload">("form");
     const [formData, setFormData] = useState({
         familyName: "",
@@ -32,14 +35,15 @@ export default function CVUploadModal({ opened, onClose }: Props) {
     });
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [fileError, setFileError] = useState("");
+    const [cv, setCv] = useState<CV | null>(null);
 
     const validationMessages = useMemo(
         () => ({
             familyNameLabel: t("upload.familyName"),
             givenNameLabel: t("upload.givenName"),
             middleNameLabel: t("upload.middleName"),
-            required: (label: string) => t("validation.required", { label }),
-            nameLetters: (label: string) => t("validation.nameLetters", { label }),
+            required: (label: string) => t("validation.required", {label}),
+            nameLetters: (label: string) => t("validation.nameLetters", {label}),
             emailRequired: t("validation.emailRequired"),
             emailInvalid: t("validation.emailInvalid"),
         }),
@@ -50,14 +54,9 @@ export default function CVUploadModal({ opened, onClose }: Props) {
 
     const reset = () => {
         setStep("form");
-        setFormData({ familyName: "", middleName: "", givenName: "", email: "" });
+        setFormData({familyName: "", middleName: "", givenName: "", email: ""});
         setUploadedFile(null);
         setFileError("");
-    };
-
-    const handleClose = () => {
-        reset();
-        onClose();
     };
 
     const handleFormSubmit = () => {
@@ -107,23 +106,10 @@ export default function CVUploadModal({ opened, onClose }: Props) {
         }
 
         try {
-            const response = await JobService.uploadCv({
-                ...formData,
-                cv: uploadedFile,
-            });
+            const response = await CvService.getTestCv();
+            setCv(response);
 
-            if (!response.ok) {
-                alert(t("upload.failed"));
-                return;
-            }
-
-            const responseJson = await response.json();
-
-            localStorage.setItem("compatabilityScores", JSON.stringify(responseJson));
-
-            alert(t("upload.success"));
             reset();
-            onClose(responseJson);
         } catch (error) {
             console.error("Upload error:", error);
             alert(t("upload.error"));
@@ -133,7 +119,7 @@ export default function CVUploadModal({ opened, onClose }: Props) {
     return (
         <Modal
             opened={opened}
-            onClose={handleClose}
+            onClose={() => onClose([])}
             centered
             size="md"
             title={
@@ -144,7 +130,7 @@ export default function CVUploadModal({ opened, onClose }: Props) {
             closeButtonProps={{
                 size: 40,
                 radius: "xl",
-                style: { backgroundColor: BROWN, color: "#fff", border: "none" },
+                style: {backgroundColor: BROWN, color: "#fff", border: "none"},
             }}
         >
             {step === "form" ? (
@@ -154,21 +140,21 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                         placeholder={t("upload.familyNamePlaceholder")}
                         value={formData.familyName}
                         error={formErrors.familyName}
-                        onChange={(e) => setFormData({ ...formData, familyName: e.currentTarget.value })}
+                        onChange={(e) => setFormData({...formData, familyName: e.currentTarget.value})}
                     />
                     <TextInput
                         label={t("upload.middleName")}
                         placeholder={t("upload.middleNamePlaceholder")}
                         value={formData.middleName}
                         error={formErrors.middleName}
-                        onChange={(e) => setFormData({ ...formData, middleName: e.currentTarget.value })}
+                        onChange={(e) => setFormData({...formData, middleName: e.currentTarget.value})}
                     />
                     <TextInput
                         label={t("upload.givenName")}
                         placeholder={t("upload.givenNamePlaceholder")}
                         value={formData.givenName}
                         error={formErrors.givenName}
-                        onChange={(e) => setFormData({ ...formData, givenName: e.currentTarget.value })}
+                        onChange={(e) => setFormData({...formData, givenName: e.currentTarget.value})}
                     />
                     <TextInput
                         label={t("upload.email")}
@@ -176,13 +162,13 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                         type="email"
                         value={formData.email}
                         error={formErrors.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
+                        onChange={(e) => setFormData({...formData, email: e.currentTarget.value})}
                     />
                     <Button
                         fullWidth
                         radius="md"
                         disabled={!canContinue}
-                        style={{ backgroundColor: BROWN }}
+                        style={{backgroundColor: BROWN}}
                         onClick={handleFormSubmit}
                     >
                         {t("upload.continue")}
@@ -197,7 +183,7 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                         maxSize={5 * 1024 * 1024}
                         multiple
                     >
-                        <Group justify="center" style={{ minHeight: 220 }}>
+                        <Group justify="center" style={{minHeight: 220}}>
                             <Stack align="center">
                                 <Text size="md">{t("upload.dropPdf")}</Text>
                                 <Text size="xs" c="dimmed">{t("upload.browsePdf")}</Text>
@@ -249,7 +235,7 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                             }}
                         >
                             <Text size="sm" c="green" lineClamp={1}>
-                                {t("upload.fileSelected", { fileName: uploadedFile.name })}
+                                {t("upload.fileSelected", {fileName: uploadedFile.name})}
                             </Text>
                             <ActionIcon
                                 variant="subtle"
@@ -271,12 +257,25 @@ export default function CVUploadModal({ opened, onClose }: Props) {
                         radius="md"
                         disabled={!uploadedFile}
                         onClick={handleUploadSubmit}
-                        style={{ backgroundColor: BROWN }}
+                        style={{backgroundColor: BROWN}}
                     >
                         {t("upload.submit")}
                     </Button>
                 </Stack>
             )}
+
+            <Modal opened={cv != null}
+                   onClose={() => setCv(null)}
+                   title={<Text fw={700} size="lg">CV Summary</Text>}
+                   size="xl"
+            >
+                <CVUploadConfirmation cv={cv!}
+                                      onClose={(scores) => {
+                                          setCv(null);
+                                          onClose(scores);
+                                      }}
+                />
+            </Modal>
         </Modal>
     );
 }
