@@ -5,11 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f819cda6-f115-4246-b863-2bfa440ff185" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/CVUploadConfirmation.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/CVUploadConfirmation.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/CVUploadModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/CVUploadModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/CvService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/CvService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/JobService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/JobService.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

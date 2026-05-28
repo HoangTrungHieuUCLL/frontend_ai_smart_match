@@ -36,6 +36,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [fileError, setFileError] = useState("");
     const [cv, setCv] = useState<CV | null>(null);
+    const [profileId, setProfileId] = useState<number | null>(null);
 
     const validationMessages = useMemo(
         () => ({
@@ -114,7 +115,8 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 email: formData.email,
                 cv: uploadedFile
             });
-            setCv(response);
+            setCv(response.ai_result);
+            setProfileId(response.profile_id);
             console.log(response);
 
             reset();
@@ -282,6 +284,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
                                           setCv(null);
                                           onClose(scores);
                                       }}
+                                      profileId={profileId}
                 />
             </Modal>
         </Modal>

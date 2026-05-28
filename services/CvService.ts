@@ -10,6 +10,11 @@ export type CvUploadData = {
     cv: File;
 };
 
+export type CvConfirmData = {
+    profileId: number;
+    cv: CV;
+}
+
 const uploadCv = async (data: CvUploadData): Promise<CV> => {
     const formData = new FormData();
     formData.append("familyName", data.familyName);
@@ -26,12 +31,10 @@ const uploadCv = async (data: CvUploadData): Promise<CV> => {
     return await response.json();
 };
 
-const getTestCv = async (): Promise<CV> => {
-    const response = await fetch(`${API_URL}/cv/test`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
+const confirmCv = async (data: CvConfirmData): Promise<CV> => {
+    const response = await fetch(`${API_URL}/profiles/`, {
+        method: "POST",
+        body: JSON.stringify(data),
     });
 
     return await response.json();
@@ -39,7 +42,7 @@ const getTestCv = async (): Promise<CV> => {
 
 const CvService = {
     uploadCv,
-    getTestCv,
+    confirmCv,
 };
 
 export default CvService;
