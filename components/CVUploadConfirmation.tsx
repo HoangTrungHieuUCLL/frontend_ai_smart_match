@@ -13,15 +13,15 @@ import CvService from "../services/CvService";
 
 const BROWN = "#774326";
 
-type Score = {
+export type Score = {
     job_id: number;
     compatibility_score: number;
 };
 
 interface Props {
-    cv: CV,
-    onClose: (scores) => void,
-    profileId: number | null,
+    cv: CV;
+    onClose: (scores: Score[]) => void;
+    profileId: number | null;
 }
 
 export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
@@ -43,8 +43,14 @@ export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
         });
         console.log(response);
 
-        onClose(response.compatibility_scores);
-    }
+        const scores: Score[] =
+            response?.jobs?.map((s: any) => ({
+                job_id: s.job_id,
+                compatibility_score: s.compatibility_score,
+            })) ?? [];
+
+        onClose(scores);
+    };
 
     return (
         <Stack gap="lg">
