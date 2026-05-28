@@ -1,3 +1,4 @@
+import { GetServerSideProps } from "next";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import {
@@ -22,12 +23,16 @@ const BROWN = "#774326";
 
 const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) ?? [];
 
-export default function JobInfoDetailPage() {
+type Props = {
+    initialJob: Job | null;
+};
+
+export default function JobInfoDetailPage({ initialJob }: Props) {
     const router = useRouter();
     const { t } = useTranslation();
     const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
-    const [job, setJob] = useState<Job | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [job, setJob] = useState<Job | null>(initialJob);
+    const [loading, setLoading] = useState(!initialJob);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [compatabilityScore, setCompatabilityScore] = useState<number | null>(null);
 
@@ -45,8 +50,14 @@ export default function JobInfoDetailPage() {
 
     useEffect(() => {
         if (!id) return;
+
+        if (initialJob && initialJob.id === Number(id)) {
+            setLoading(false);
+            return;
+        }
+
         fetchJob();
-    }, [id]);
+    }, [id, initialJob]);
 
     if (loading) {
         return (
@@ -313,3 +324,36 @@ export default function JobInfoDetailPage() {
         </Box>
     );
 }
+
+export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
+    const jobId = context.params?.id;
+    const numericJobId = Number(Array.isArray(jobId) ? jobId[0] : jobId);
+
+    if (!Number.isFinite(numericJobId)) {
+        return { props: { initialJob: null } };
+    }
+
+    const apiBaseUrl = process.env.INTERNAL_API_URL || "http://localhost:8000";
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/jobs/${numericJobId}`);
+
+        if (!response.ok) {
+            return { props: { initialJob: null } };
+        }
+
+        const initialJob = (await response.json()) as Job;
+
+        return {
+            props: {
+                initialJob,
+            },
+        };
+    } catch {
+        return {
+            props: {
+                initialJob: null,
+            },
+        };
+    }
+};
