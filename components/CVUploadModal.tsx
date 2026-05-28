@@ -1,11 +1,10 @@
 import {useMemo, useState} from "react";
-import {ActionIcon, Box, Button, Group, Modal, Stack, Text, TextInput, Title} from "@mantine/core";
+import {ActionIcon, Box, Button, Group, Modal, Stack, Text, TextInput} from "@mantine/core";
 import {Dropzone} from "@mantine/dropzone";
-import JobService from "../services/JobService";
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import {useTranslation} from "../contexts/I18nContext";
-import CvService from "../services/CvService";
-import {CV} from "../types";
+import CvService, {ParsedCvResponse} from "../services/CvService";
+import {CV, Certification, Education, Experience, Language, Project} from "../types";
 import CVUploadConfirmation from "./CVUploadConfirmation";
 
 const BROWN = "#774326";
@@ -17,6 +16,13 @@ type FileRejection = {
 type Score = {
     job_id: number;
     compatability_score: number;
+};
+
+type CvFormData = {
+    familyName: string;
+    middleName: string;
+    givenName: string;
+    email: string;
 };
 
 type Props = {
@@ -106,13 +112,13 @@ export default function CVUploadModal({opened, onClose}: Props) {
         }
 
         try {
-            const response = await CvService.getTestCv();
-            setCv(response);
+            const response = await CvService.parseCv(uploadedFile);
+            setCv(toConfirmationCv(response, uploadedFile.name, formData));
 
             reset();
         } catch (error) {
             console.error("Upload error:", error);
-            alert(t("upload.error"));
+            alert(error instanceof Error ? error.message : t("upload.error"));
         }
     };
 
@@ -278,4 +284,116 @@ export default function CVUploadModal({opened, onClose}: Props) {
             </Modal>
         </Modal>
     );
+}
+
+function toConfirmationCv(
+    response: ParsedCvResponse,
+    filename: string,
+    formData: CvFormData,
+): CV {
+    const aiResult = response.ai_result ?? {};
+    const candidateProfile = aiResult.candidate_profile ?? {};
+    const profileId = response.profile_id;
+
+    return {
+        id: response.cv_id,
+        filename,
+        uploaded_at: new Date().toISOString(),
+        candidate_profile: {
+            id: profileId,
+            cv_id: response.cv_id,
+            given_name: formData.givenName,
+            middle_name: formData.middleName || null,
+            family_name: formData.familyName,
+            current_title: candidateProfile.current_title ?? null,
+            skills: skillsToString(candidateProfile.skills),
+            phone: candidateProfile.phone ?? null,
+            location: candidateProfile.location ?? null,
+            email: formData.email,
+            bio: candidateProfile.bio ?? null,
+            work_experiences: mapCollection<Experience>(
+                aiResult.work_experience,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    job_title: getString(item, "job_title"),
+                    company_name: getString(item, "company_name"),
+                    start_date: getString(item, "start_date"),
+                    end_date: getString(item, "end_date"),
+                }),
+            ),
+            educations: mapCollection<Education>(
+                aiResult.education,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    institution: getString(item, "institution"),
+                    degree: getString(item, "degree"),
+                    field_of_study: getString(item, "field_of_study"),
+                    start_date: getString(item, "start_date"),
+                    end_date: getString(item, "end_date"),
+                }),
+            ),
+            projects: mapCollection<Project>(
+                aiResult.projects,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    project_name: getString(item, "project_name"),
+                    description: getString(item, "description"),
+                }),
+            ),
+            languages: mapCollection<Language>(
+                aiResult.languages,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    language_name: getString(item, "language_name"),
+                    proficiency_level: getString(item, "proficiency_level"),
+                }),
+            ),
+            certifications: mapCollection<Certification>(
+                aiResult.certifications,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    certification_name: getString(item, "certification_name"),
+                    issue_date: getString(item, "issue_date"),
+                }),
+            ),
+            compatibility_scores: [],
+        },
+        compatibility_scores: [],
+    };
+}
+
+function mapCollection<T>(
+    value: unknown,
+    profileId: number,
+    mapper: (item: Record<string, unknown>, id: number) => T,
+): T[] {
+    if (!Array.isArray(value)) return [];
+
+    return value
+        .filter((item): item is Record<string, unknown> => item !== null && typeof item === "object")
+        .map((item, index) => mapper(item, profileId * 1000 + index + 1));
+}
+
+function getString(item: Record<string, unknown>, key: string): string | null {
+    const value = item[key];
+
+    return typeof value === "string" && value.trim() ? value : null;
+}
+
+function skillsToString(value: string[] | string | null | undefined): string | null {
+    if (Array.isArray(value)) {
+        return value.filter(Boolean).join(", ") || null;
+    }
+
+    return value || null;
 }
