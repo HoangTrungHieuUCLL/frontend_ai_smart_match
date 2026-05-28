@@ -15,6 +15,17 @@ export type CvConfirmData = {
     cv: CV;
 }
 
+export interface CvConfirmReturn {
+    job_id: number;
+    company_name: string;
+    position: string;
+    location: string;
+    type: string;
+    requirements: string;
+    requirements_simplified: string;
+    compatibility_score: number;
+}
+
 const uploadCv = async (data: CvUploadData): Promise<CV> => {
     const formData = new FormData();
     formData.append("familyName", data.familyName);
@@ -31,10 +42,9 @@ const uploadCv = async (data: CvUploadData): Promise<CV> => {
     return await response.json();
 };
 
-const confirmCv = async (data: CvConfirmData): Promise<CV> => {
-    const response = await fetch(`${API_URL}/profiles/`, {
-        method: "POST",
-        body: JSON.stringify(data),
+const confirmCv = async (data: CvConfirmData): Promise<CvConfirmReturn> => {
+    const response = await fetch(`${API_URL}/profiles/${data.profileId}/all`, {
+        method: "GET",
     });
 
     return await response.json();

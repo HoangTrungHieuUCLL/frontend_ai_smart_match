@@ -4,7 +4,7 @@ import {Dropzone} from "@mantine/dropzone";
 import JobService from "../services/JobService";
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import {useTranslation} from "../contexts/I18nContext";
-import CvService from "../services/CvService";
+import CvService, {CvConfirmReturn} from "../services/CvService";
 import {CV} from "../types";
 import CVUploadConfirmation from "./CVUploadConfirmation";
 
@@ -16,12 +16,12 @@ type FileRejection = {
 
 type Score = {
     job_id: number;
-    compatability_score: number;
+    compatibility_score: number;
 };
 
 type Props = {
     opened: boolean,
-    onClose: (scores: Score[]) => void
+    onClose: (results: (CvConfirmReturn[] | undefined)) => void
 };
 
 export default function CVUploadModal({opened, onClose}: Props) {

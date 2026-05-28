@@ -298,15 +298,15 @@ export default function JobInfoDetailPage() {
 
             <CVUploadModal
                 opened={modalOpen}
-                onClose={(scores) => {
+                onClose={(results: CvConfirmReturn[] | undefined) => {
                     setModalOpen(false);
 
-                    const match = scores?.find(
-                        (s) => s.job_id === job.id
+                    const match = results?.find(
+                        (r) => r.job_id === job.id
                     );
 
-                    setCompatabilityScore(
-                        match?.compatability_score ?? null
+                    setCompatibilityScore(
+                        match?.compatibility_score ?? null
                     );
                 }}
             />

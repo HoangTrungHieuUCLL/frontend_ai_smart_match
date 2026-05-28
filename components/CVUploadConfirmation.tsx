@@ -15,13 +15,13 @@ const BROWN = "#774326";
 
 type Score = {
     job_id: number;
-    compatability_score: number;
+    compatibility_score: number;
 };
 
 interface Props {
     cv: CV,
-    onClose: (scores: Score[]) => void,
-    profileId: number | null
+    onClose: (scores) => void,
+    profileId: number | null,
 }
 
 export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
@@ -41,8 +41,9 @@ export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
             profileId,
             cv
         });
+        console.log(response);
 
-        onClose(response);
+        onClose(response.compatibility_scores);
     }
 
     return (

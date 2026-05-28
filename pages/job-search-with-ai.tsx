@@ -6,6 +6,7 @@ import JobService from "../services/JobService";
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
+import {CvConfirmReturn} from "../services/CvService";
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
@@ -32,13 +33,13 @@ export default function JobSearchWithAIPage() {
     const scoredJobs = useMemo(() => {
         return jobs.map((job) => ({
             ...job,
-            compatability_score: job.compatability_score ?? null,
+            compatibility_score: job.compatibility_score ?? null,
         }));
     }, [jobs]);
 
     const sortedJobs = useMemo(() => {
         return [...scoredJobs].sort(
-            (a, b) => (b.compatability_score ?? 0) - (a.compatability_score ?? 0)
+            (a, b) => (b.compatibility_score ?? 0) - (a.compatibility_score ?? 0)
         );
     }, [scoredJobs]);
 
@@ -99,23 +100,21 @@ export default function JobSearchWithAIPage() {
 
             <CVUploadModal
                 opened={modalOpen}
-                onClose={(scores) => {
+                onClose={(results: CvConfirmReturn[] | undefined) => {
                     setModalOpen(false);
 
-                    if (!scores) return;
+                    if (!results) return;
 
-                    setJobs((prevJobs) =>
-                        prevJobs.map((job) => {
-                            const scoreMatch = scores.find(
-                                (s) => s.job_id === job.id
-                            );
+                    const scoreMap = new Map(
+                        results.map(r => [r.job_id, r.compatibility_score])
+                    );
 
-                            return {
-                                ...job,
-                                compatability_score:
-                                    scoreMatch?.compatability_score ?? null,
-                            };
-                        })
+                    setJobs(prevJobs =>
+                        prevJobs.map(job => ({
+                            ...job,
+                            compatibility_score:
+                                scoreMap.get(job.id) ?? null,
+                        }))
                     );
                 }}
             />
