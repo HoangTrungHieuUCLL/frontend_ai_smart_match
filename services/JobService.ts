@@ -1,4 +1,4 @@
-import { Job } from "../types";
+import {CV, Job} from "../types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -32,13 +32,13 @@ const getJobById = async (id: number): Promise<Job> => {
   return await response.json();
 };
 
-const uploadCv = async (data: CvUploadData): Promise<Response> => {
+const uploadCv = async (data: CV): Promise<Response> => {
   const formData = new FormData();
-  formData.append("familyName", data.familyName);
-  formData.append("middleName", data.middleName);
-  formData.append("givenName", data.givenName);
-  formData.append("email", data.email);
-  formData.append("cv", data.cv);
+  // formData.append("familyName", data.familyName);
+  // formData.append("middleName", data.middleName);
+  // formData.append("givenName", data.givenName);
+  // formData.append("email", data.email);
+  // formData.append("cv", data.cv);
 
   return await fetch(`${API_URL}/cv/upload`, {
     method: "POST",
