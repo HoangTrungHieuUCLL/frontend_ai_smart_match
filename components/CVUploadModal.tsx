@@ -106,8 +106,16 @@ export default function CVUploadModal({opened, onClose}: Props) {
         }
 
         try {
-            const response = await CvService.getTestCv();
+            console.log("yipee")
+            const response = await CvService.uploadCv({
+                familyName: formData.familyName,
+                middleName: formData.middleName,
+                givenName: formData.givenName,
+                email: formData.email,
+                cv: uploadedFile
+            });
             setCv(response);
+            console.log(response);
 
             reset();
         } catch (error) {

@@ -23,7 +23,7 @@ interface Props {
 }
 
 export default function CVUploadConfirmation({cv, onClose}: Props) {
-    const profile = cv?.candidate_profile;
+    const profile = cv?.ai_result.candidate_profile;
 
     const sectionStyle = {
         border: "1px solid rgba(119, 67, 38, 0.18)",

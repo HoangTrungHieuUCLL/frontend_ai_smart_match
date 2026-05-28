@@ -6,9 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="f819cda6-f115-4246-b863-2bfa440ff185" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/CVUploadConfirmation.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/CVUploadConfirmation.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/CVUploadModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/CVUploadModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/test.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/CvService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/CvService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/JobService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/JobService.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -44,6 +44,10 @@
     &quot;accountId&quot;: &quot;cd589c63-9d26-488b-b75c-3ec7fc38cc26&quot;
   }
 }</component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 8
@@ -63,7 +67,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "62-confirmation",
+    "git-widget-placeholder": "66-integration",
     "ignore.virus.scanning.warn.message": "true",
     "javascript.preferred.runtime.type.id": "node",
     "js.debugger.nextJs.config.created.client": "true",
@@ -74,8 +78,13 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "npm.Next.js: server-side.executor": "Run",
-    "ts.external.directory.path": "F:\\Programs\\JetBrains\\Projects\\Bachelor Project\\frontend_ai_smart_match_team19\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "/Users/yigit/School/UCLL-3/Bachelor Project/frontend_ai_smart_match_team19/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
+    ]
   }
 }]]></component>
   <component name="ReactDesignerToolWindowState">
