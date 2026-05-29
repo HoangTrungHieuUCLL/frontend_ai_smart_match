@@ -29,7 +29,7 @@ export default function JobInfoDetailPage() {
     const [job, setJob] = useState<Job | null>(null);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const [compatabilityScore, setCompatabilityScore] = useState<number | null>(null);
+    const [compatibilityScore, setCompatibilityScore] = useState<number | null>(null);
 
     const fetchJob = async () => {
         setLoading(true);
@@ -190,7 +190,7 @@ export default function JobInfoDetailPage() {
                                     </Group>
 
                                     <Group gap="md">
-                                        {compatabilityScore !== null && (
+                                        {compatibilityScore !== null && (
                                             <RingProgress
                                                 size={130}
                                                 thickness={11}
@@ -202,12 +202,12 @@ export default function JobInfoDetailPage() {
                                                         style={{ pointerEvents: 'none' }}
                                                         fw={700}
                                                     >
-                                                        {compatabilityScore}% <Text size="xs">{t("jobInfo.match")}</Text>
+                                                        {compatibilityScore}% <Text size="xs">{t("jobInfo.match")}</Text>
                                                     </Text>
                                                 }
                                                 sections={[
                                                     {
-                                                        value: compatabilityScore,
+                                                        value: compatibilityScore,
                                                         color: compatabilityScore >= 70 ? '#34C759' : '#FF383C',
                                                     },
                                                 ]}

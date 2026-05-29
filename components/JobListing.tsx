@@ -32,8 +32,14 @@ const JobListing: React.FC<Props> = ({ job }) => {
     const router = useRouter();
     const { t } = useTranslation();
 
-    const handleLearnMore = (jobId: number) => {
-        router.push(`/job-info/${jobId}`);
+    const handleLearnMore = async (jobId: number) => {
+        try {
+            await router.push({ pathname: `/job-info/[id]`, query: { id: jobId } });
+        } catch (e) {
+            console.error("Navigation failed, falling back to full redirect:", e);
+            // Fallback to full page load if client-side navigation fails
+            window.location.href = `/job-info/${jobId}`;
+        }
     };
 
     return (
