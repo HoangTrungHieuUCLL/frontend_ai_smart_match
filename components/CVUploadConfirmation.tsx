@@ -9,20 +9,22 @@ import {
 } from "@mantine/core";
 import {CV} from "../types";
 import JobService from "../services/JobService";
+import CvService from "../services/CvService";
 
 const BROWN = "#774326";
 
-type Score = {
+export type Score = {
     job_id: number;
-    compatability_score: number;
+    compatibility_score: number;
 };
 
 interface Props {
-    cv: CV,
-    onClose: (scores: Score[]) => void
+    cv: CV;
+    onClose: (scores: Score[]) => void;
+    profileId: number | null;
 }
 
-export default function CVUploadConfirmation({cv, onClose}: Props) {
+export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
     const profile = cv?.candidate_profile;
 
     const sectionStyle = {
@@ -31,13 +33,24 @@ export default function CVUploadConfirmation({cv, onClose}: Props) {
     };
 
     const onSubmit = async () => {
-        const response = await JobService.uploadCv(cv);
-        const responseJson = await response.json();
+        if (!profileId) {
+            throw new Error("Profile ID missing");
+        }
 
-        localStorage.setItem("compatabilityScores", JSON.stringify(responseJson));
+        const response = await CvService.confirmCv({
+            profileId,
+            cv
+        });
+        console.log(response);
 
-        onClose(responseJson);
-    }
+        const scores: Score[] =
+            response?.jobs?.map((s: any) => ({
+                job_id: s.job_id,
+                compatibility_score: s.compatibility_score,
+            })) ?? [];
+
+        onClose(scores);
+    };
 
     return (
         <Stack gap="lg">

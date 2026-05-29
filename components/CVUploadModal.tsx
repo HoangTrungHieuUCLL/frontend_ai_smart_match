@@ -4,7 +4,7 @@ import {Dropzone} from "@mantine/dropzone";
 import JobService from "../services/JobService";
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import {useTranslation} from "../contexts/I18nContext";
-import CvService from "../services/CvService";
+import CvService, {CvConfirmReturn} from "../services/CvService";
 import {CV} from "../types";
 import CVUploadConfirmation from "./CVUploadConfirmation";
 
@@ -16,12 +16,12 @@ type FileRejection = {
 
 type Score = {
     job_id: number;
-    compatability_score: number;
+    compatibility_score: number;
 };
 
 type Props = {
     opened: boolean,
-    onClose: (scores: Score[]) => void
+    onClose: (results: (CvConfirmReturn[] | undefined)) => void
 };
 
 export default function CVUploadModal({opened, onClose}: Props) {
@@ -36,6 +36,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [fileError, setFileError] = useState("");
     const [cv, setCv] = useState<CV | null>(null);
+    const [profileId, setProfileId] = useState<number | null>(null);
 
     const validationMessages = useMemo(
         () => ({
@@ -106,8 +107,17 @@ export default function CVUploadModal({opened, onClose}: Props) {
         }
 
         try {
-            const response = await CvService.getTestCv();
-            setCv(response);
+            console.log("yipee")
+            const response = await CvService.uploadCv({
+                familyName: formData.familyName,
+                middleName: formData.middleName,
+                givenName: formData.givenName,
+                email: formData.email,
+                cv: uploadedFile
+            });
+            setCv(response.ai_result);
+            setProfileId(response.profile_id);
+            console.log(response);
 
             reset();
         } catch (error) {
@@ -274,6 +284,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
                                           setCv(null);
                                           onClose(scores);
                                       }}
+                                      profileId={profileId}
                 />
             </Modal>
         </Modal>
