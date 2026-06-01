@@ -18,6 +18,7 @@ export default function JobSearchWithAIPage() {
     const [modalOpen, setModalOpen] = useState(false);
 
     const [search, setSearch] = useState("");
+    const [uploadedCvName, setUploadedCvName] =useState<string | null>(null);
     const fetchJobs = async () => {
         try {
             const response = await JobService.getAllJobs();
@@ -81,7 +82,9 @@ export default function JobSearchWithAIPage() {
 
                 <Group gap="md" wrap="nowrap">
 
-                    <CVUploadButton onClick={() => setModalOpen(true)} />
+                    <CVUploadButton 
+                    label={uploadedCvName ?? undefined}
+                    onClick={() => setModalOpen(true)} />
 
                     <TextInput
                         placeholder="Search jobs..."
@@ -134,11 +137,13 @@ export default function JobSearchWithAIPage() {
 
             <CVUploadModal
                 opened={modalOpen}
-                onClose={(results: CvConfirmReturn[] | undefined) => {
+                onClose={(results, cvName) => {
                     setModalOpen(false);
 
                     if (!results) return;
-
+                    if (cvName) {
+                        setUploadedCvName(cvName);
+                    }
                     const scoreMap = new Map(
                         results.map(r => [r.job_id, r.compatibility_score])
                     );
