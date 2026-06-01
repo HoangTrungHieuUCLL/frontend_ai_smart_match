@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Container, Group, Stack, Text, Title } from "@mantine/core";
+import { Box, Button, Container, Group, Stack, Text, TextInput, Title } from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
 import JobService from "../services/JobService";
@@ -17,6 +17,7 @@ export default function JobSearchWithAIPage() {
     const [page, setPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
 
+    const [search, setSearch] = useState("");
     const fetchJobs = async () => {
         try {
             const response = await JobService.getAllJobs();
@@ -45,17 +46,30 @@ export default function JobSearchWithAIPage() {
 
     const pageCount = Math.max(1, Math.ceil(sortedJobs.length / JOBS_PER_PAGE));
 
+    const filteredJobs = useMemo(() => {
+        const q = search.toLowerCase();
+
+        return sortedJobs.filter((job) => {
+            return (
+                job.position?.toLowerCase().includes(q) ||
+                job.company_name?.toLowerCase().includes(q) ||
+                job.location?.toLowerCase().includes(q) ||
+                job.requirements?.toLowerCase().includes(q)
+            );
+        });
+    }, [sortedJobs, search]);
+
     const currentJobs = useMemo(() => {
-        return sortedJobs.slice(
+        return filteredJobs.slice(
             (page - 1) * JOBS_PER_PAGE,
             page * JOBS_PER_PAGE
         );
-    }, [sortedJobs, page]);
+    }, [filteredJobs, page]);
 
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
             <Container size="1100px">
-                <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
+                <Group justify="space-between" align="center" wrap="nowrap" style={{ marginBottom: 24 }}>
                     <Stack gap={4}>
                         <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
                             {t("jobSearch.title")}
@@ -65,7 +79,27 @@ export default function JobSearchWithAIPage() {
                         </Text>
                     </Stack>
 
+                <Group gap="md" wrap="nowrap">
+
                     <CVUploadButton onClick={() => setModalOpen(true)} />
+
+                    <TextInput
+                        placeholder="Search jobs..."
+                        value={search}
+                        onChange={(e) => setSearch(e.currentTarget.value)}
+                        radius="xl"
+                        h={40}
+                        styles={{
+                            input: {
+                                height: 40,
+                                borderColor: BROWN,
+                                color: BROWN,
+                                backgroundColor: "#f7f2ef",
+                            },
+                        }}
+                    />
+
+                </Group>
                 </Group>
 
                 <Stack gap="md">
