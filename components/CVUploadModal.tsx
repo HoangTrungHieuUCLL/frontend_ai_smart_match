@@ -157,7 +157,6 @@ export default function CVUploadModal({opened, onClose}: Props) {
             setCv(response.ai_result);
             setProfileId(response.profile_id);
             setCvFileName(response.cv_file_name);
-            console.log(response);
 
             setLoadingState(prev => ({
                 ...prev,
