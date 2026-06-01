@@ -1,21 +1,26 @@
 import {useMemo, useState} from "react";
-import {ActionIcon, Box, Button, Group, Modal, Stack, Text, TextInput} from "@mantine/core";
+import {
+    ActionIcon,
+    Box,
+    Button,
+    Group,
+    Loader,
+    Modal,
+    Stack,
+    Text,
+    TextInput,
+} from "@mantine/core";
 import {Dropzone} from "@mantine/dropzone";
-import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import {useTranslation} from "../contexts/I18nContext";
-import CvService, {ParsedCvResponse} from "../services/CvService";
+import CvService, {CvConfirmReturn, ParsedCvResponse} from "../services/CvService";
 import {CV, Certification, Education, Experience, Language, Project} from "../types";
+import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import CVUploadConfirmation from "./CVUploadConfirmation";
 
 const BROWN = "#774326";
 
 type FileRejection = {
     errors: readonly { code: string }[];
-};
-
-type Score = {
-    job_id: number;
-    compatability_score: number;
 };
 
 type CvFormData = {
@@ -26,14 +31,14 @@ type CvFormData = {
 };
 
 type Props = {
-    opened: boolean,
-    onClose: (scores: Score[]) => void
+    opened: boolean;
+    onClose: (results: CvConfirmReturn[] | undefined) => void;
 };
 
 export default function CVUploadModal({opened, onClose}: Props) {
     const {t} = useTranslation();
     const [step, setStep] = useState<"form" | "upload">("form");
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<CvFormData>({
         familyName: "",
         middleName: "",
         givenName: "",
@@ -42,6 +47,16 @@ export default function CVUploadModal({opened, onClose}: Props) {
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [fileError, setFileError] = useState("");
     const [cv, setCv] = useState<CV | null>(null);
+    const [profileId, setProfileId] = useState<number | null>(null);
+    const [loadingState, setLoadingState] = useState<{
+        open: boolean;
+        status: "loading" | "error";
+        message: string;
+    }>({
+        open: false,
+        status: "loading",
+        message: "",
+    });
 
     const validationMessages = useMemo(
         () => ({
@@ -53,7 +68,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
             emailRequired: t("validation.emailRequired"),
             emailInvalid: t("validation.emailInvalid"),
         }),
-        [t]
+        [t],
     );
     const formErrors = getCvFormErrors(formData, validationMessages);
     const canContinue = isCvFormValid(formData, validationMessages);
@@ -112,13 +127,47 @@ export default function CVUploadModal({opened, onClose}: Props) {
         }
 
         try {
-            const response = await CvService.parseCv(uploadedFile);
+            setLoadingState({
+                open: true,
+                status: "loading",
+                message: "Sending your CV to our server",
+            });
+
+            const response = await CvService.uploadCv({
+                familyName: formData.familyName,
+                middleName: formData.middleName,
+                givenName: formData.givenName,
+                email: formData.email,
+                cv: uploadedFile,
+            });
+
+            setLoadingState((prev) => ({
+                ...prev,
+                message: "Extracting data from your CV",
+            }));
+
+            setLoadingState((prev) => ({
+                ...prev,
+                message: "Calculating Compatibility Score",
+            }));
+
             setCv(toConfirmationCv(response, uploadedFile.name, formData));
+            setProfileId(response.profile_id);
+
+            setLoadingState((prev) => ({
+                ...prev,
+                open: false,
+            }));
 
             reset();
         } catch (error) {
             console.error("Upload error:", error);
-            alert(error instanceof Error ? error.message : t("upload.error"));
+
+            setLoadingState({
+                open: true,
+                status: "error",
+                message: error instanceof Error ? error.message : "Failed to upload your CV. Please try again.",
+            });
         }
     };
 
@@ -270,16 +319,57 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 </Stack>
             )}
 
-            <Modal opened={cv != null}
-                   onClose={() => setCv(null)}
-                   title={<Text fw={700} size="lg">CV Summary</Text>}
-                   size="xl"
+            <Modal
+                opened={loadingState.open}
+                onClose={() => {}}
+                centered
+                closeOnClickOutside={false}
+                closeOnEscape={false}
+                withCloseButton={false}
+                size="sm"
             >
-                <CVUploadConfirmation cv={cv!}
-                                      onClose={(scores) => {
-                                          setCv(null);
-                                          onClose(scores);
-                                      }}
+                <Stack align="center" gap="md" py="md">
+                    {loadingState.status === "loading" ? (
+                        <Loader color={BROWN} size="xl" type="oval" />
+                    ) : (
+                        <Text c="#E03131" fw={900} fz={56} lh={1}>
+                            ×
+                        </Text>
+                    )}
+
+                    <Text ta="center" fw={600}>
+                        {loadingState.message}
+                    </Text>
+
+                    {loadingState.status === "error" && (
+                        <Button
+                            style={{backgroundColor: BROWN}}
+                            onClick={() =>
+                                setLoadingState((prev) => ({
+                                    ...prev,
+                                    open: false,
+                                }))
+                            }
+                        >
+                            OK
+                        </Button>
+                    )}
+                </Stack>
+            </Modal>
+
+            <Modal
+                opened={cv != null}
+                onClose={() => setCv(null)}
+                title={<Text fw={700} size="lg">CV Summary</Text>}
+                size="xl"
+            >
+                <CVUploadConfirmation
+                    cv={cv!}
+                    onClose={(scores) => {
+                        setCv(null);
+                        onClose(scores);
+                    }}
+                    profileId={profileId}
                 />
             </Modal>
         </Modal>
@@ -302,14 +392,14 @@ function toConfirmationCv(
         candidate_profile: {
             id: profileId,
             cv_id: response.cv_id,
-            given_name: formData.givenName,
-            middle_name: formData.middleName || null,
-            family_name: formData.familyName,
+            given_name: candidateProfile.given_name ?? formData.givenName,
+            middle_name: (candidateProfile.middle_name ?? formData.middleName) || null,
+            family_name: candidateProfile.family_name ?? formData.familyName,
             current_title: candidateProfile.current_title ?? null,
             skills: skillsToString(candidateProfile.skills),
             phone: candidateProfile.phone ?? null,
             location: candidateProfile.location ?? null,
-            email: formData.email,
+            email: candidateProfile.email ?? formData.email,
             bio: candidateProfile.bio ?? null,
             work_experiences: mapCollection<Experience>(
                 aiResult.work_experience,

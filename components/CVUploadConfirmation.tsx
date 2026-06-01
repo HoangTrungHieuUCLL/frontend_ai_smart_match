@@ -1,30 +1,26 @@
 import {
+    Button,
     Divider,
     Group,
     Paper,
     Stack,
     Text,
+    Textarea,
     TextInput,
-    Textarea, Button,
 } from "@mantine/core";
 import {useState} from "react";
+import CvService, {CvConfirmReturn} from "../services/CvService";
 import {CV, Certification, Education, Experience, Language, Profile, Project} from "../types";
-import JobService from "../services/JobService";
-import CvService from "../services/CvService";
 
 const BROWN = "#774326";
 
-type Score = {
-    job_id: number;
-    compatability_score: number;
-};
-
 interface Props {
-    cv: CV,
-    onClose: (scores: Score[]) => void
+    cv: CV;
+    onClose: (scores: CvConfirmReturn[]) => void;
+    profileId: number | null;
 }
 
-export default function CVUploadConfirmation({cv, onClose}: Props) {
+export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [profile, setProfile] = useState<Profile | null>(cv?.candidate_profile ?? null);
@@ -35,13 +31,19 @@ export default function CVUploadConfirmation({cv, onClose}: Props) {
     };
 
     const onSubmit = async () => {
-        const response = await JobService.uploadCv(cv);
-        const responseJson = await response.json();
+        const id = profileId ?? profile?.id;
 
-        localStorage.setItem("compatabilityScores", JSON.stringify(responseJson));
+        if (!id) {
+            throw new Error("Profile ID missing");
+        }
 
-        onClose(responseJson);
-    }
+        const response = await CvService.confirmCv({
+            profileId: id,
+            cv,
+        });
+
+        onClose(response.jobs ?? []);
+    };
 
     const onSaveChanges = async () => {
         if (!profile) return;
@@ -179,7 +181,7 @@ export default function CVUploadConfirmation({cv, onClose}: Props) {
                 </Stack>
             </Paper>
 
-            <Divider/>
+            <Divider />
 
             <Stack gap="md">
                 <Text size="lg" fw={700} c={BROWN}>
@@ -222,7 +224,7 @@ export default function CVUploadConfirmation({cv, onClose}: Props) {
                 ))}
             </Stack>
 
-            <Divider/>
+            <Divider />
 
             <Stack gap="md">
                 <Text size="lg" fw={700} c={BROWN}>
@@ -272,7 +274,7 @@ export default function CVUploadConfirmation({cv, onClose}: Props) {
                 ))}
             </Stack>
 
-            <Divider/>
+            <Divider />
 
             <Stack gap="md">
                 <Text size="lg" fw={700} c={BROWN}>
@@ -301,7 +303,7 @@ export default function CVUploadConfirmation({cv, onClose}: Props) {
                 ))}
             </Stack>
 
-            <Divider/>
+            <Divider />
 
             <Stack gap="md">
                 <Text size="lg" fw={700} c={BROWN}>
@@ -329,7 +331,7 @@ export default function CVUploadConfirmation({cv, onClose}: Props) {
                 ))}
             </Stack>
 
-            <Divider/>
+            <Divider />
 
             <Stack gap="md">
                 <Text size="lg" fw={700} c={BROWN}>
@@ -367,16 +369,18 @@ export default function CVUploadConfirmation({cv, onClose}: Props) {
 
             <Group justify="flex-end">
                 {!isEditing && (
-                    <Button variant="outline"
-                            color={BROWN}
-                            onClick={() => setIsEditing(true)}
+                    <Button
+                        variant="outline"
+                        color={BROWN}
+                        onClick={() => setIsEditing(true)}
                     >
                         Edit
                     </Button>
                 )}
-                <Button color={BROWN}
-                        loading={isSaving}
-                        onClick={isEditing ? onSaveChanges : onSubmit}
+                <Button
+                    color={BROWN}
+                    loading={isSaving}
+                    onClick={isEditing ? onSaveChanges : onSubmit}
                 >
                     {isEditing ? "Save changes" : "Everything looks good!"}
                 </Button>

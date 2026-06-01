@@ -6,11 +6,16 @@ export type ParsedCvResponse = {
     message: string;
     cv_id: number;
     profile_id: number;
+    top_10_compatibility_scores?: CvConfirmReturn[];
     ai_result: {
         candidate_profile?: {
+            given_name?: string | null;
+            middle_name?: string | null;
+            family_name?: string | null;
             current_title?: string | null;
             phone?: string | null;
             location?: string | null;
+            email?: string | null;
             bio?: string | null;
             skills?: string[] | string | null;
         } | null;
@@ -22,13 +27,61 @@ export type ParsedCvResponse = {
     };
 };
 
-const getTestCv = async (): Promise<CV> => {
-    const response = await fetch(`${API_URL}/cv/test`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
+export type CvUploadData = {
+    familyName: string;
+    middleName: string;
+    givenName: string;
+    email: string;
+    cv: File;
+};
+
+export type CvConfirmData = {
+    profileId: number;
+    cv: CV;
+};
+
+export interface CvConfirmReturn {
+    job_id: number;
+    company_name: string;
+    position: string;
+    location: string;
+    type: string;
+    requirements: string;
+    requirements_simplified: string;
+    compatibility_score: number;
+}
+
+const readErrorMessage = async (response: Response): Promise<string> => {
+    try {
+        const body = await response.json();
+        const detail = body?.detail;
+
+        if (typeof detail === "string") return detail;
+        if (typeof detail?.error === "string") return detail.error;
+        if (typeof detail?.message === "string") return detail.message;
+    } catch {
+        // Fall through to plain text below.
+    }
+
+    return await response.text();
+};
+
+const uploadCv = async (data: CvUploadData): Promise<ParsedCvResponse> => {
+    const formData = new FormData();
+    formData.append("familyName", data.familyName);
+    formData.append("middleName", data.middleName);
+    formData.append("givenName", data.givenName);
+    formData.append("email", data.email);
+    formData.append("cv", data.cv);
+
+    const response = await fetch(`${API_URL}/cv/upload`, {
+        method: "POST",
+        body: formData,
     });
+
+    if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
+    }
 
     return await response.json();
 };
@@ -49,19 +102,16 @@ const parseCv = async (cv: File): Promise<ParsedCvResponse> => {
     return await response.json();
 };
 
-const readErrorMessage = async (response: Response): Promise<string> => {
-    try {
-        const body = await response.json();
-        const detail = body?.detail;
+const confirmCv = async (data: CvConfirmData): Promise<{ jobs?: CvConfirmReturn[] }> => {
+    const response = await fetch(`${API_URL}/profiles/${data.profileId}/all`, {
+        method: "GET",
+    });
 
-        if (typeof detail === "string") return detail;
-        if (typeof detail?.error === "string") return detail.error;
-        if (typeof detail?.message === "string") return detail.message;
-    } catch {
-        // Fall through to plain text below.
+    if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
     }
 
-    return await response.text();
+    return await response.json();
 };
 
 const updateExtractedData = async (profileId: number, cvData: unknown): Promise<Response> => {
@@ -75,8 +125,9 @@ const updateExtractedData = async (profileId: number, cvData: unknown): Promise<
 };
 
 const CvService = {
-    getTestCv,
+    uploadCv,
     parseCv,
+    confirmCv,
     updateExtractedData,
 };
 
