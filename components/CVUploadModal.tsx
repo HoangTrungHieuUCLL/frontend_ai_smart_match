@@ -21,7 +21,8 @@ type Score = {
 
 type Props = {
     opened: boolean,
-    onClose: (results: (CvConfirmReturn[] | undefined)) => void
+    onClose: (results: (CvConfirmReturn[] | undefined),
+                cvName?: string) => void
 };
 
 export default function CVUploadModal({opened, onClose}: Props) {
@@ -37,7 +38,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
     const [fileError, setFileError] = useState("");
     const [cv, setCv] = useState<CV | null>(null);
     const [profileId, setProfileId] = useState<number | null>(null);
-
+    const [cvFileName, setCvFileName] = useState<string | null>(null);
     const validationMessages = useMemo(
         () => ({
             familyNameLabel: t("upload.familyName"),
@@ -117,6 +118,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
             });
             setCv(response.ai_result);
             setProfileId(response.profile_id);
+            setCvFileName(response.cv_file_name);
             console.log(response);
 
             reset();
@@ -282,7 +284,9 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 <CVUploadConfirmation cv={cv!}
                                       onClose={(scores) => {
                                           setCv(null);
-                                          onClose(scores);
+                                          onClose(scores,
+                                            cvFileName ?? undefined
+                                          );
                                       }}
                                       profileId={profileId}
                 />
