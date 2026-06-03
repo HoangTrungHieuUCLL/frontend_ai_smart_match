@@ -21,6 +21,7 @@ export type TranslationKey =
   | "jobSearch.pageStatus"
   | "jobListing.learnMore"
   | "jobListing.save"
+  | "jobListing.saved"
   | "jobListing.share"
   | "jobListing.savedAlert"
   | "jobListing.shareAlert"

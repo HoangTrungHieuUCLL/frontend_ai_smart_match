@@ -17,6 +17,7 @@ export const en: TranslationDictionary = {
   "jobSearch.pageStatus": "Page {{page}} of {{pageCount}}. Showing up to {{jobsPerPage}} jobs per page.",
   "jobListing.learnMore": "Learn more",
   "jobListing.save": "Save",
+  "jobListing.saved": "Saved",
   "jobListing.share": "Share",
   "jobListing.savedAlert": "Saved {{title}}",
   "jobListing.shareAlert": "Share {{title}}",
