@@ -17,6 +17,7 @@ export const vn: TranslationDictionary = {
   "jobSearch.pageStatus": "Trang {{page}} / {{pageCount}}. Hiển thị tối đa {{jobsPerPage}} việc làm mỗi trang.",
   "jobListing.learnMore": "Xem thêm",
   "jobListing.save": "Lưu",
+  "jobListing.saved": "Đã lưu",
   "jobListing.share": "Chia sẻ",
   "jobListing.savedAlert": "Đã lưu {{title}}",
   "jobListing.shareAlert": "Chia sẻ {{title}}",
