@@ -1,4 +1,4 @@
-import {CV, Job} from "../types";
+import {CV} from "../types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -26,7 +26,21 @@ export interface CvConfirmReturn {
     compatibility_score: number;
 }
 
-const uploadCv = async (data: CvUploadData): Promise<CV> => {
+export interface CvUploadResponse {
+    message: string;
+    cv_id: number;
+    profile_id: number;
+    cv_file_name: string;
+    ai_result: CV;
+}
+
+export interface CvConfirmResponse {
+    profile_id: number;
+    saved_count: number;
+    jobs: CvConfirmReturn[];
+}
+
+const uploadCv = async (data: CvUploadData): Promise<CvUploadResponse> => {
     const formData = new FormData();
     formData.append("familyName", data.familyName);
     formData.append("middleName", data.middleName);
@@ -42,7 +56,7 @@ const uploadCv = async (data: CvUploadData): Promise<CV> => {
     return await response.json();
 };
 
-const confirmCv = async (data: CvConfirmData): Promise<CvConfirmReturn> => {
+const confirmCv = async (data: CvConfirmData): Promise<CvConfirmResponse> => {
     const response = await fetch(`${API_URL}/profiles/${data.profileId}/all`, {
         method: "GET",
     });

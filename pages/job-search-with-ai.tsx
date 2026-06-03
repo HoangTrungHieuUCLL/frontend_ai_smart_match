@@ -6,7 +6,6 @@ import JobService from "../services/JobService";
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
-import {CvConfirmReturn} from "../services/CvService";
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
