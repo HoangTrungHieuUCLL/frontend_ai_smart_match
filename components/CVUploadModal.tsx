@@ -12,7 +12,6 @@ import {
 } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
 import {Dropzone} from "@mantine/dropzone";
-import JobService from "../services/JobService";
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import {useTranslation} from "../contexts/I18nContext";
 import CvService, {CvConfirmReturn} from "../services/CvService";
@@ -23,11 +22,6 @@ const BROWN = "#774326";
 
 type FileRejection = {
     errors: readonly { code: string }[];
-};
-
-type Score = {
-    job_id: number;
-    compatibility_score: number;
 };
 
 type Props = {

@@ -17,6 +17,7 @@ import JobService from "../../services/JobService";
 import CVUploadButton from "../../components/CVUploadButton";
 import CVUploadModal from "../../components/CVUploadModal";
 import { useTranslation } from "../../contexts/I18nContext";
+import { CvConfirmReturn } from "../../services/CvService";
 
 const BROWN = "#774326";
 
@@ -208,7 +209,7 @@ export default function JobInfoDetailPage() {
                                                 sections={[
                                                     {
                                                         value: compatibilityScore,
-                                                        color: compatabilityScore >= 70 ? '#34C759' : '#FF383C',
+                                                        color: compatibilityScore >= 70 ? '#34C759' : '#FF383C',
                                                     },
                                                 ]}
                                             />
