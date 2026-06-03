@@ -7,49 +7,29 @@ import {
     TextInput,
     Textarea, Button,
 } from "@mantine/core";
+import { ReactNode } from "react";
 import {CV} from "../types";
-import JobService from "../services/JobService";
-import CvService from "../services/CvService";
+import CvService, { CvConfirmReturn } from "../services/CvService";
 
 const BROWN = "#774326";
 
-export type Score = {
-    job_id: number;
-    compatibility_score: number;
-};
-
 interface Props {
     cv: CV;
-    onClose: (scores: Score[]) => void;
+    onClose: (scores: CvConfirmReturn[]) => void;
     profileId: number | null;
 }
 
-export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
+interface CVSummaryDetailsProps {
+    cv: CV;
+    footer?: ReactNode;
+}
+
+export function CVSummaryDetails({cv, footer}: CVSummaryDetailsProps) {
     const profile = cv?.candidate_profile;
 
     const sectionStyle = {
         border: "1px solid rgba(119, 67, 38, 0.18)",
         backgroundColor: "#fdf7ef",
-    };
-
-    const onSubmit = async () => {
-        if (!profileId) {
-            throw new Error("Profile ID missing");
-        }
-
-        const response = await CvService.confirmCv({
-            profileId,
-            cv
-        });
-        console.log(response);
-
-        const scores: Score[] =
-            response?.jobs?.map((s: any) => ({
-                job_id: s.job_id,
-                compatibility_score: s.compatibility_score,
-            })) ?? [];
-
-        onClose(scores);
     };
 
     return (
@@ -290,13 +270,40 @@ export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
                 )}
             </Stack>
 
-            <Group justify="flex-end">
-                <Button color={BROWN}
-                        onClick={onSubmit}
-                >
+            {footer && (
+                <Group justify="flex-end">
+                    {footer}
+                </Group>
+            )}
+        </Stack>
+    );
+}
+
+export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
+    const onSubmit = async () => {
+        if (!profileId) {
+            throw new Error("Profile ID missing");
+        }
+
+        const response = await CvService.confirmCv({
+            profileId,
+            cv
+        });
+        console.log(response);
+
+        const scores = response?.jobs ?? [];
+
+        onClose(scores);
+    };
+
+    return (
+        <CVSummaryDetails
+            cv={cv}
+            footer={
+                <Button color={BROWN} onClick={onSubmit}>
                     Everything looks good!
                 </Button>
-            </Group>
-        </Stack>
+            }
+        />
     );
 }

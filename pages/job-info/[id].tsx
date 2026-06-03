@@ -21,6 +21,8 @@ import { isJobSaved } from "../../utils/savedJobs";
 import { saveJob, removeJob } from "../../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
 import { Modal} from "@mantine/core";
+import { CvConfirmReturn } from "../../services/CvService";
+
 const BROWN = "#774326";
 
 const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) ?? [];

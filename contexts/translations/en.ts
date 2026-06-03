@@ -7,6 +7,7 @@ export const en: TranslationDictionary = {
   "nav.clients": "Our clients",
   "nav.consultation": "Consultation",
   "nav.jobSearch": "Job search with AI",
+  "nav.login": "Log in",
   "footer.contact": "Contact",
   "footer.director": "Director",
   "footer.address": "Address",
