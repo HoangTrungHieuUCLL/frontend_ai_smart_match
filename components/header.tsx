@@ -2,12 +2,14 @@ import {Button, Group, Image, Text, Select, Avatar, Modal, Stack, TextInput, Pas
 import { useRouter } from "next/router";
 import { Language, useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/header.module.css";
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import Login from "./Login";
 
 export const Header = () => {
     const router = useRouter();
     const { language, setLanguage, t } = useTranslation();
     const [loginOpened, setLoginOpened] = useState(false);
+    const [loggedInUsername, setLoggedInUsername] = useState<string>("");
 
     const navItems = [
         { label: t("nav.homepage"), href: "/" },
@@ -26,6 +28,14 @@ export const Header = () => {
     const handleJobSearchClick = () => {
         router.push("/job-search-with-ai");
     };
+
+    useEffect(() => {
+        const username = localStorage.getItem("username");
+
+        if (username != null) {
+            setLoggedInUsername(username);
+        }
+    }, []);
 
     return (
         <Group 
@@ -82,16 +92,20 @@ export const Header = () => {
                     {t("nav.jobSearch")}
                 </Button>
 
-                {/* Log In Button */}
-                <Button
-                    className={styles.loginButton}
-                    fw={500}
-                    size="sm"
-                    radius="xl"
-                    onClick={() => setLoginOpened(true)}
-                >
-                    {t("nav.login")}
-                </Button>
+                {loggedInUsername ? (
+                    <Text c="black">Hello, {loggedInUsername}!</Text>
+                ) : (
+                    // Log in button
+                    <Button
+                        className={styles.loginButton}
+                        fw={500}
+                        size="sm"
+                        radius="xl"
+                        onClick={() => setLoginOpened(true)}
+                    >
+                        {t("nav.login")}
+                    </Button>
+                )}
 
                 {/* Language Selector */}
                 <Select
@@ -122,43 +136,7 @@ export const Header = () => {
                 padding="lg"
                 size={450}
             >
-                <Stack gap="md">
-                    <TextInput
-                        placeholder="username"
-                        radius="xl"
-                        size="lg"
-                        styles={{
-                            input: {
-                                borderColor: "#774326",
-                            },
-                        }}
-                    />
-
-                    <PasswordInput
-                        placeholder="password"
-                        radius="xl"
-                        size="lg"
-                        styles={{
-                            input: {
-                                borderColor: "#774326",
-                            },
-                        }}
-                    />
-
-                    <Button
-                        radius="xl"
-                        size="lg"
-                        fullWidth
-                        styles={{
-                            root: {
-                                backgroundColor: "#774326",
-                            },
-                        }}
-                        onClick={() => router.push('/executive-view')}
-                    >
-                        Log in
-                    </Button>
-                </Stack>
+                <Login />
             </Modal>
         </Group>
     );
