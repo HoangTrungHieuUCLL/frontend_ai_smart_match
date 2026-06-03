@@ -1,10 +1,13 @@
-import {Button, Group, Image, Text, Select, Avatar} from "@mantine/core";
+import {Button, Group, Image, Text, Select, Avatar, Modal, Stack, TextInput, PasswordInput} from "@mantine/core";
 import { useRouter } from "next/router";
 import { Language, useTranslation } from "../contexts/I18nContext";
+import styles from "../styles/header.module.css";
+import {useState} from "react";
 
 export const Header = () => {
     const router = useRouter();
     const { language, setLanguage, t } = useTranslation();
+    const [loginOpened, setLoginOpened] = useState(false);
 
     const navItems = [
         { label: t("nav.homepage"), href: "/" },
@@ -69,9 +72,9 @@ export const Header = () => {
                     fw={500}
                     size="sm"
                     px="md"
+                    radius="xl"
                     style={{ 
                         backgroundColor: "#774326", 
-                        borderRadius: "20px",
                         whiteSpace: "nowrap"
                     }}
                     onClick={handleJobSearchClick}
@@ -79,14 +82,16 @@ export const Header = () => {
                     {t("nav.jobSearch")}
                 </Button>
 
-                {/* User Avatar */}
-                <Avatar 
-                    name="U"
-                    size={36}
+                {/* Log In Button */}
+                <Button
+                    className={styles.loginButton}
+                    fw={500}
+                    size="sm"
                     radius="xl"
-                    style={{ cursor: "pointer", flexShrink: 0 }}
-                    color="brown"
-                />
+                    onClick={() => setLoginOpened(true)}
+                >
+                    {t("nav.login")}
+                </Button>
 
                 {/* Language Selector */}
                 <Select
@@ -107,6 +112,54 @@ export const Header = () => {
                     style={{ flexShrink: 0 }}
                 />
             </Group>
+
+            <Modal
+                opened={loginOpened}
+                onClose={() => setLoginOpened(false)}
+                centered
+                withCloseButton={false}
+                radius="lg"
+                padding="lg"
+                size={450}
+            >
+                <Stack gap="md">
+                    <TextInput
+                        placeholder="username"
+                        radius="xl"
+                        size="lg"
+                        styles={{
+                            input: {
+                                borderColor: "#774326",
+                            },
+                        }}
+                    />
+
+                    <PasswordInput
+                        placeholder="password"
+                        radius="xl"
+                        size="lg"
+                        styles={{
+                            input: {
+                                borderColor: "#774326",
+                            },
+                        }}
+                    />
+
+                    <Button
+                        radius="xl"
+                        size="lg"
+                        fullWidth
+                        styles={{
+                            root: {
+                                backgroundColor: "#774326",
+                            },
+                        }}
+                        onClick={() => router.push('/executive-view')}
+                    >
+                        Log in
+                    </Button>
+                </Stack>
+            </Modal>
         </Group>
     );
 }
