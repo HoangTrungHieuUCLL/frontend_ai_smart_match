@@ -7,6 +7,7 @@ export const vn: TranslationDictionary = {
   "nav.clients": "Khách hàng",
   "nav.consultation": "Tư vấn",
   "nav.jobSearch": "Tìm việc với AI",
+  "nav.login": "Đăng nhập",
   "footer.contact": "Liên hệ",
   "footer.director": "Giám đốc",
   "footer.address": "Địa chỉ",

@@ -123,8 +123,7 @@ export default function ExecutiveViewPage() {
             try {
                 const response = await ExecutiveViewService.getDashboard();
                 setDashboard(response);
-            } catch (err) {
-                console.error("Failed to fetch executive dashboard", err);
+            } catch {
                 setError("Unable to load executive dashboard data.");
             } finally {
                 setLoading(false);
