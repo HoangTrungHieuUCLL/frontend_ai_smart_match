@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Container, Group, Modal, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Box, Button, Container, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
 import JobService from "../services/JobService";
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
-import {CvConfirmReturn} from "../services/CvService";
 import { getSavedJobs } from "../utils/savedJobs";
 
 const JOBS_PER_PAGE = 10;
@@ -102,7 +101,7 @@ export default function JobSearchWithAIPage() {
 
                 <Group gap="md" wrap="nowrap">
 
-                    <CVUploadButton 
+                    <CVUploadButton
                     label={uploadedCvName ?? undefined}
                     onClick={() => setModalOpen(true)} />
 
@@ -133,7 +132,7 @@ export default function JobSearchWithAIPage() {
                         }}
                         onClick={() => setShowSavedOnly((prev) => !prev)}
                     >
-                        Saved Jobs  
+                        Saved Jobs
                     </Button>
 
                 </Group>
@@ -141,7 +140,7 @@ export default function JobSearchWithAIPage() {
 
                 <Stack gap="md">
                     {currentJobs.map((job) => (
-                        <JobListing key={job.id} job={job} 
+                        <JobListing key={job.id} job={job}
                          onShare={handleShare}/>
                     ))}
                 </Stack>
@@ -192,7 +191,7 @@ export default function JobSearchWithAIPage() {
                     );
                 }}
             />
-            
+
             <Modal
                 opened={shareOpened}
                 onClose={() => setShareOpened(false)}

@@ -10,7 +10,8 @@ import {
     Paper,
     Stack,
     Text,
-    RingProgress
+    RingProgress,
+    Modal,
 } from "@mantine/core";
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
@@ -20,7 +21,6 @@ import { useTranslation } from "../../contexts/I18nContext";
 import { isJobSaved } from "../../utils/savedJobs";
 import { saveJob, removeJob } from "../../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
-import { Modal} from "@mantine/core";
 import { CvConfirmReturn } from "../../services/CvService";
 
 const BROWN = "#774326";
@@ -37,7 +37,6 @@ export default function JobInfoDetailPage() {
     const [compatibilityScore, setCompatibilityScore] = useState<number | null>(null);
     const [Saved, setSaved] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
-    const [copiedUrl, setCopiedUrl] = useState("");
 
     const fetchJob = async () => {
         setLoading(true);
@@ -82,12 +81,12 @@ export default function JobInfoDetailPage() {
     const requirements = splitLines(job.requirements);
     const benefits = splitLines(job.offers);
     const notes = splitLines(job.notes);
-    
+
     const handleSave = () => {
         if (Saved) {
             removeJob(job.id);
             setSaved(false);
-            
+
             notifications.show({
                 title: "Removed",
                 message: "Job removed from saved list",
@@ -96,7 +95,7 @@ export default function JobInfoDetailPage() {
         } else {
             saveJob(job.id);
             setSaved(true);
-            
+
             notifications.show({
                 title: "Saved",
                 message: "Job added to saved list",
@@ -109,7 +108,6 @@ export default function JobInfoDetailPage() {
 
         await navigator.clipboard.writeText(url);
 
-        setCopiedUrl(url);
         setShareOpened(true);
     };
 

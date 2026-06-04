@@ -11,6 +11,7 @@ export type TranslationKey =
   | "nav.clients"
   | "nav.consultation"
   | "nav.jobSearch"
+  | "nav.login"
   | "footer.contact"
   | "footer.director"
   | "footer.address"

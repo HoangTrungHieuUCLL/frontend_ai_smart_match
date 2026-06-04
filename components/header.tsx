@@ -1,4 +1,4 @@
-import {Button, Group, Image, Text, Select, Avatar, Modal, Stack, TextInput, PasswordInput} from "@mantine/core";
+import {Button, Group, Image, Text, Select, Modal} from "@mantine/core";
 import { useRouter } from "next/router";
 import { Language, useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/header.module.css";

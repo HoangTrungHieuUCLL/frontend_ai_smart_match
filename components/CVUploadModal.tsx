@@ -8,14 +8,13 @@ import {
     Modal,
     Stack,
     Text,
-    TextInput
+    TextInput,
 } from "@mantine/core";
-import { IconX } from "@tabler/icons-react";
 import {Dropzone} from "@mantine/dropzone";
-import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import {useTranslation} from "../contexts/I18nContext";
-import CvService, {CvConfirmReturn} from "../services/CvService";
-import {CV} from "../types";
+import CvService, {CvConfirmReturn, ParsedCvResponse} from "../services/CvService";
+import {CV, Certification, Education, Experience, Language, Project} from "../types";
+import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import CVUploadConfirmation from "./CVUploadConfirmation";
 
 const BROWN = "#774326";
@@ -24,16 +23,22 @@ type FileRejection = {
     errors: readonly { code: string }[];
 };
 
+type CvFormData = {
+    familyName: string;
+    middleName: string;
+    givenName: string;
+    email: string;
+};
+
 type Props = {
-    opened: boolean,
-    onClose: (results: (CvConfirmReturn[] | undefined),
-                cvName?: string) => void
+    opened: boolean;
+    onClose: (results: CvConfirmReturn[] | undefined, cvName?: string) => void;
 };
 
 export default function CVUploadModal({opened, onClose}: Props) {
     const {t} = useTranslation();
     const [step, setStep] = useState<"form" | "upload">("form");
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<CvFormData>({
         familyName: "",
         middleName: "",
         givenName: "",
@@ -64,7 +69,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
             emailRequired: t("validation.emailRequired"),
             emailInvalid: t("validation.emailInvalid"),
         }),
-        [t]
+        [t],
     );
     const formErrors = getCvFormErrors(formData, validationMessages);
     const canContinue = isCvFormValid(formData, validationMessages);
@@ -134,25 +139,24 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 middleName: formData.middleName,
                 givenName: formData.givenName,
                 email: formData.email,
-                cv: uploadedFile
+                cv: uploadedFile,
             });
 
-            // Future-proof placeholder stages
-            setLoadingState(prev => ({
+            setLoadingState((prev) => ({
                 ...prev,
                 message: "Extracting data from your CV",
             }));
 
-            setLoadingState(prev => ({
+            setLoadingState((prev) => ({
                 ...prev,
                 message: "Calculating Compatibility Score",
             }));
 
-            setCv(response.ai_result);
+            setCv(toConfirmationCv(response, response.cv_file_name ?? uploadedFile.name, formData));
             setProfileId(response.profile_id);
-            setCvFileName(response.cv_file_name);
+            setCvFileName(response.cv_file_name ?? uploadedFile.name);
 
-            setLoadingState(prev => ({
+            setLoadingState((prev) => ({
                 ...prev,
                 open: false,
             }));
@@ -164,7 +168,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
             setLoadingState({
                 open: true,
                 status: "error",
-                message: "Failed to upload your CV. Please try again.",
+                message: error instanceof Error ? error.message : "Failed to upload your CV. Please try again.",
             });
         }
     };
@@ -327,19 +331,12 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 size="sm"
             >
                 <Stack align="center" gap="md" py="md">
-
                     {loadingState.status === "loading" ? (
-                        <Loader
-                            color={BROWN}
-                            size="xl"
-                            type="oval"
-                        />
+                        <Loader color={BROWN} size="xl" type="oval" />
                     ) : (
-                        <IconX
-                            size={56}
-                            color="#E03131"
-                            stroke={2.5}
-                        />
+                        <Text c="#E03131" fw={900} fz={56} lh={1}>
+                            ×
+                        </Text>
                     )}
 
                     <Text ta="center" fw={600}>
@@ -348,9 +345,9 @@ export default function CVUploadModal({opened, onClose}: Props) {
 
                     {loadingState.status === "error" && (
                         <Button
-                            style={{ backgroundColor: BROWN }}
+                            style={{backgroundColor: BROWN}}
                             onClick={() =>
-                                setLoadingState(prev => ({
+                                setLoadingState((prev) => ({
                                     ...prev,
                                     open: false,
                                 }))
@@ -362,21 +359,133 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 </Stack>
             </Modal>
 
-            <Modal opened={cv != null}
-                   onClose={() => setCv(null)}
-                   title={<Text fw={700} size="lg">CV Summary</Text>}
-                   size="xl"
+            <Modal
+                opened={cv != null}
+                onClose={() => setCv(null)}
+                title={<Text fw={700} size="lg">CV Summary</Text>}
+                size="xl"
             >
-                <CVUploadConfirmation cv={cv!}
-                                      onClose={(scores) => {
-                                          setCv(null);
-                                          onClose(scores,
-                                            cvFileName ?? undefined
-                                          );
-                                      }}
-                                      profileId={profileId}
+                <CVUploadConfirmation
+                    cv={cv!}
+                    onClose={(scores) => {
+                        setCv(null);
+                        onClose(scores, cvFileName ?? undefined);
+                    }}
+                    profileId={profileId}
                 />
             </Modal>
         </Modal>
     );
+}
+
+function toConfirmationCv(
+    response: ParsedCvResponse,
+    filename: string,
+    formData: CvFormData,
+): CV {
+    const aiResult = response.ai_result ?? {};
+    const candidateProfile = aiResult.candidate_profile ?? {};
+    const profileId = response.profile_id;
+
+    return {
+        id: response.cv_id,
+        filename,
+        uploaded_at: new Date().toISOString(),
+        candidate_profile: {
+            id: profileId,
+            cv_id: response.cv_id,
+            given_name: candidateProfile.given_name ?? formData.givenName,
+            middle_name: (candidateProfile.middle_name ?? formData.middleName) || null,
+            family_name: candidateProfile.family_name ?? formData.familyName,
+            current_title: candidateProfile.current_title ?? null,
+            skills: skillsToString(candidateProfile.skills),
+            phone: candidateProfile.phone ?? null,
+            location: candidateProfile.location ?? null,
+            email: candidateProfile.email ?? formData.email,
+            bio: candidateProfile.bio ?? null,
+            work_experiences: mapCollection<Experience>(
+                aiResult.work_experience,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    job_title: getString(item, "job_title"),
+                    company_name: getString(item, "company_name"),
+                    start_date: getString(item, "start_date"),
+                    end_date: getString(item, "end_date"),
+                }),
+            ),
+            educations: mapCollection<Education>(
+                aiResult.education,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    institution: getString(item, "institution"),
+                    degree: getString(item, "degree"),
+                    field_of_study: getString(item, "field_of_study"),
+                    start_date: getString(item, "start_date"),
+                    end_date: getString(item, "end_date"),
+                }),
+            ),
+            projects: mapCollection<Project>(
+                aiResult.projects,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    project_name: getString(item, "project_name"),
+                    description: getString(item, "description"),
+                }),
+            ),
+            languages: mapCollection<Language>(
+                aiResult.languages,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    language_name: getString(item, "language_name"),
+                    proficiency_level: getString(item, "proficiency_level"),
+                }),
+            ),
+            certifications: mapCollection<Certification>(
+                aiResult.certifications,
+                profileId,
+                (item, id) => ({
+                    id,
+                    profile_id: profileId,
+                    certification_name: getString(item, "certification_name"),
+                    issue_date: getString(item, "issue_date"),
+                }),
+            ),
+            compatibility_scores: [],
+        },
+        compatibility_scores: [],
+    };
+}
+
+function mapCollection<T>(
+    value: unknown,
+    profileId: number,
+    mapper: (item: Record<string, unknown>, id: number) => T,
+): T[] {
+    if (!Array.isArray(value)) return [];
+
+    return value
+        .filter((item): item is Record<string, unknown> => item !== null && typeof item === "object")
+        .map((item, index) => mapper(item, profileId * 1000 + index + 1));
+}
+
+function getString(item: Record<string, unknown>, key: string): string | null {
+    const value = item[key];
+
+    return typeof value === "string" && value.trim() ? value : null;
+}
+
+function skillsToString(value: string[] | string | null | undefined): string | null {
+    if (Array.isArray(value)) {
+        return value.filter(Boolean).join(", ") || null;
+    }
+
+    return value || null;
 }
