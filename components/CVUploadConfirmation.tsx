@@ -35,13 +35,13 @@ interface CVSummaryDetailsProps {
 }
 
 export function CVSummaryDetails({
-    cv,
-    profile: profileOverride,
-    footer,
-    isEditing = false,
-    onProfileFieldChange,
-    onCollectionItemChange,
-}: CVSummaryDetailsProps) {
+                                     cv,
+                                     profile: profileOverride,
+                                     footer,
+                                     isEditing = false,
+                                     onProfileFieldChange,
+                                     onCollectionItemChange,
+                                 }: CVSummaryDetailsProps) {
     const profile = profileOverride ?? cv?.candidate_profile;
 
     const sectionStyle = {
@@ -311,11 +311,7 @@ export function CVSummaryDetails({
                 )}
             </Stack>
 
-            {footer && (
-                <Group justify="flex-end">
-                    {footer}
-                </Group>
-            )}
+            {footer && <Group justify="flex-end">{footer}</Group>}
         </Stack>
     );
 }
@@ -323,6 +319,7 @@ export function CVSummaryDetails({
 export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [profile, setProfile] = useState<Profile | null>(cv?.candidate_profile ?? null);
 
     const onSubmit = async () => {
@@ -332,18 +329,25 @@ export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
             throw new Error("Profile ID missing");
         }
 
-        const response = await CvService.confirmCv({
-            profileId: id,
-            cv,
-        });
+        setIsSubmitting(true);
 
-        onClose(response?.jobs ?? []);
+        try {
+            const response = await CvService.confirmCv({
+                profileId: id,
+                cv,
+            });
+
+            onClose(response?.jobs ?? []);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const onSaveChanges = async () => {
         if (!profile) return;
 
         setIsSaving(true);
+
         try {
             const response = await CvService.updateExtractedData(profile.id, {
                 candidate_profile: {
@@ -415,13 +419,16 @@ export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
                             variant="outline"
                             color={BROWN}
                             onClick={() => setIsEditing(true)}
+                            disabled={isSubmitting}
                         >
                             Edit
                         </Button>
                     )}
+
                     <Button
                         color={BROWN}
-                        loading={isSaving}
+                        loading={isSaving || isSubmitting}
+                        disabled={isSaving || isSubmitting}
                         onClick={isEditing ? onSaveChanges : onSubmit}
                     >
                         {isEditing ? "Save changes" : "Everything looks good!"}
