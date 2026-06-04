@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Container, Group, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Box, Button, Container, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
 import JobService from "../services/JobService";
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
-import {CvConfirmReturn} from "../services/CvService";
+import { getSavedJobs } from "../utils/savedJobs";
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
@@ -18,6 +18,10 @@ export default function JobSearchWithAIPage() {
     const [modalOpen, setModalOpen] = useState(false);
 
     const [search, setSearch] = useState("");
+    const [uploadedCvName, setUploadedCvName] =useState<string | null>(null);
+    const [showSavedOnly, setShowSavedOnly] = useState(false);
+    const [shareOpened, setShareOpened] = useState(false);
+    // const [copiedUrl, setCopiedUrl] = useState("");
     const fetchJobs = async () => {
         try {
             const response = await JobService.getAllJobs();
@@ -30,6 +34,10 @@ export default function JobSearchWithAIPage() {
     useEffect(() => {
         fetchJobs();
     }, []);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search, showSavedOnly]);
 
     const scoredJobs = useMemo(() => {
         return jobs.map((job) => ({
@@ -48,16 +56,20 @@ export default function JobSearchWithAIPage() {
 
     const filteredJobs = useMemo(() => {
         const q = search.toLowerCase();
+        const savedIds = getSavedJobs();
 
         return sortedJobs.filter((job) => {
-            return (
+            const matchesSearch =
                 job.position?.toLowerCase().includes(q) ||
                 job.company_name?.toLowerCase().includes(q) ||
                 job.location?.toLowerCase().includes(q) ||
-                job.requirements?.toLowerCase().includes(q)
-            );
+                job.requirements?.toLowerCase().includes(q);
+
+            const matchesSaved = showSavedOnly ? savedIds.includes(job.id) : true;
+
+            return matchesSearch && matchesSaved;
         });
-    }, [sortedJobs, search]);
+    }, [sortedJobs, search, showSavedOnly]);
 
     const currentJobs = useMemo(() => {
         return filteredJobs.slice(
@@ -66,22 +78,32 @@ export default function JobSearchWithAIPage() {
         );
     }, [filteredJobs, page]);
 
+    const handleShare = async (jobId: number) => {
+        const url = `${window.location.origin}/job-info/${jobId}`;
+
+        await navigator.clipboard.writeText(url);
+
+        // setCopiedUrl(url);
+        setShareOpened(true);
+    };
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
             <Container size="1100px">
-                <Group justify="space-between" align="center" wrap="nowrap" style={{ marginBottom: 24 }}>
-                    <Stack gap={4}>
+                <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
+                    {/* <Stack gap={4}>
                         <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
                             {t("jobSearch.title")}
                         </Title>
                         <Text size="sm" c="dimmed">
                             {t("jobSearch.subtitle")}
                         </Text>
-                    </Stack>
+                    </Stack> */}
 
                 <Group gap="md" wrap="nowrap">
 
-                    <CVUploadButton onClick={() => setModalOpen(true)} />
+                    <CVUploadButton
+                    label={uploadedCvName ?? undefined}
+                    onClick={() => setModalOpen(true)} />
 
                     <TextInput
                         placeholder="Search jobs..."
@@ -98,13 +120,28 @@ export default function JobSearchWithAIPage() {
                             },
                         }}
                     />
+                    <Button
+                        radius="xl"
+                        variant={showSavedOnly ? "filled" : "light"}
+                        style={{
+                            backgroundColor: showSavedOnly ? BROWN : "transparent",
+                            border: `1px solid ${BROWN}`,
+                            color: showSavedOnly ? "#fff" : BROWN,
+                            whiteSpace: "nowrap",
+                            flexShrink: 0,
+                        }}
+                        onClick={() => setShowSavedOnly((prev) => !prev)}
+                    >
+                        Saved Jobs
+                    </Button>
 
                 </Group>
                 </Group>
 
                 <Stack gap="md">
                     {currentJobs.map((job) => (
-                        <JobListing key={job.id} job={job} />
+                        <JobListing key={job.id} job={job}
+                         onShare={handleShare}/>
                     ))}
                 </Stack>
 
@@ -134,11 +171,13 @@ export default function JobSearchWithAIPage() {
 
             <CVUploadModal
                 opened={modalOpen}
-                onClose={(results: CvConfirmReturn[] | undefined) => {
+                onClose={(results, cvName) => {
                     setModalOpen(false);
 
                     if (!results) return;
-
+                    if (cvName) {
+                        setUploadedCvName(cvName);
+                    }
                     const scoreMap = new Map(
                         results.map(r => [r.job_id, r.compatibility_score])
                     );
@@ -152,6 +191,27 @@ export default function JobSearchWithAIPage() {
                     );
                 }}
             />
+
+            <Modal
+                opened={shareOpened}
+                onClose={() => setShareOpened(false)}
+                centered
+                title="Share Job"
+            >
+                <Stack>
+                    <Text>
+                        Link to this job is saved in your clipboard
+                    </Text>
+
+                    <Button
+                        radius="xl"
+                        color={BROWN}
+                        onClick={() => setShareOpened(false)}
+                    >
+                        OK
+                    </Button>
+                </Stack>
+            </Modal>
         </Box>
     );
 }

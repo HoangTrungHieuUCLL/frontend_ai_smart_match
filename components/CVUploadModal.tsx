@@ -32,7 +32,7 @@ type CvFormData = {
 
 type Props = {
     opened: boolean;
-    onClose: (results: CvConfirmReturn[] | undefined) => void;
+    onClose: (results: CvConfirmReturn[] | undefined, cvName?: string) => void;
 };
 
 export default function CVUploadModal({opened, onClose}: Props) {
@@ -48,6 +48,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
     const [fileError, setFileError] = useState("");
     const [cv, setCv] = useState<CV | null>(null);
     const [profileId, setProfileId] = useState<number | null>(null);
+    const [cvFileName, setCvFileName] = useState<string | null>(null);
     const [loadingState, setLoadingState] = useState<{
         open: boolean;
         status: "loading" | "error";
@@ -151,8 +152,9 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 message: "Calculating Compatibility Score",
             }));
 
-            setCv(toConfirmationCv(response, uploadedFile.name, formData));
+            setCv(toConfirmationCv(response, response.cv_file_name ?? uploadedFile.name, formData));
             setProfileId(response.profile_id);
+            setCvFileName(response.cv_file_name ?? uploadedFile.name);
 
             setLoadingState((prev) => ({
                 ...prev,
@@ -367,7 +369,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
                     cv={cv!}
                     onClose={(scores) => {
                         setCv(null);
-                        onClose(scores);
+                        onClose(scores, cvFileName ?? undefined);
                     }}
                     profileId={profileId}
                 />

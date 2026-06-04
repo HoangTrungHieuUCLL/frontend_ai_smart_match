@@ -1,4 +1,5 @@
 import React from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Job } from "../types";
 import {
@@ -12,13 +13,15 @@ import {
     RingProgress
 } from "@mantine/core";
 import { useTranslation } from "../contexts/I18nContext";
+import { isJobSaved, saveJob, removeJob } from "../utils/savedJobs";
+import { notifications } from "@mantine/notifications";
 
 interface Props {
     job: Job;
+    onShare?: (jobId: number) => void;
 }
 
 const BROWN = "#774326";
-
 const getInitials = (name: string) =>
     name
         .split(" ")
@@ -28,9 +31,16 @@ const getInitials = (name: string) =>
         .join("")
         .toUpperCase();
 
-const JobListing: React.FC<Props> = ({ job }) => {
+const JobListing: React.FC<Props> = ({ job, onShare }) => {
     const router = useRouter();
     const { t } = useTranslation();
+
+    const [saved, setSaved] = useState(false);
+
+
+    useEffect(() => {
+        setSaved(isJobSaved(job.id));
+    }, [job.id]);
 
     const handleLearnMore = async (jobId: number) => {
         try {
@@ -39,6 +49,58 @@ const JobListing: React.FC<Props> = ({ job }) => {
             console.error("Navigation failed, falling back to full redirect:", e);
             // Fallback to full page load if client-side navigation fails
             window.location.href = `/job-info/${jobId}`;
+        }
+    };
+
+    const handleSave = () => {
+        if (saved) {
+            removeJob(job.id);
+            setSaved(false);
+
+            notifications.show({
+                message: (
+                    <>
+                        <strong>{job.position}</strong> has been removed.{" "}
+                        <a
+                            href="#"
+                            onClick={(e) => e.preventDefault()}
+                            style={{
+                                color: BROWN,
+                                fontWeight: 600,
+                                textDecoration: "underline",
+                            }}
+                        >
+                            Login
+                        </a>{" "}
+                        to keep your saved jobs across sessions.
+                    </>
+                ),
+                autoClose: 3000,
+            });
+        } else {
+            saveJob(job.id);
+            setSaved(true);
+
+            notifications.show({
+                message: (
+                    <>
+                        <strong>{job.position}</strong> has been saved.{" "}
+                        <a
+                            href="#"
+                            onClick={(e) => e.preventDefault()}
+                            style={{
+                                color: BROWN,
+                                fontWeight: 600,
+                                textDecoration: "underline",
+                            }}
+                        >
+                            Login
+                        </a>{" "}
+                        to keep your saved jobs across sessions.
+                    </>
+                ),
+                autoClose: 3000,
+            });
         }
     };
 
@@ -150,10 +212,20 @@ const JobListing: React.FC<Props> = ({ job }) => {
                             radius="xl"
                             size="xs"
                             variant="light"
-                            color="gray"
-                            onClick={() => window.alert(t("jobListing.savedAlert", { title: job.position }))}
+                            onClick={handleSave}
+                            styles={{
+                                root: {
+                                    border: `1px solid ${BROWN}`,
+                                    backgroundColor: saved ? BROWN : "transparent",
+                                    transition: "all 150ms ease",
+                                },
+                                label: {
+                                    color: saved ? "#ffffff" : BROWN,
+                                    fontWeight: 500,
+                                },
+                            }}
                         >
-                            {t("jobListing.save")}
+                            {saved ? t("jobListing.saved") : t("jobListing.save")}
                         </Button>
                     </Group>
 
@@ -161,8 +233,7 @@ const JobListing: React.FC<Props> = ({ job }) => {
                         radius="xl"
                         size="xs"
                         variant="subtle"
-                        color="gray"
-                        onClick={() => window.alert(t("jobListing.shareAlert", { title: job.position }))}
+                        onClick={() => onShare?.(job.id)}
                     >
                         {t("jobListing.share")}
                     </Button>

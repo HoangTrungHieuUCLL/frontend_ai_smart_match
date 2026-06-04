@@ -1,0 +1,11 @@
+.loginButton {
+    border: 1px solid #774326;
+    color: #774326;
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.loginButton:hover {
+    background: #774326;
+    color: white;
+}

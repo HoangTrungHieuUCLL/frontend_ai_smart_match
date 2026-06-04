@@ -2,10 +2,22 @@ import {CV} from "../types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export interface CvConfirmReturn {
+    job_id: number;
+    company_name: string;
+    position: string;
+    location: string;
+    type: string;
+    requirements: string;
+    requirements_simplified: string;
+    compatibility_score: number;
+}
+
 export type ParsedCvResponse = {
     message: string;
     cv_id: number;
     profile_id: number;
+    cv_file_name?: string;
     top_10_compatibility_scores?: CvConfirmReturn[];
     ai_result: {
         candidate_profile?: {
@@ -40,15 +52,10 @@ export type CvConfirmData = {
     cv: CV;
 };
 
-export interface CvConfirmReturn {
-    job_id: number;
-    company_name: string;
-    position: string;
-    location: string;
-    type: string;
-    requirements: string;
-    requirements_simplified: string;
-    compatibility_score: number;
+export interface CvConfirmResponse {
+    profile_id: number;
+    saved_count: number;
+    jobs: CvConfirmReturn[];
 }
 
 const readErrorMessage = async (response: Response): Promise<string> => {
@@ -60,7 +67,6 @@ const readErrorMessage = async (response: Response): Promise<string> => {
         if (typeof detail?.error === "string") return detail.error;
         if (typeof detail?.message === "string") return detail.message;
     } catch {
-        // Fall through to plain text below.
     }
 
     return await response.text();
@@ -102,7 +108,7 @@ const parseCv = async (cv: File): Promise<ParsedCvResponse> => {
     return await response.json();
 };
 
-const confirmCv = async (data: CvConfirmData): Promise<{ jobs?: CvConfirmReturn[] }> => {
+const confirmCv = async (data: CvConfirmData): Promise<CvConfirmResponse> => {
     const response = await fetch(`${API_URL}/profiles/${data.profileId}/all`, {
         method: "GET",
     });
