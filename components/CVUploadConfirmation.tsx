@@ -41,13 +41,14 @@ export default function CVUploadConfirmation({cv, onClose, profileId}: Props) {
             profileId,
             cv
         });
-        console.log(response);
 
         const scores: Score[] =
             response?.jobs?.map((s: any) => ({
                 job_id: s.job_id,
                 compatibility_score: s.compatibility_score,
             })) ?? [];
+
+        localStorage.setItem("jobScores", JSON.stringify(scores));
 
         onClose(scores);
     };

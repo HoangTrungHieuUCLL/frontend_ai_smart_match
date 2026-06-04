@@ -20,7 +20,22 @@ export default function JobSearchWithAIPage() {
     const fetchJobs = async () => {
         try {
             const response = await JobService.getAllJobs();
-            setJobs(response);
+
+            const savedScores: CvConfirmReturn[] = JSON.parse(
+                localStorage.getItem("jobScores") ?? "[]"
+            );
+
+            const scoreMap = new Map(
+                savedScores.map(s => [s.job_id, s.compatibility_score])
+            );
+
+            const jobsWithScores = response.map(job => ({
+                ...job,
+                compatibility_score:
+                    scoreMap.get(job.id) ?? job.compatibility_score ?? null,
+            }));
+
+            setJobs(jobsWithScores);
         } catch (error) {
             console.error("Failed to fetch jobs", error);
         }
@@ -103,7 +118,7 @@ export default function JobSearchWithAIPage() {
                 onClose={(results: CvConfirmReturn[] | undefined) => {
                     setModalOpen(false);
 
-                    if (!results) return;
+                    if (!results || results.length === 0) return;
 
                     const scoreMap = new Map(
                         results.map(r => [r.job_id, r.compatibility_score])

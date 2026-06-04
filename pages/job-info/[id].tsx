@@ -17,6 +17,7 @@ import JobService from "../../services/JobService";
 import CVUploadButton from "../../components/CVUploadButton";
 import CVUploadModal from "../../components/CVUploadModal";
 import { useTranslation } from "../../contexts/I18nContext";
+import {CvConfirmReturn} from "../../services/CvService";
 
 const BROWN = "#774326";
 
@@ -47,6 +48,22 @@ export default function JobInfoDetailPage() {
         if (!id) return;
         fetchJob();
     }, [id]);
+
+    useEffect(() => {
+        if (!job) return;
+
+        const savedScores: CvConfirmReturn[] = JSON.parse(
+            localStorage.getItem("jobScores") ?? "[]"
+        );
+
+        const match = savedScores.find(
+            (s) => s.job_id === job.id
+        );
+
+        setCompatibilityScore(
+            match?.compatibility_score ?? null
+        );
+    }, [job]);
 
     if (loading) {
         return (
@@ -208,7 +225,7 @@ export default function JobInfoDetailPage() {
                                                 sections={[
                                                     {
                                                         value: compatibilityScore,
-                                                        color: compatabilityScore >= 70 ? '#34C759' : '#FF383C',
+                                                        color: compatibilityScore >= 70 ? '#34C759' : '#FF383C',
                                                     },
                                                 ]}
                                             />
@@ -300,6 +317,8 @@ export default function JobInfoDetailPage() {
                 opened={modalOpen}
                 onClose={(results: CvConfirmReturn[] | undefined) => {
                     setModalOpen(false);
+
+                    if (!results || results.length === 0) return;
 
                     const match = results?.find(
                         (r) => r.job_id === job.id
