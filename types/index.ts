@@ -14,6 +14,21 @@ export interface Job {
     compatibility_score: number | null;
 }
 
+export interface JobCreatePayload {
+    company_name: string;
+    position: string;
+    date: string;
+    location: string;
+    type: string;
+    overview: string;
+    responsibilities: string;
+    requirements: string;
+    offers: string;
+    salary: string | null;
+    notes: string | null;
+    requirements_simplified: string;
+}
+
 export interface CV {
     id: number;
     filename: string;
