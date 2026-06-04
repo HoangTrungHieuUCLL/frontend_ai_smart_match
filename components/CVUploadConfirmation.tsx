@@ -311,7 +311,11 @@ export function CVSummaryDetails({
                 )}
             </Stack>
 
-            {footer && <Group justify="flex-end">{footer}</Group>}
+            {footer && (
+                <Group justify="flex-end">
+                    {footer}
+                </Group>
+            )}
         </Stack>
     );
 }
@@ -321,7 +325,7 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
 
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [profile, setProfile] = useState<Profile | null>(() => {
         const saved = localStorage.getItem(STORAGE_KEY);
 
@@ -351,14 +355,19 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
             throw new Error("Profile ID missing");
         }
 
-        const response = await CvService.confirmCv({
-            profileId: id,
-            cv,
-        });
+        setIsSubmitting(true);
 
-        localStorage.removeItem(STORAGE_KEY);
+        try {
+            const response = await CvService.confirmCv({
+                profileId: id,
+                cv,
+            });
 
-        onClose(response?.jobs ?? []);
+            localStorage.removeItem(STORAGE_KEY);
+            onClose(response?.jobs ?? []);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const onSaveChanges = async () => {
@@ -445,6 +454,7 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
                             variant="outline"
                             color={BROWN}
                             onClick={() => setIsEditing(true)}
+                            disabled={isSubmitting}
                         >
                             Edit
                         </Button>
@@ -452,7 +462,8 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
 
                     <Button
                         color={BROWN}
-                        loading={isSaving}
+                        loading={isSaving || isSubmitting}
+                        disabled={isSaving || isSubmitting}
                         onClick={isEditing ? onSaveChanges : onSubmit}
                     >
                         {isEditing ? "Save changes" : "Everything looks good!"}
