@@ -10,14 +10,18 @@ import {
     Paper,
     Stack,
     Text,
-    RingProgress
+    RingProgress,
+    Modal,
 } from "@mantine/core";
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
 import CVUploadButton from "../../components/CVUploadButton";
 import CVUploadModal from "../../components/CVUploadModal";
 import { useTranslation } from "../../contexts/I18nContext";
-import {CvConfirmReturn} from "../../services/CvService";
+import { isJobSaved } from "../../utils/savedJobs";
+import { saveJob, removeJob } from "../../utils/savedJobs";
+import { notifications } from "@mantine/notifications";
+import { CvConfirmReturn } from "../../services/CvService";
 
 const BROWN = "#774326";
 
@@ -31,6 +35,8 @@ export default function JobInfoDetailPage() {
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [compatibilityScore, setCompatibilityScore] = useState<number | null>(null);
+    const [Saved, setSaved] = useState(false);
+    const [shareOpened, setShareOpened] = useState(false);
 
     const fetchJob = async () => {
         setLoading(true);
@@ -63,6 +69,8 @@ export default function JobInfoDetailPage() {
         setCompatibilityScore(
             match?.compatibility_score ?? null
         );
+
+        setSaved(isJobSaved(job.id));
     }, [job]);
 
     if (loading) {
@@ -85,6 +93,35 @@ export default function JobInfoDetailPage() {
     const requirements = splitLines(job.requirements);
     const benefits = splitLines(job.offers);
     const notes = splitLines(job.notes);
+
+    const handleSave = () => {
+        if (Saved) {
+            removeJob(job.id);
+            setSaved(false);
+
+            notifications.show({
+                title: "Removed",
+                message: "Job removed from saved list",
+                autoClose: 3000,
+            });
+        } else {
+            saveJob(job.id);
+            setSaved(true);
+
+            notifications.show({
+                title: "Saved",
+                message: "Job added to saved list",
+                autoClose: 3000,
+            });
+        }
+    };
+    const handleShare = async () => {
+        const url = window.location.href;
+
+        await navigator.clipboard.writeText(url);
+
+        setShareOpened(true);
+    };
 
   return (
     <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
@@ -235,16 +272,18 @@ export default function JobInfoDetailPage() {
                                             <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
                                             <Group grow>
                                                 <Button
-                                                    variant="filled"
+                                                    variant={Saved ? "filled" : "light"}
                                                     size="sm"
                                                     color={BROWN}
+                                                    onClick={handleSave}
                                                 >
-                                                    {t("jobInfo.save")}
+                                                    {Saved ? "Saved" : t("jobInfo.save")}
                                                 </Button>
                                                 <Button
                                                     variant="light"
                                                     size="sm"
                                                     color={BROWN}
+                                                    onClick={handleShare}
                                                 >
                                                     {t("jobInfo.share")}
                                                 </Button>
@@ -329,6 +368,26 @@ export default function JobInfoDetailPage() {
                     );
                 }}
             />
+            <Modal
+                opened={shareOpened}
+                onClose={() => setShareOpened(false)}
+                centered
+                title="Share Job"
+            >
+                <Stack>
+                    <Text>
+                        Link to this job is saved in your clipboard
+                    </Text>
+
+                    <Button
+                        radius="xl"
+                        color={BROWN}
+                        onClick={() => setShareOpened(false)}
+                    >
+                        OK
+                    </Button>
+                </Stack>
+            </Modal>
         </Box>
     );
 }
