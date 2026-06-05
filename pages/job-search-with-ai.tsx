@@ -6,6 +6,7 @@ import JobService from "../services/JobService";
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
+import { CvConfirmReturn } from "../services/CvService";
 import { getSavedJobs } from "../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
 
@@ -64,6 +65,29 @@ const requiredJobFields: Array<keyof JobFormState> = [
     "requirements_simplified",
 ];
 
+const SCORE_STORAGE_KEY = "jobScores";
+const CV_NAME_STORAGE_KEY = "cvName";
+
+const saveScoresToStorage = (results: CvConfirmReturn[]) => {
+    const existing: CvConfirmReturn[] = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
+    const merged = new Map(existing.map((r) => [r.job_id, r.compatibility_score]));
+    results.forEach((r) => merged.set(r.job_id, r.compatibility_score));
+    localStorage.setItem(
+        SCORE_STORAGE_KEY,
+        JSON.stringify(Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({ job_id, compatibility_score })))
+    );
+};
+
+const applyStoredScores = (jobList: Job[]): Job[] => {
+    const stored: CvConfirmReturn[] = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
+    if (!stored.length) return jobList;
+    const scoreMap = new Map(stored.map((r) => [r.job_id, r.compatibility_score]));
+    return jobList.map((job) => ({
+        ...job,
+        compatibility_score: scoreMap.get(job.id) ?? job.compatibility_score ?? null,
+    }));
+};
+
 export default function JobSearchWithAIPage() {
     const { t } = useTranslation();
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -75,14 +99,18 @@ export default function JobSearchWithAIPage() {
     const [isRegistering, setIsRegistering] = useState(false);
 
     const [search, setSearch] = useState("");
-    const [uploadedCvName, setUploadedCvName] =useState<string | null>(null);
+    const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
+
+    useEffect(() => {
+        setUploadedCvName(localStorage.getItem(CV_NAME_STORAGE_KEY));
+    }, []);
     const [showSavedOnly, setShowSavedOnly] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
     // const [copiedUrl, setCopiedUrl] = useState("");
     const fetchJobs = async () => {
         try {
             const response = await JobService.getAllJobs();
-            setJobs(response);
+            setJobs(applyStoredScores(response));
         } catch (error) {
             console.error("Failed to fetch jobs", error);
         }
@@ -331,7 +359,11 @@ export default function JobSearchWithAIPage() {
                     if (!results) return;
                     if (cvName) {
                         setUploadedCvName(cvName);
+                        localStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
                     }
+
+                    saveScoresToStorage(results);
+
                     const scoreMap = new Map(
                         results.map(r => [r.job_id, r.compatibility_score])
                     );
