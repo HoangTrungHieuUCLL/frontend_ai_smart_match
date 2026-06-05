@@ -119,7 +119,7 @@ export const Header = () => {
                         { value: "EN", label: "EN" },
                         { value: "VN", label: "VN" }
                     ]}
-                    w={65}
+                    w={70}
                     size="sm"
                     clearable={false}
                     searchable={false}

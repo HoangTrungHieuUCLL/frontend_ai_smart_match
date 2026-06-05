@@ -232,7 +232,7 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                     <Button
                         radius="xl"
                         size="xs"
-                        variant="subtle"
+                        variant="outline"
                         onClick={() => onShare?.(job.id)}
                     >
                         {t("jobListing.share")}
