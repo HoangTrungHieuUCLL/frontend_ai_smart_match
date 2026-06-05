@@ -1,4 +1,4 @@
-import {Button, Group, Image, Text, Select, Modal} from "@mantine/core";
+import {Button, Group, Image, Text, Select, Modal, Popover, Stack} from "@mantine/core";
 import { useRouter } from "next/router";
 import { Language, useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/header.module.css";
@@ -10,6 +10,7 @@ export const Header = () => {
     const { language, setLanguage, t } = useTranslation();
     const [loginOpened, setLoginOpened] = useState(false);
     const [loggedInUsername, setLoggedInUsername] = useState<string>("");
+    const [logoutOpened, setLogoutOpened] = useState(false);
 
     const navItems = [
         { label: t("nav.homepage"), href: "/" },
@@ -27,6 +28,14 @@ export const Header = () => {
 
     const handleJobSearchClick = () => {
         router.push("/job-search-with-ai");
+    };
+
+    const handleLogout = async () => {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("username");
+        setLoggedInUsername("");
+        setLogoutOpened(false);
+        await router.push("/");
     };
 
     useEffect(() => {
@@ -93,7 +102,38 @@ export const Header = () => {
                 </Button>
 
                 {loggedInUsername ? (
-                    <Text c="black">Hello, {loggedInUsername}!</Text>
+                    <Popover
+                        opened={logoutOpened}
+                        onChange={setLogoutOpened}
+                        position="bottom"
+                        offset={12}
+                        withinPortal={false}
+                        shadow="md"
+                    >
+                        <Popover.Target>
+                            <Text
+                                component="button"
+                                type="button"
+                                c="black"
+                                className={styles.adminGreeting}
+                                onClick={() => setLogoutOpened((opened) => !opened)}
+                            >
+                                Hello, {loggedInUsername}!
+                            </Text>
+                        </Popover.Target>
+                        <Popover.Dropdown className={styles.logoutPopover}>
+                            <Stack align="center" gap={0}>
+                                <Button
+                                    radius="xl"
+                                    size="lg"
+                                    className={styles.logoutButton}
+                                    onClick={handleLogout}
+                                >
+                                    Log out
+                                </Button>
+                            </Stack>
+                        </Popover.Dropdown>
+                    </Popover>
                 ) : (
                     // Log in button
                     <Button
