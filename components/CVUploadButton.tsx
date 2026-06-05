@@ -49,26 +49,6 @@ export default function CVUploadButton({ label, style, ...props }: CVUploadButto
         <Text component="span" size="sm" fw={700} style={{ flex: 1, textAlign: "left", color: "#ffffff" }}>
           {label ?? t("upload.cvButton")}
         </Text>
-
-        <Box
-          aria-hidden="true"
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: "50%",
-            backgroundColor: "#ffffff",
-            color: BROWN,
-            display: "grid",
-            placeItems: "center",
-            flexShrink: 0,
-            fontSize: 16,
-            fontWeight: 800,
-            fontFamily: "Georgia, serif",
-            lineHeight: 1,
-          }}
-        >
-          i
-        </Box>
       </Group>
     </Button>
   );

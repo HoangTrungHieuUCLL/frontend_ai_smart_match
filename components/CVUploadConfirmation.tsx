@@ -3,12 +3,15 @@ import {
     Divider,
     Group,
     Paper,
+    Pill,
+    PillsInput,
     Stack,
     Text,
     Textarea,
     TextInput,
+    Tooltip,
 } from "@mantine/core";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import CvService, { CvConfirmReturn } from "../services/CvService";
 import { CV, Profile } from "../types";
 
@@ -34,6 +37,15 @@ interface CVSummaryDetailsProps {
     ) => void;
 }
 
+const parseSkills = (skillsStr?: string | null): string[] =>
+    (skillsStr ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+const serializeSkills = (skills: string[]) =>
+    skills.map((s) => s.trim()).filter(Boolean);
+
 export function CVSummaryDetails({
                                      cv,
                                      profile: profileOverride,
@@ -49,6 +61,39 @@ export function CVSummaryDetails({
         backgroundColor: "#fdf7ef",
     };
 
+    const [skillInput, setSkillInput] = useState("");
+
+    const skills = parseSkills(profile?.skills);
+
+    const updateSkills = (nextSkills: string[]) => {
+        const normalized = serializeSkills(nextSkills);
+        onProfileFieldChange?.("skills", normalized.join(", "));
+    };
+
+    const addSkill = (rawSkill: string) => {
+        const skill = rawSkill.trim();
+
+        setSkillInput("");
+
+        if (!skill) return;
+
+        const exists = skills.some(
+            (s) => s.toLowerCase() === skill.toLowerCase(),
+        );
+
+        if (exists) return;
+
+        updateSkills([...skills, skill]);
+    };
+
+    const removeSkill = (skillToRemove: string) => {
+        updateSkills(
+            skills.filter(
+                (s) => s.toLowerCase() !== skillToRemove.toLowerCase(),
+            ),
+        );
+    };
+
     return (
         <Stack gap="lg">
             <Paper p="md" radius="md" style={sectionStyle}>
@@ -62,19 +107,34 @@ export function CVSummaryDetails({
                             label="Given Name"
                             value={profile?.given_name ?? ""}
                             readOnly={!isEditing}
-                            onChange={(event) => onProfileFieldChange?.("given_name", event.currentTarget.value)}
+                            onChange={(event) =>
+                                onProfileFieldChange?.(
+                                    "given_name",
+                                    event.currentTarget.value,
+                                )
+                            }
                         />
                         <TextInput
                             label="Middle Name"
                             value={profile?.middle_name ?? ""}
                             readOnly={!isEditing}
-                            onChange={(event) => onProfileFieldChange?.("middle_name", event.currentTarget.value)}
+                            onChange={(event) =>
+                                onProfileFieldChange?.(
+                                    "middle_name",
+                                    event.currentTarget.value,
+                                )
+                            }
                         />
                         <TextInput
                             label="Family Name"
                             value={profile?.family_name ?? ""}
                             readOnly={!isEditing}
-                            onChange={(event) => onProfileFieldChange?.("family_name", event.currentTarget.value)}
+                            onChange={(event) =>
+                                onProfileFieldChange?.(
+                                    "family_name",
+                                    event.currentTarget.value,
+                                )
+                            }
                         />
                     </Group>
 
@@ -83,13 +143,23 @@ export function CVSummaryDetails({
                             label="Current Title"
                             value={profile?.current_title ?? ""}
                             readOnly={!isEditing}
-                            onChange={(event) => onProfileFieldChange?.("current_title", event.currentTarget.value)}
+                            onChange={(event) =>
+                                onProfileFieldChange?.(
+                                    "current_title",
+                                    event.currentTarget.value,
+                                )
+                            }
                         />
                         <TextInput
                             label="Email"
                             value={profile?.email ?? ""}
                             readOnly={!isEditing}
-                            onChange={(event) => onProfileFieldChange?.("email", event.currentTarget.value)}
+                            onChange={(event) =>
+                                onProfileFieldChange?.(
+                                    "email",
+                                    event.currentTarget.value,
+                                )
+                            }
                         />
                     </Group>
 
@@ -98,13 +168,23 @@ export function CVSummaryDetails({
                             label="Phone"
                             value={profile?.phone ?? ""}
                             readOnly={!isEditing}
-                            onChange={(event) => onProfileFieldChange?.("phone", event.currentTarget.value)}
+                            onChange={(event) =>
+                                onProfileFieldChange?.(
+                                    "phone",
+                                    event.currentTarget.value,
+                                )
+                            }
                         />
                         <TextInput
                             label="Location"
                             value={profile?.location ?? ""}
                             readOnly={!isEditing}
-                            onChange={(event) => onProfileFieldChange?.("location", event.currentTarget.value)}
+                            onChange={(event) =>
+                                onProfileFieldChange?.(
+                                    "location",
+                                    event.currentTarget.value,
+                                )
+                            }
                         />
                     </Group>
 
@@ -113,15 +193,86 @@ export function CVSummaryDetails({
                         value={profile?.bio ?? ""}
                         autosize
                         readOnly={!isEditing}
-                        onChange={(event) => onProfileFieldChange?.("bio", event.currentTarget.value)}
+                        onChange={(event) =>
+                            onProfileFieldChange?.(
+                                "bio",
+                                event.currentTarget.value,
+                            )
+                        }
                     />
 
-                    <TextInput
-                        label="Skills"
-                        value={profile?.skills ?? ""}
-                        readOnly={!isEditing}
-                        onChange={(event) => onProfileFieldChange?.("skills", event.currentTarget.value)}
-                    />
+                    <PillsInput label="Skills"
+                                description="Add skills by writing them and pressing Enter or Tab in edit mode"
+                    >
+                        <Pill.Group>
+                            {skills.map((skill) => {
+                                const isLong = skill.length > 60;
+
+                                const pill = (
+                                    <Pill
+                                        key={skill}
+                                        radius="sm"
+                                        color={BROWN}
+                                        withRemoveButton={isEditing}
+                                        onRemove={() => removeSkill(skill)}
+                                    >
+                                        <span
+                                            style={{
+                                                display: "inline-block",
+                                                maxWidth: 250,
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                whiteSpace: "nowrap",
+                                            }}
+                                        >
+                                            {skill}
+                                        </span>
+                                    </Pill>
+                                );
+
+                                return isLong ? (
+                                    <Tooltip key={skill} label={skill}>
+                                        {pill}
+                                    </Tooltip>
+                                ) : (
+                                    pill
+                                );
+                            })}
+
+                            {isEditing && (
+                                <PillsInput.Field
+                                    value={skillInput}
+                                    placeholder="Add a skill..."
+                                    onChange={(event) =>
+                                        setSkillInput(
+                                            event.currentTarget.value,
+                                        )
+                                    }
+                                    onKeyDown={(event) => {
+                                        if (
+                                            event.key === "Enter" ||
+                                            event.key === "Tab"
+                                        ) {
+                                            event.preventDefault();
+                                            addSkill(skillInput);
+                                            return;
+                                        }
+
+                                        if (
+                                            event.key === "Backspace" &&
+                                            !skillInput.trim() &&
+                                            skills.length > 0
+                                        ) {
+                                            event.preventDefault();
+                                            removeSkill(
+                                                skills[skills.length - 1],
+                                            );
+                                        }
+                                    }}
+                                />
+                            )}
+                        </Pill.Group>
+                    </PillsInput>
                 </Stack>
             </Paper>
 
@@ -139,14 +290,28 @@ export function CVSummaryDetails({
                                 label="Job Title"
                                 value={exp.job_title ?? ""}
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("work_experiences", index, "job_title", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "work_experiences",
+                                        index,
+                                        "job_title",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
 
                             <TextInput
                                 label="Company"
                                 value={exp.company_name ?? ""}
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("work_experiences", index, "company_name", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "work_experiences",
+                                        index,
+                                        "company_name",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
 
                             <Group grow>
@@ -154,13 +319,27 @@ export function CVSummaryDetails({
                                     label="Start Date"
                                     value={exp.start_date ?? ""}
                                     readOnly={!isEditing}
-                                    onChange={(event) => onCollectionItemChange?.("work_experiences", index, "start_date", event.currentTarget.value)}
+                                    onChange={(event) =>
+                                        onCollectionItemChange?.(
+                                            "work_experiences",
+                                            index,
+                                            "start_date",
+                                            event.currentTarget.value,
+                                        )
+                                    }
                                 />
                                 <TextInput
                                     label="End Date"
                                     value={exp.end_date ?? ""}
                                     readOnly={!isEditing}
-                                    onChange={(event) => onCollectionItemChange?.("work_experiences", index, "end_date", event.currentTarget.value)}
+                                    onChange={(event) =>
+                                        onCollectionItemChange?.(
+                                            "work_experiences",
+                                            index,
+                                            "end_date",
+                                            event.currentTarget.value,
+                                        )
+                                    }
                                 />
                             </Group>
                         </Stack>
@@ -182,21 +361,42 @@ export function CVSummaryDetails({
                                 label="Institution"
                                 value={edu.institution ?? ""}
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("educations", index, "institution", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "educations",
+                                        index,
+                                        "institution",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
 
                             <TextInput
                                 label="Degree"
                                 value={edu.degree ?? ""}
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("educations", index, "degree", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "educations",
+                                        index,
+                                        "degree",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
 
                             <TextInput
                                 label="Field of Study"
                                 value={edu.field_of_study ?? ""}
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("educations", index, "field_of_study", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "educations",
+                                        index,
+                                        "field_of_study",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
 
                             <Group grow>
@@ -204,13 +404,27 @@ export function CVSummaryDetails({
                                     label="Start Date"
                                     value={edu.start_date ?? ""}
                                     readOnly={!isEditing}
-                                    onChange={(event) => onCollectionItemChange?.("educations", index, "start_date", event.currentTarget.value)}
+                                    onChange={(event) =>
+                                        onCollectionItemChange?.(
+                                            "educations",
+                                            index,
+                                            "start_date",
+                                            event.currentTarget.value,
+                                        )
+                                    }
                                 />
                                 <TextInput
                                     label="End Date"
                                     value={edu.end_date ?? ""}
                                     readOnly={!isEditing}
-                                    onChange={(event) => onCollectionItemChange?.("educations", index, "end_date", event.currentTarget.value)}
+                                    onChange={(event) =>
+                                        onCollectionItemChange?.(
+                                            "educations",
+                                            index,
+                                            "end_date",
+                                            event.currentTarget.value,
+                                        )
+                                    }
                                 />
                             </Group>
                         </Stack>
@@ -232,7 +446,14 @@ export function CVSummaryDetails({
                                 label="Project Name"
                                 value={project.project_name ?? ""}
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("projects", index, "project_name", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "projects",
+                                        index,
+                                        "project_name",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
 
                             <Textarea
@@ -240,7 +461,14 @@ export function CVSummaryDetails({
                                 value={project.description ?? ""}
                                 autosize
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("projects", index, "description", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "projects",
+                                        index,
+                                        "description",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
                         </Stack>
                     </Paper>
@@ -261,14 +489,28 @@ export function CVSummaryDetails({
                                 label="Language"
                                 value={lang.language_name ?? ""}
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("languages", index, "language_name", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "languages",
+                                        index,
+                                        "language_name",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
 
                             <TextInput
                                 label="Proficiency"
                                 value={lang.proficiency_level ?? ""}
                                 readOnly={!isEditing}
-                                onChange={(event) => onCollectionItemChange?.("languages", index, "proficiency_level", event.currentTarget.value)}
+                                onChange={(event) =>
+                                    onCollectionItemChange?.(
+                                        "languages",
+                                        index,
+                                        "proficiency_level",
+                                        event.currentTarget.value,
+                                    )
+                                }
                             />
                         </Group>
                     </Paper>
@@ -290,14 +532,28 @@ export function CVSummaryDetails({
                                     label="Certification"
                                     value={cert.certification_name ?? ""}
                                     readOnly={!isEditing}
-                                    onChange={(event) => onCollectionItemChange?.("certifications", index, "certification_name", event.currentTarget.value)}
+                                    onChange={(event) =>
+                                        onCollectionItemChange?.(
+                                            "certifications",
+                                            index,
+                                            "certification_name",
+                                            event.currentTarget.value,
+                                        )
+                                    }
                                 />
 
                                 <TextInput
                                     label="Issue Date"
                                     value={cert.issue_date ?? ""}
                                     readOnly={!isEditing}
-                                    onChange={(event) => onCollectionItemChange?.("certifications", index, "issue_date", event.currentTarget.value)}
+                                    onChange={(event) =>
+                                        onCollectionItemChange?.(
+                                            "certifications",
+                                            index,
+                                            "issue_date",
+                                            event.currentTarget.value,
+                                        )
+                                    }
                                 />
                             </Stack>
                         </Paper>
@@ -311,49 +567,27 @@ export function CVSummaryDetails({
                 )}
             </Stack>
 
-            {footer && (
-                <Group justify="flex-end">
-                    {footer}
-                </Group>
-            )}
+            {footer && <Group justify="flex-end">{footer}</Group>}
         </Stack>
     );
 }
 
-export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) {
-    const STORAGE_KEY = `cv-upload-confirmation-profile-${profileId ?? cv?.candidate_profile?.id ?? "new"}`;
-
+export default function CVUploadConfirmation({
+                                                 cv,
+                                                 onClose,
+                                                 profileId,
+                                             }: Props) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [profile, setProfile] = useState<Profile | null>(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch {
-                localStorage.removeItem(STORAGE_KEY);
-            }
-        }
-
-        return cv?.candidate_profile ?? null;
-    });
-
-    useEffect(() => {
-        if (profile) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-        } else {
-            localStorage.removeItem(STORAGE_KEY);
-        }
-    }, [profile, STORAGE_KEY]);
+    const [profile, setProfile] = useState<Profile | null>(
+        cv?.candidate_profile ?? null,
+    );
 
     const onSubmit = async () => {
         const id = profileId ?? profile?.id;
 
-        if (!id) {
-            throw new Error("Profile ID missing");
-        }
+        if (!id) throw new Error("Profile ID missing");
 
         setIsSubmitting(true);
 
@@ -363,7 +597,6 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
                 cv,
             });
 
-            localStorage.removeItem(STORAGE_KEY);
             onClose(response?.jobs ?? []);
         } finally {
             setIsSubmitting(false);
@@ -378,20 +611,8 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
         try {
             const response = await CvService.updateExtractedData(profile.id, {
                 candidate_profile: {
-                    given_name: profile.given_name,
-                    middle_name: profile.middle_name,
-                    family_name: profile.family_name,
-                    current_title: profile.current_title,
-                    email: profile.email,
-                    phone: profile.phone,
-                    location: profile.location,
-                    bio: profile.bio,
-                    skills: profile.skills,
-                    work_experiences: profile.work_experiences,
-                    educations: profile.educations,
-                    projects: profile.projects,
-                    languages: profile.languages,
-                    certifications: profile.certifications,
+                    ...profile,
+                    skills: serializeSkills(parseSkills(profile.skills)).join(", "),
                 },
             });
 
@@ -399,9 +620,7 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
                 throw new Error(await response.text());
             }
 
-            localStorage.removeItem(STORAGE_KEY);
             setIsEditing(false);
-
             await onSubmit();
         } catch (error) {
             console.error("Save CV changes error:", error);
@@ -413,12 +632,17 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
 
     const updateProfileField = (field: keyof Profile, value: string) => {
         setProfile((current) =>
-            current ? { ...current, [field]: value } : current
+            current ? { ...current, [field]: value } : current,
         );
     };
 
     const updateCollectionItem = (
-        collection: "work_experiences" | "educations" | "projects" | "languages" | "certifications",
+        collection:
+            | "work_experiences"
+            | "educations"
+            | "projects"
+            | "languages"
+            | "certifications",
         index: number,
         field: string,
         value: string,
@@ -426,7 +650,9 @@ export default function CVUploadConfirmation({ cv, onClose, profileId }: Props) 
         setProfile((current) => {
             if (!current) return current;
 
-            const nextCollection = [...current[collection]] as unknown as Array<Record<string, unknown>>;
+            const nextCollection = [
+                ...current[collection],
+            ] as unknown as Array<Record<string, unknown>>;
 
             nextCollection[index] = {
                 ...nextCollection[index],

@@ -1,4 +1,4 @@
-import {Job} from "../types";
+import {Job, JobCreatePayload} from "../types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -24,9 +24,28 @@ const getJobById = async (id: number): Promise<Job> => {
   return await response.json();
 };
 
+const createJob = async (job: JobCreatePayload, token: string): Promise<Job> => {
+  const response = await fetch(`${API_URL}/jobs`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(job),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail || "Failed to register job");
+  }
+
+  return await response.json();
+};
+
 const JobService = {
   getAllJobs,
   getJobById,
+  createJob,
 };
 
 export default JobService;
