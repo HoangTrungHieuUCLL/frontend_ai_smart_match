@@ -219,21 +219,10 @@ export default function JobSearchWithAIPage() {
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
             <Container size="1100px">
-                <Group justify="space-between" align="center" style={{ marginBottom: 24 }}>
-                    {/* <Stack gap={4}>
-                        <Title order={2} style={{ color: "#623a26", fontWeight: 700 }}>
-                            {t("jobSearch.title")}
-                        </Title>
-                        <Text size="sm" c="dimmed">
-                            {t("jobSearch.subtitle")}
-                        </Text>
-                    </Stack> */}
-
-                <Group gap="md" wrap="nowrap">
-
+                <Group justify="flex-end" gap="xs" align="center" style={{ marginBottom: 24 }}>
                     <CVUploadButton
-                    label={uploadedCvName ?? undefined}
-                    onClick={() => setModalOpen(true)} />
+                        label={uploadedCvName ?? undefined}
+                        onClick={() => setModalOpen(true)} />
 
                     <TextInput
                         placeholder="Search jobs..."
@@ -244,6 +233,7 @@ export default function JobSearchWithAIPage() {
                         styles={{
                             input: {
                                 height: 40,
+                                minHeight: 40,
                                 borderColor: BROWN,
                                 color: BROWN,
                                 backgroundColor: "#f7f2ef",
@@ -253,6 +243,7 @@ export default function JobSearchWithAIPage() {
                     <Button
                         radius="xl"
                         variant={showSavedOnly ? "filled" : "light"}
+                        h={40}
                         style={{
                             backgroundColor: showSavedOnly ? BROWN : "transparent",
                             border: `1px solid ${BROWN}`,
@@ -262,7 +253,7 @@ export default function JobSearchWithAIPage() {
                         }}
                         onClick={() => setShowSavedOnly((prev) => !prev)}
                     >
-                        Saved Jobs
+                        Saved jobs
                     </Button>
 
                     {adminToken && (
@@ -297,14 +288,14 @@ export default function JobSearchWithAIPage() {
                             </Group>
                         </Button>
                     )}
-
-                </Group>
                 </Group>
 
                 <Stack gap="md">
                     {currentJobs.map((job) => (
-                        <JobListing key={job.id} job={job}
-                         onShare={handleShare}/>
+                        <JobListing key={job.id}
+                                    job={job}
+                                    onShare={handleShare}
+                        />
                     ))}
                 </Stack>
 
