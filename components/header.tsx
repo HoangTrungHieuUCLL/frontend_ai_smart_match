@@ -125,7 +125,7 @@ export const Header = () => {
                             <Stack align="center" gap={0}>
                                 <Button
                                     radius="xl"
-                                    size="lg"
+                                    size="sm"
                                     className={styles.logoutButton}
                                     onClick={handleLogout}
                                 >
