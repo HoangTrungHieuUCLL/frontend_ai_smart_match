@@ -64,4 +64,5 @@ export const en: TranslationDictionary = {
   "jobInfo.match": "match",
   "jobInfo.loading": "Loading job details...",
   "jobInfo.notFound": "Job not found.",
+  "jobInfo.cardCvReuploadDescription": "You have already uploaded a CV. You can replace it if needed."
 };

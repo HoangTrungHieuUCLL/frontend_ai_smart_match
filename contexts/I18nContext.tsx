@@ -67,7 +67,8 @@ export type TranslationKey =
   | "jobInfo.share"
   | "jobInfo.match"
   | "jobInfo.loading"
-  | "jobInfo.notFound";
+  | "jobInfo.notFound"
+  | "jobInfo.cardCvReuploadDescription";
 
 export type TranslationDictionary = Record<TranslationKey, string>;
 

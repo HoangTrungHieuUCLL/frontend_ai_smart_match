@@ -64,4 +64,5 @@ export const vn: TranslationDictionary = {
   "jobInfo.match": "phù hợp",
   "jobInfo.loading": "Đang tải chi tiết công việc...",
   "jobInfo.notFound": "Không tìm thấy công việc.",
+  "jobInfo.cardCvReuploadDescription": "Bạn đã tải lên một CV. Bạn có thể thay thế nó nếu cần."
 };
