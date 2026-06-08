@@ -1,72 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, Textarea, TextInput} from "@mantine/core";
+import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, TextInput} from "@mantine/core";
 import JobListing from "../components/JobListing";
-import { Job, JobCreatePayload } from "../types";
+import { Job } from "../types";
 import JobService from "../services/JobService";
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
 import { CvConfirmReturn } from "../services/CvService";
 import { getSavedJobs } from "../utils/savedJobs";
-import { notifications } from "@mantine/notifications";
 import AddJobModal from "../components/AddJobModal";
 
 type SortOption = "best_match" | "newest_first" | "company_az";
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
-
-type JobFormState = {
-    company_name: string;
-    position: string;
-    date_posted: string;
-    location: string;
-    job_type: string;
-    overview: string;
-    responsibilities: string;
-    requirements: string;
-    offers: string;
-    salary_usd: string;
-    notes: string;
-    requirements_simplified: string;
-};
-
-const getTodayDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-};
-
-const getEmptyJobForm = (): JobFormState => ({
-    company_name: "",
-    position: "",
-    date_posted: getTodayDate(),
-    location: "",
-    job_type: "",
-    overview: "",
-    responsibilities: "",
-    requirements: "",
-    offers: "",
-    salary_usd: "",
-    notes: "",
-    requirements_simplified: "",
-});
-
-const requiredJobFields: Array<keyof JobFormState> = [
-    "company_name",
-    "position",
-    "date_posted",
-    "location",
-    "job_type",
-    "overview",
-    "responsibilities",
-    "requirements",
-    "offers",
-    "requirements_simplified",
-];
 
 const SCORE_STORAGE_KEY = "jobScores";
 const CV_NAME_STORAGE_KEY = "cvName";
@@ -483,7 +430,7 @@ export default function JobSearchWithAIPage() {
                 opened={addJobOpen}
                 onClose={() => setAddJobOpen(false)}
                 adminToken={adminToken!}
-                onJobCreated={async () => {
+                onJobSaved={async () => {
                     await fetchJobs();
                     setPage(1);
                 }}
