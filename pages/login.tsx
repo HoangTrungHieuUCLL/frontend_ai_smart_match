@@ -5,20 +5,42 @@ import {
     PasswordInput,
     TextInput,
     Center,
+    Text,
 } from "@mantine/core";
 import { useRouter } from "next/router";
+import AuthService from "../services/AuthService";
 
 export default function LoginPage() {
     const router = useRouter();
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    const handleLogin = () => {
-        console.log({ username, password });
+    const handleLogin = async () => {
+        try {
+            setIsLoading(true);
+            setError("");
 
-        // TODO: call login API
-        router.push("/");
+            const data = await AuthService.login({
+                username,
+                password,
+            });
+
+            localStorage.setItem("access_token", data.access_token);
+            localStorage.setItem("username", data.username);
+
+            await router.push("/executive-view");
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Invalid username or password"
+            );
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -66,11 +88,18 @@ export default function LoginPage() {
                     }}
                 />
 
+                {error && (
+                    <Text c="red" size="sm" mt="sm">
+                        {error}
+                    </Text>
+                )}
+
                 <Button
                     fullWidth
                     mt="md"
                     size="lg"
                     radius="xl"
+                    loading={isLoading}
                     onClick={handleLogin}
                     styles={{
                         root: {
