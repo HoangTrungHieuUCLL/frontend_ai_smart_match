@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Container, Group, Image, Modal, Stack, Text, Textarea, TextInput } from "@mantine/core";
+import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, Textarea, TextInput} from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job, JobCreatePayload } from "../types";
 import JobService from "../services/JobService";
@@ -9,6 +9,9 @@ import { useTranslation } from "../contexts/I18nContext";
 import { CvConfirmReturn } from "../services/CvService";
 import { getSavedJobs } from "../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
+import AddJobModal from "../components/AddJobModal";
+
+type SortOption = "best_match" | "newest_first" | "company_az";
 
 const JOBS_PER_PAGE = 10;
 const BROWN = "#774326";
@@ -95,16 +98,18 @@ export default function JobSearchWithAIPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [addJobOpen, setAddJobOpen] = useState(false);
     const [adminToken, setAdminToken] = useState<string | null>(null);
-    const [jobForm, setJobForm] = useState<JobFormState>(() => getEmptyJobForm());
-    const [isRegistering, setIsRegistering] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     const [search, setSearch] = useState("");
     const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
+    const [sortOption, setSortOption] = useState<SortOption>("newest_first");
 
     useEffect(() => {
-        setUploadedCvName(localStorage.getItem(CV_NAME_STORAGE_KEY));
+        const stored = localStorage.getItem(CV_NAME_STORAGE_KEY);
+        setUploadedCvName(stored);
+        if (stored) setSortOption("best_match");
     }, []);
+
     const [showSavedOnly, setShowSavedOnly] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
     // const [copiedUrl, setCopiedUrl] = useState("");
@@ -130,7 +135,7 @@ export default function JobSearchWithAIPage() {
 
     useEffect(() => {
         setPage(1);
-    }, [search, showSavedOnly]);
+    }, [search, showSavedOnly, sortOption]);
 
     const scoredJobs = useMemo(() => {
         return jobs.map((job) => ({
@@ -140,10 +145,26 @@ export default function JobSearchWithAIPage() {
     }, [jobs]);
 
     const sortedJobs = useMemo(() => {
-        return [...scoredJobs].sort(
-            (a, b) => (b.compatibility_score ?? 0) - (a.compatibility_score ?? 0)
-        );
-    }, [scoredJobs]);
+        return [...scoredJobs].sort((a, b) => {
+            if (sortOption === "best_match") {
+                const diff = (b.compatibility_score ?? 0) - (a.compatibility_score ?? 0);
+                return diff !== 0 ? diff : a.id - b.id;
+            }
+            if (sortOption === "newest_first") {
+                const dateA = a.date ? new Date(a.date).getTime() : null;
+                const dateB = b.date ? new Date(b.date).getTime() : null;
+                if (dateA === null && dateB === null) return a.id - b.id;
+                if (dateA === null) return 1;
+                if (dateB === null) return -1;
+                return dateB - dateA !== 0 ? dateB - dateA : a.id - b.id;
+            }
+            if (sortOption === "company_az") {
+                const cmp = (a.company_name ?? "").localeCompare(b.company_name ?? "");
+                return cmp !== 0 ? cmp : a.id - b.id;
+            }
+            return 0;
+        });
+    }, [scoredJobs, sortOption]);
 
     const pageCount = Math.max(1, Math.ceil(sortedJobs.length / JOBS_PER_PAGE));
 
@@ -235,74 +256,6 @@ export default function JobSearchWithAIPage() {
         setShareOpened(true);
     };
 
-    const updateJobForm = (field: keyof JobFormState, value: string) => {
-        setJobForm((current) => ({
-            ...current,
-            [field]: value,
-        }));
-    };
-
-    const handleRegisterJob = async () => {
-        const hasMissingRequiredField = requiredJobFields.some(
-            (field) => !jobForm[field].trim()
-        );
-
-        if (hasMissingRequiredField) {
-            notifications.show({
-                color: "red",
-                message: "Please complete all required job fields.",
-                autoClose: 3000,
-            });
-            return;
-        }
-
-        if (!adminToken) {
-            notifications.show({
-                color: "red",
-                message: "Please log in as admin before registering a job.",
-                autoClose: 3000,
-            });
-            return;
-        }
-
-        const payload: JobCreatePayload = {
-            company_name: jobForm.company_name.trim(),
-            position: jobForm.position.trim(),
-            date: jobForm.date_posted,
-            location: jobForm.location.trim(),
-            type: jobForm.job_type.trim(),
-            overview: jobForm.overview.trim(),
-            responsibilities: jobForm.responsibilities.trim(),
-            requirements: jobForm.requirements.trim(),
-            offers: jobForm.offers.trim(),
-            salary: jobForm.salary_usd.trim() || null,
-            notes: jobForm.notes.trim() || null,
-            requirements_simplified: jobForm.requirements_simplified.trim(),
-        };
-
-        try {
-            setIsRegistering(true);
-            await JobService.createJob(payload, adminToken);
-            await fetchJobs();
-            setAddJobOpen(false);
-            setJobForm(getEmptyJobForm());
-            setPage(1);
-
-            notifications.show({
-                message: "Job registered successfully.",
-                autoClose: 3000,
-            });
-        } catch (error) {
-            notifications.show({
-                color: "red",
-                message: error instanceof Error ? error.message : "Failed to register job.",
-                autoClose: 3000,
-            });
-        } finally {
-            setIsRegistering(false);
-        }
-    };
-
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
             <Container size="1100px">
@@ -360,10 +313,6 @@ export default function JobSearchWithAIPage() {
                                 label: { width: "100%" },
                             }}
                             onClick={() => {
-                                setJobForm((current) => ({
-                                    ...current,
-                                    date_posted: getTodayDate(),
-                                }));
                                 setAddJobOpen(true);
                             }}
                         >
@@ -375,6 +324,37 @@ export default function JobSearchWithAIPage() {
                             </Group>
                         </Button>
                     )}
+
+                    <Select
+                        value={sortOption}
+                        onChange={(val) => {
+                            if (val) setSortOption(val as SortOption);
+                        }}
+                        data={[
+                            {
+                                value: "best_match",
+                                label: "Best Match",
+                                disabled: !jobs.some(j => j.compatibility_score),
+                            },
+                            { value: "newest_first", label: "Newest First" },
+                            { value: "company_az", label: "Company A–Z" },
+                        ]}
+                        radius="xl"
+                        w={180}
+                        styles={{
+                            input: {
+                                height: 40,
+                                minHeight: 40,
+                                borderColor: BROWN,
+                                color: BROWN,
+                                backgroundColor: "#f7f2ef",
+                                fontWeight: 600,
+                            },
+                            option: {
+                                color: BROWN,
+                            },
+                        }}
+                    />
                 </Group>
 
                 {showEmptyState ? (
@@ -459,6 +439,7 @@ export default function JobSearchWithAIPage() {
                     if (cvName) {
                         setUploadedCvName(cvName);
                         localStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
+                        setSortOption("best_match");
                     }
 
                     saveScoresToStorage(results);
@@ -498,126 +479,15 @@ export default function JobSearchWithAIPage() {
                 </Stack>
             </Modal>
 
-            <Modal
+            <AddJobModal
                 opened={addJobOpen}
                 onClose={() => setAddJobOpen(false)}
-                centered
-                size="lg"
-                title="Add a new job"
-            >
-                <Stack gap="sm">
-                    <Group grow align="flex-start">
-                        <TextInput
-                            label="Company name"
-                            value={jobForm.company_name}
-                            onChange={(e) => updateJobForm("company_name", e.currentTarget.value)}
-                            required
-                        />
-                        <TextInput
-                            label="Position"
-                            value={jobForm.position}
-                            onChange={(e) => updateJobForm("position", e.currentTarget.value)}
-                            required
-                        />
-                    </Group>
-
-                    <Group grow align="flex-start">
-                        <TextInput
-                            label="Date posted"
-                            value={jobForm.date_posted}
-                            readOnly
-                            required
-                        />
-                        <TextInput
-                            label="Location"
-                            value={jobForm.location}
-                            onChange={(e) => updateJobForm("location", e.currentTarget.value)}
-                            required
-                        />
-                    </Group>
-
-                    <Group grow align="flex-start">
-                        <TextInput
-                            label="Job type"
-                            value={jobForm.job_type}
-                            onChange={(e) => updateJobForm("job_type", e.currentTarget.value)}
-                            required
-                        />
-                        <TextInput
-                            label="Salary USD"
-                            value={jobForm.salary_usd}
-                            onChange={(e) => updateJobForm("salary_usd", e.currentTarget.value)}
-                            placeholder="Optional"
-                        />
-                    </Group>
-
-                    <Textarea
-                        label="Overview"
-                        value={jobForm.overview}
-                        onChange={(e) => updateJobForm("overview", e.currentTarget.value)}
-                        minRows={3}
-                        autosize
-                        required
-                    />
-                    <Textarea
-                        label="Responsibilities"
-                        value={jobForm.responsibilities}
-                        onChange={(e) => updateJobForm("responsibilities", e.currentTarget.value)}
-                        minRows={3}
-                        autosize
-                        required
-                    />
-                    <Textarea
-                        label="Requirements"
-                        value={jobForm.requirements}
-                        onChange={(e) => updateJobForm("requirements", e.currentTarget.value)}
-                        minRows={3}
-                        autosize
-                        required
-                    />
-                    <Textarea
-                        label="Offers"
-                        value={jobForm.offers}
-                        onChange={(e) => updateJobForm("offers", e.currentTarget.value)}
-                        minRows={3}
-                        autosize
-                        required
-                    />
-                    <Textarea
-                        label="Notes"
-                        value={jobForm.notes}
-                        onChange={(e) => updateJobForm("notes", e.currentTarget.value)}
-                        minRows={2}
-                        autosize
-                        placeholder="Optional"
-                    />
-                    <Textarea
-                        label="Requirements simplified"
-                        value={jobForm.requirements_simplified}
-                        onChange={(e) => updateJobForm("requirements_simplified", e.currentTarget.value)}
-                        minRows={3}
-                        autosize
-                        required
-                    />
-
-                    <Group justify="flex-end" mt="sm">
-                        <Button
-                            variant="light"
-                            color={BROWN}
-                            onClick={() => setAddJobOpen(false)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            style={{ backgroundColor: BROWN }}
-                            loading={isRegistering}
-                            onClick={handleRegisterJob}
-                        >
-                            Register
-                        </Button>
-                    </Group>
-                </Stack>
-            </Modal>
+                adminToken={adminToken!}
+                onJobCreated={async () => {
+                    await fetchJobs();
+                    setPage(1);
+                }}
+            />
         </Box>
     );
 }
