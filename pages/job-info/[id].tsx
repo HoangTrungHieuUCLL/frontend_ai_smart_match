@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { useRef } from "react";
 import {
     Badge,
     Box,
@@ -22,7 +23,7 @@ import { isJobSaved } from "../../utils/savedJobs";
 import { saveJob, removeJob } from "../../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
 import { CvConfirmReturn } from "../../services/CvService";
-
+import styles from "../../styles/header.module.css";
 const BROWN = "#774326";
 
 const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) ?? [];
@@ -37,6 +38,10 @@ export default function JobInfoDetailPage() {
     const [compatibilityScore, setCompatibilityScore] = useState<number | null>(null);
     const [Saved, setSaved] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
+
+    const jobDescriptionRef = useRef<HTMLDivElement | null>(null);
+    const matchScoreRef = useRef<HTMLDivElement | null>(null);
+    const [cvUploaded, setCvUploaded] = useState(false);
 
     const fetchJob = async () => {
         setLoading(true);
@@ -69,6 +74,7 @@ export default function JobInfoDetailPage() {
         setCompatibilityScore(
             match?.compatibility_score ?? null
         );
+        setCvUploaded(!!match);
 
         setSaved(isJobSaved(job.id));
     }, [job]);
@@ -122,33 +128,65 @@ export default function JobInfoDetailPage() {
 
         setShareOpened(true);
     };
+    const handleScrollToDescription = () => {
+        jobDescriptionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+    };
+
+    const handleCvUpload = () => {
+        setModalOpen(true);
+    };
+
+    const handleMatchClick = () => {
+        if (!cvUploaded) {
+            setModalOpen(true);
+            return;
+        }
+
+        matchScoreRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+        });
+    };
+
+    const cardActions = [
+        {
+            number: "1",
+            title: t("jobInfo.cardJobDescription"),
+            description: job.overview,
+            button: t("jobInfo.suitMe"),
+            onClick: handleScrollToDescription,
+        },
+        {
+            number: "2",
+            title: t("jobInfo.cardCvUploaded"),
+            description: cvUploaded
+                ? t("jobInfo.cardCvReuploadDescription")
+                : t("jobInfo.cardCvDescription"),
+            button: cvUploaded ? "Re-upload CV" : t("jobInfo.askAi"),
+            onClick: handleCvUpload,
+        },
+        {
+            number: "3",
+            title: t("jobInfo.cardMatchScore"),
+            description:
+                compatibilityScore !== null
+                    ? `${compatibilityScore}% Match`
+                    : t("jobInfo.cardMatchDescription"),
+            button: t("jobInfo.compatible"),
+            onClick: handleMatchClick,
+        },
+    ];
 
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
             <Container size="1200px">
                 <Paper style={{backgroundColor: "#f7f2ef"}}>
                     <Stack gap="lg">
-                        <Group justify="space-between" align="stretch" wrap="wrap" style={{ marginBottom: 24 }}>
-                            {[
-                                {
-                                    number: "1",
-                                    title: t("jobInfo.cardJobDescription"),
-                                    description: job.overview,
-                                    button: t("jobInfo.suitMe"),
-                                },
-                                {
-                                    number: "2",
-                                    title: t("jobInfo.cardCvUploaded"),
-                                    description: t("jobInfo.cardCvDescription"),
-                                    button: t("jobInfo.askAi"),
-                                },
-                                {
-                                    number: "3",
-                                    title: t("jobInfo.cardMatchScore"),
-                                    description: t("jobInfo.cardMatchDescription"),
-                                    button: t("jobInfo.compatible"),
-                                },
-                            ].map((card) => (
+                        <Group justify="space-between" align="stretch" wrap="wrap" style={{ gap: 16 }}>
+                            {cardActions.map((card) => (
                                 <Paper
                                     key={card.number}
                                     withBorder
@@ -191,7 +229,11 @@ export default function JobInfoDetailPage() {
                                             </Text>
                                         </Stack>
                                     </Stack>
-                                    <Button radius="xl" style={{ backgroundColor: BROWN, borderColor: BROWN, marginTop: 16 }}>
+                                    <Button radius="xl" 
+                                            style={{ backgroundColor: BROWN, borderColor: BROWN, marginTop: 16 }}
+                                            onClick={card.onClick}
+                                            className={styles.jobStepCardButton}
+                                    >
                                         {card.button}
                                     </Button>
                                 </Paper>
@@ -243,21 +285,25 @@ export default function JobInfoDetailPage() {
                                         </Stack>
                                     </Group>
 
-                                    <Group gap="md">
+                                    <Group gap="md" ref={matchScoreRef}>
                                         {compatibilityScore !== null && (
                                             <RingProgress
                                                 size={130}
                                                 thickness={11}
                                                 roundCaps
                                                 label={
-                                                    <Text
-                                                        size="sm"
-                                                        ta="center"
-                                                        style={{ pointerEvents: 'none' }}
-                                                        fw={700}
-                                                    >
-                                                        {compatibilityScore}% <Text size="xs">{t("jobInfo.match")}</Text>
-                                                    </Text>
+                                                    <Stack gap={0} align="center">
+                                                        <Text
+                                                            size="sm"
+                                                            ta="center"
+                                                            style={{ pointerEvents: 'none' }}
+                                                            fw={700}
+                                                        >
+                                                            {compatibilityScore}% 
+                                                        </Text>
+                                                        
+                                                        <Text size="xs">{t("jobInfo.match")}</Text>
+                                                    </Stack>
                                                 }
                                                 sections={[
                                                     {
@@ -294,7 +340,7 @@ export default function JobInfoDetailPage() {
 
                                 <Divider />
 
-                                <Stack gap="sm">
+                                <Stack gap="sm" ref={jobDescriptionRef}>
                                     <Text size="lg" style={{ fontWeight: 700 }}>
                                         Job description
                                     </Text>
