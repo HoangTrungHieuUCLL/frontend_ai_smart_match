@@ -98,6 +98,7 @@ export default function JobSearchWithAIPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [addJobOpen, setAddJobOpen] = useState(false);
     const [adminToken, setAdminToken] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [search, setSearch] = useState("");
     const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
@@ -114,10 +115,13 @@ export default function JobSearchWithAIPage() {
     // const [copiedUrl, setCopiedUrl] = useState("");
     const fetchJobs = async () => {
         try {
+            setIsLoading(true);
             const response = await JobService.getAllJobs();
             setJobs(applyStoredScores(response));
         } catch (error) {
             console.error("Failed to fetch jobs", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -180,6 +184,61 @@ export default function JobSearchWithAIPage() {
             return matchesSearch && matchesSaved;
         });
     }, [sortedJobs, search, showSavedOnly]);
+
+    const hasSearch = search.trim().length > 0;
+    const noJobsInDatabase = jobs.length === 0;
+    const showEmptyState =
+        !isLoading &&
+        filteredJobs.length === 0;
+
+    const emptyStateContent = useMemo(() => {
+        if (noJobsInDatabase) {
+            return {
+                title: "No jobs are available at the moment.",
+                description: "Check back soon.",
+                showClearFilters: false,
+            };
+        }
+
+        if (hasSearch && showSavedOnly) {
+            return {
+                title: "No jobs found",
+                description:
+                    "No saved jobs match your search. Try clearing the search or the saved filter.",
+                showClearFilters: true,
+            };
+        }
+
+        if (showSavedOnly) {
+            return {
+                title: "No jobs found",
+                description:
+                    "You haven't saved any jobs yet. Browse the full list to save jobs you like.",
+                showClearFilters: true,
+            };
+        }
+
+        if (hasSearch) {
+            return {
+                title: "No jobs found",
+                description:
+                    "Try a different search term or clear the search.",
+                showClearFilters: true,
+            };
+        }
+
+        return {
+            title: "No jobs found",
+            description: "",
+            showClearFilters: true,
+        };
+    }, [noJobsInDatabase, hasSearch, showSavedOnly]);
+
+    const clearFilters = () => {
+        setSearch("");
+        setShowSavedOnly(false);
+        setPage(1);
+    };
 
     const currentJobs = useMemo(() => {
         return filteredJobs.slice(
@@ -298,14 +357,54 @@ export default function JobSearchWithAIPage() {
                     />
                 </Group>
 
-                <Stack gap="md">
-                    {currentJobs.map((job) => (
-                        <JobListing key={job.id}
-                                    job={job}
-                                    onShare={handleShare}
-                        />
-                    ))}
-                </Stack>
+                {showEmptyState ? (
+                    <Box
+                        style={{
+                            minHeight: 200,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <Stack align="center" gap="sm">
+                            <Text fw={700} size="lg">
+                                {emptyStateContent.title}
+                            </Text>
+
+                            <Text
+                                c="dimmed"
+                                ta="center"
+                                maw={420}
+                            >
+                                {emptyStateContent.description}
+                            </Text>
+
+                            {emptyStateContent.showClearFilters && (
+                                <Button
+                                    radius="xl"
+                                    variant="outline"
+                                    style={{
+                                        borderColor: BROWN,
+                                        color: BROWN,
+                                    }}
+                                    onClick={clearFilters}
+                                >
+                                    Clear filters
+                                </Button>
+                            )}
+                        </Stack>
+                    </Box>
+                ) : (
+                    <Stack gap="md">
+                        {currentJobs.map((job) => (
+                            <JobListing
+                                key={job.id}
+                                job={job}
+                                onShare={handleShare}
+                            />
+                        ))}
+                    </Stack>
+                )}
 
                 <Group justify="center" gap="xs" mt={24}>
                     {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
