@@ -12,14 +12,47 @@ export type ExecutiveViewDashboard = {
     total_cvs: number;
     top_skills: TopSkill[];
     cvs: CV[];
+    cv_table: {
+        total_count: number;
+        page: number;
+        page_size: number;
+        total_pages: number;
+    };
 };
 
-const getDashboard = async (): Promise<ExecutiveViewDashboard> => {
+export type CvSortBy = "id" | "filename" | "candidate_name" | "skills";
+export type SortDirection = "asc" | "desc";
+
+export type ExecutiveViewParams = {
+    search?: string;
+    sortBy?: CvSortBy;
+    sortDirection?: SortDirection;
+    page?: number;
+    pageSize?: number;
+};
+
+const getDashboard = async ({
+    search = "",
+    sortBy = "id",
+    sortDirection = "desc",
+    page = 1,
+    pageSize = 20,
+}: ExecutiveViewParams = {}): Promise<ExecutiveViewDashboard> => {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 8000);
+    const params = new URLSearchParams({
+        sort_by: sortBy,
+        sort_direction: sortDirection,
+        page: String(page),
+        page_size: String(pageSize),
+    });
+
+    if (search.trim()) {
+        params.set("search", search.trim());
+    }
 
     try {
-        const response = await fetch(`${API_URL}/executive-view`, {
+        const response = await fetch(`${API_URL}/executive-view?${params.toString()}`, {
             method: "GET",
             signal: controller.signal,
             headers: {
