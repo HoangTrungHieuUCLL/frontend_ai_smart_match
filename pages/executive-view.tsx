@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
     ActionIcon,
     Badge,
@@ -35,6 +36,7 @@ import { CV, Job } from "../types";
 import ExecutiveViewService, {
     CvSortBy,
     ExecutiveViewDashboard,
+    ExecutiveViewRequestError,
     SortDirection,
     TopSkill,
 } from "../services/ExecutiveViewService";
@@ -69,6 +71,7 @@ function getCandidateName(cv: CV) {
 function KpiCard({label, value}: { label: string; value: number }) {
     return (
         <Paper
+            data-testid="kpi-card"
             p="lg"
             radius="md"
             style={{
@@ -142,7 +145,7 @@ function SkillsBarChart({skills}: { skills: TopSkill[] }) {
         >
             <Stack gap="md">
                 {skills.map((skill) => (
-                    <Box key={skill.skill}>
+                    <Box key={skill.skill} data-testid="skill-bar">
                         <Group justify="space-between" gap="md" wrap="nowrap" mb={6}>
                             <Text size="sm" fw={600} lineClamp={1}>
                                 {skill.skill}
@@ -176,6 +179,7 @@ function SkillsBarChart({skills}: { skills: TopSkill[] }) {
 }
 
 export default function ExecutiveViewPage() {
+    const router = useRouter();
     const [dashboard, setDashboard] = useState<ExecutiveViewDashboard | null>(null);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [selectedCv, setSelectedCv] = useState<CV | null>(null);
@@ -212,9 +216,9 @@ export default function ExecutiveViewPage() {
 
         const fetchDashboard = async () => {
             try {
-                const loggedInUser = localStorage.getItem("email");
-                if (!loggedInUser || loggedInUser != "admin") {
-                    setError("You are not authorized to view this page.");
+                const token = localStorage.getItem("access_token");
+                if (!token) {
+                    router.replace("/login");
                     return;
                 }
 
@@ -232,8 +236,24 @@ export default function ExecutiveViewPage() {
                 if (!cancelled) {
                     setDashboard(response);
                 }
-            } catch {
+            } catch (requestError) {
                 if (!cancelled) {
+                    if (
+                        requestError instanceof ExecutiveViewRequestError &&
+                        requestError.status === 401
+                    ) {
+                        router.replace("/login");
+                        return;
+                    }
+
+                    if (
+                        requestError instanceof ExecutiveViewRequestError &&
+                        requestError.status === 403
+                    ) {
+                        setError("You are not authorized to view this page.");
+                        return;
+                    }
+
                     setError("Unable to load executive dashboard data.");
                 }
             } finally {
@@ -249,7 +269,7 @@ export default function ExecutiveViewPage() {
         return () => {
             cancelled = true;
         };
-    }, [debouncedSearch, sortBy, sortDirection, page, pageSize]);
+    }, [debouncedSearch, sortBy, sortDirection, page, pageSize, router]);
 
     const fetchJobs = async () => {
         try {
@@ -296,6 +316,7 @@ export default function ExecutiveViewPage() {
     const rows = useMemo(() => {
         return cvs.map((cv) => (
             <Table.Tr
+                data-testid="cv-table-row"
                 key={cv.id}
                 onClick={() => setSelectedCv(cv)}
                 style={{
