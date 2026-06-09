@@ -10,17 +10,32 @@ import {
     Modal,
     Paper,
     ScrollArea,
+    Select,
     Stack,
     Table,
     Text,
+    TextInput,
     Title,
     Tooltip,
+    UnstyledButton,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
+import {
+    IconChevronDown,
+    IconChevronLeft,
+    IconChevronRight,
+    IconChevronUp,
+    IconEdit,
+    IconPlus,
+    IconSearch,
+    IconSelector,
+    IconTrash,
+} from "@tabler/icons-react";
 import { CV, Job } from "../types";
 import ExecutiveViewService, {
+    CvSortBy,
     ExecutiveViewDashboard,
+    SortDirection,
     TopSkill,
 } from "../services/ExecutiveViewService";
 import { CVSummaryDetails } from "../components/CVUploadConfirmation";
@@ -29,6 +44,15 @@ import CvService from "../services/CvService";
 import AddJobModal from "../components/AddJobModal";
 
 const BROWN = "#774326";
+const ROWS_PER_PAGE_OPTIONS = ["10", "20", "50"];
+
+type SortableHeaderProps = {
+    label: string;
+    sortKey: CvSortBy;
+    activeSortBy: CvSortBy;
+    sortDirection: SortDirection;
+    onSort: (sortKey: CvSortBy) => void;
+};
 
 function getCandidateName(cv: CV) {
     const profile = cv.candidate_profile;
@@ -61,6 +85,38 @@ function KpiCard({label, value}: { label: string; value: number }) {
                 </Text>
             </Stack>
         </Paper>
+    );
+}
+
+function SortableHeader({
+                            label,
+                            sortKey,
+                            activeSortBy,
+                            sortDirection,
+                            onSort,
+                        }: SortableHeaderProps) {
+    const isActive = activeSortBy === sortKey;
+    const SortIcon = !isActive
+        ? IconSelector
+        : sortDirection === "asc"
+            ? IconChevronUp
+            : IconChevronDown;
+
+    return (
+        <Table.Th>
+            <UnstyledButton
+                onClick={() => onSort(sortKey)}
+                style={{width: "100%"}}
+                aria-label={`Sort by ${label}`}
+            >
+                <Group gap={6} wrap="nowrap">
+                    <Text fw={700} size="sm">
+                        {label}
+                    </Text>
+                    <SortIcon size={16} color={isActive ? BROWN : "#9b8a80"} />
+                </Group>
+            </UnstyledButton>
+        </Table.Th>
     );
 }
 
@@ -128,14 +184,32 @@ export default function ExecutiveViewPage() {
     const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
     const [jobModalOpen, setJobModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [cvTableLoading, setCvTableLoading] = useState(false);
     const [jobsLoading, setJobsLoading] = useState(true);
     const [error, setError] = useState("");
     const [jobError, setJobError] = useState("");
     const [adminToken, setAdminToken] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deletingCvId, setDeletingCvId] = useState<number | null>(null);
+    const [searchInput, setSearchInput] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [sortBy, setSortBy] = useState<CvSortBy>("id");
+    const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
 
     useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            setPage(1);
+            setDebouncedSearch(searchInput);
+        }, 300);
+
+        return () => window.clearTimeout(timeout);
+    }, [searchInput]);
+
+    useEffect(() => {
+        let cancelled = false;
+
         const fetchDashboard = async () => {
             try {
                 const loggedInUser = localStorage.getItem("email");
@@ -144,17 +218,38 @@ export default function ExecutiveViewPage() {
                     return;
                 }
 
-                const response = await ExecutiveViewService.getDashboard();
-                setDashboard(response);
+                setError("");
+                setCvTableLoading(true);
+
+                const response = await ExecutiveViewService.getDashboard({
+                    search: debouncedSearch,
+                    sortBy,
+                    sortDirection,
+                    page,
+                    pageSize,
+                });
+
+                if (!cancelled) {
+                    setDashboard(response);
+                }
             } catch {
-                setError("Unable to load executive dashboard data.");
+                if (!cancelled) {
+                    setError("Unable to load executive dashboard data.");
+                }
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                    setCvTableLoading(false);
+                }
             }
         };
 
         fetchDashboard();
-    }, []);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [debouncedSearch, sortBy, sortDirection, page, pageSize]);
 
     const fetchJobs = async () => {
         try {
@@ -175,6 +270,28 @@ export default function ExecutiveViewPage() {
     }, []);
 
     const cvs = dashboard?.cvs ?? [];
+    const cvTable = dashboard?.cv_table;
+    const totalMatchingCvs = cvTable?.total_count ?? 0;
+    const totalPages = cvTable?.total_pages ?? 1;
+    const firstShownCv = totalMatchingCvs === 0 ? 0 : (page - 1) * pageSize + 1;
+    const lastShownCv = Math.min(page * pageSize, totalMatchingCvs);
+
+    const handleSort = (nextSortBy: CvSortBy) => {
+        setPage(1);
+
+        if (sortBy === nextSortBy) {
+            setSortDirection((current) => current === "asc" ? "desc" : "asc");
+            return;
+        }
+
+        setSortBy(nextSortBy);
+        setSortDirection("asc");
+    };
+
+    const handlePageSizeChange = (value: string | null) => {
+        setPageSize(Number(value ?? 20));
+        setPage(1);
+    };
 
     const rows = useMemo(() => {
         return cvs.map((cv) => (
@@ -321,6 +438,10 @@ export default function ExecutiveViewPage() {
                     ...current,
                     total_cvs: Math.max(0, current.total_cvs - 1),
                     cvs: current.cvs.filter((cv) => cv.id !== cvToDelete.id),
+                    cv_table: {
+                        ...current.cv_table,
+                        total_count: Math.max(0, current.cv_table.total_count - 1),
+                    },
                 };
             });
 
@@ -473,7 +594,7 @@ export default function ExecutiveViewPage() {
                         </Stack>
 
                         <Stack gap="sm">
-                            <Group justify="space-between">
+                            <Group justify="space-between" align="flex-end">
                                 <Title order={3} style={{color: "#623a26"}}>
                                     CV Extracted Data
                                 </Title>
@@ -481,6 +602,14 @@ export default function ExecutiveViewPage() {
                                     Click a row to view the full CV summary.
                                 </Text>
                             </Group>
+
+                            <TextInput
+                                value={searchInput}
+                                onChange={(event) => setSearchInput(event.currentTarget.value)}
+                                leftSection={<IconSearch size={18} />}
+                                placeholder="Search by candidate name or skills"
+                                aria-label="Search candidates by name or skills"
+                            />
 
                             <Paper
                                 radius="md"
@@ -494,19 +623,54 @@ export default function ExecutiveViewPage() {
                                     <Table highlightOnHover verticalSpacing="md" miw={860}>
                                         <Table.Thead>
                                             <Table.Tr>
-                                                <Table.Th>ID</Table.Th>
-                                                <Table.Th>CV file name</Table.Th>
-                                                <Table.Th>Candidate full name</Table.Th>
-                                                <Table.Th>Skills</Table.Th>
+                                                <SortableHeader
+                                                    label="ID"
+                                                    sortKey="id"
+                                                    activeSortBy={sortBy}
+                                                    sortDirection={sortDirection}
+                                                    onSort={handleSort}
+                                                />
+                                                <SortableHeader
+                                                    label="CV file name"
+                                                    sortKey="filename"
+                                                    activeSortBy={sortBy}
+                                                    sortDirection={sortDirection}
+                                                    onSort={handleSort}
+                                                />
+                                                <SortableHeader
+                                                    label="Candidate full name"
+                                                    sortKey="candidate_name"
+                                                    activeSortBy={sortBy}
+                                                    sortDirection={sortDirection}
+                                                    onSort={handleSort}
+                                                />
+                                                <SortableHeader
+                                                    label="Skills"
+                                                    sortKey="skills"
+                                                    activeSortBy={sortBy}
+                                                    sortDirection={sortDirection}
+                                                    onSort={handleSort}
+                                                />
                                                 <Table.Th style={{textAlign: "right"}}>Actions</Table.Th>
                                             </Table.Tr>
                                         </Table.Thead>
                                         <Table.Tbody>
-                                            {rows.length ? rows : (
+                                            {cvTableLoading ? (
+                                                <Table.Tr>
+                                                    <Table.Td colSpan={5}>
+                                                        <Group justify="center" py="lg">
+                                                            <Loader color={BROWN} size="sm" />
+                                                            <Text c="dimmed">Loading candidates...</Text>
+                                                        </Group>
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                            ) : rows.length ? rows : (
                                                 <Table.Tr>
                                                     <Table.Td colSpan={5}>
                                                         <Text c="dimmed" ta="center" py="lg">
-                                                            No uploaded CVs found.
+                                                            {debouncedSearch.trim()
+                                                                ? "No candidates found"
+                                                                : "No uploaded CVs found."}
                                                         </Text>
                                                     </Table.Td>
                                                 </Table.Tr>
@@ -514,6 +678,47 @@ export default function ExecutiveViewPage() {
                                         </Table.Tbody>
                                     </Table>
                                 </ScrollArea>
+                                <Group
+                                    justify="space-between"
+                                    gap="md"
+                                    p="md"
+                                    style={{borderTop: "1px solid rgba(119, 67, 38, 0.12)"}}
+                                >
+                                    <Text size="sm" c="dimmed">
+                                        Showing {firstShownCv}-{lastShownCv} of {totalMatchingCvs} candidates
+                                    </Text>
+                                    <Group gap="sm">
+                                        <Select
+                                            data={ROWS_PER_PAGE_OPTIONS}
+                                            value={String(pageSize)}
+                                            onChange={handlePageSizeChange}
+                                            aria-label="Rows per page"
+                                            w={92}
+                                            allowDeselect={false}
+                                        />
+                                        <Button
+                                            variant="light"
+                                            color="brown"
+                                            leftSection={<IconChevronLeft size={16} />}
+                                            disabled={page <= 1 || cvTableLoading}
+                                            onClick={() => setPage((current) => Math.max(1, current - 1))}
+                                        >
+                                            Previous
+                                        </Button>
+                                        <Text size="sm" fw={600} style={{minWidth: 84, textAlign: "center"}}>
+                                            Page {page} of {totalPages}
+                                        </Text>
+                                        <Button
+                                            variant="light"
+                                            color="brown"
+                                            rightSection={<IconChevronRight size={16} />}
+                                            disabled={page >= totalPages || cvTableLoading}
+                                            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                                        >
+                                            Next
+                                        </Button>
+                                    </Group>
+                                </Group>
                             </Paper>
                         </Stack>
                     </Stack>
