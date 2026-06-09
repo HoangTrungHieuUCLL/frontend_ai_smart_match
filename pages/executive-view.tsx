@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+    ActionIcon,
     Badge,
     Box,
     Button,
@@ -13,13 +14,18 @@ import {
     Table,
     Text,
     Title,
+    Tooltip,
 } from "@mantine/core";
-import { CV } from "../types";
+import { notifications } from "@mantine/notifications";
+import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
+import { CV, Job } from "../types";
 import ExecutiveViewService, {
     ExecutiveViewDashboard,
     TopSkill,
 } from "../services/ExecutiveViewService";
 import { CVSummaryDetails } from "../components/CVUploadConfirmation";
+import JobService from "../services/JobService";
+import AddJobModal from "../components/AddJobModal";
 
 const BROWN = "#774326";
 
@@ -114,9 +120,17 @@ function SkillsBarChart({skills}: { skills: TopSkill[] }) {
 
 export default function ExecutiveViewPage() {
     const [dashboard, setDashboard] = useState<ExecutiveViewDashboard | null>(null);
+    const [jobs, setJobs] = useState<Job[]>([]);
     const [selectedCv, setSelectedCv] = useState<CV | null>(null);
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+    const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
+    const [jobModalOpen, setJobModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [jobsLoading, setJobsLoading] = useState(true);
     const [error, setError] = useState("");
+    const [jobError, setJobError] = useState("");
+    const [adminToken, setAdminToken] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         const fetchDashboard = async () => {
@@ -131,6 +145,24 @@ export default function ExecutiveViewPage() {
         };
 
         fetchDashboard();
+    }, []);
+
+    const fetchJobs = async () => {
+        try {
+            setJobsLoading(true);
+            setJobError("");
+            const response = await JobService.getAllJobs();
+            setJobs(response);
+        } catch {
+            setJobError("Unable to load job listings.");
+        } finally {
+            setJobsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        setAdminToken(localStorage.getItem("access_token"));
+        fetchJobs();
     }, []);
 
     const cvs = dashboard?.cvs ?? [];
@@ -155,6 +187,87 @@ export default function ExecutiveViewPage() {
             </Table.Tr>
         ));
     }, [cvs]);
+
+    const jobRows = useMemo(() => {
+        return jobs.map((job) => (
+            <Table.Tr key={job.id}>
+                <Table.Td>
+                    <Text fw={700}>{job.position}</Text>
+                </Table.Td>
+                <Table.Td>{job.company_name}</Table.Td>
+                <Table.Td>{job.location || "Not specified"}</Table.Td>
+                <Table.Td>{job.type || "Not specified"}</Table.Td>
+                <Table.Td>
+                    <Text lineClamp={2}>{job.requirements || "No requirements listed"}</Text>
+                </Table.Td>
+                <Table.Td>{job.salary || "Not specified"}</Table.Td>
+                <Table.Td>
+                    <Group gap="xs" justify="flex-end" wrap="nowrap">
+                        <Tooltip label="Edit job">
+                            <ActionIcon
+                                variant="light"
+                                color="brown"
+                                aria-label={`Edit ${job.position}`}
+                                disabled={!adminToken}
+                                onClick={() => {
+                                    setSelectedJob(job);
+                                    setJobModalOpen(true);
+                                }}
+                            >
+                                <IconEdit size={18} />
+                            </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Delete job">
+                            <ActionIcon
+                                variant="light"
+                                color="red"
+                                aria-label={`Delete ${job.position}`}
+                                disabled={!adminToken}
+                                onClick={() => setJobToDelete(job)}
+                            >
+                                <IconTrash size={18} />
+                            </ActionIcon>
+                        </Tooltip>
+                    </Group>
+                </Table.Td>
+            </Table.Tr>
+        ));
+    }, [adminToken, jobs]);
+
+    const handleAddJob = () => {
+        setSelectedJob(null);
+        setJobModalOpen(true);
+    };
+
+    const handleCloseJobModal = () => {
+        setJobModalOpen(false);
+        setSelectedJob(null);
+    };
+
+    const handleDeleteJob = async () => {
+        if (!jobToDelete || !adminToken) {
+            return;
+        }
+
+        try {
+            setIsDeleting(true);
+            await JobService.deleteJob(jobToDelete.id, adminToken);
+            await fetchJobs();
+            notifications.show({
+                message: "Job deleted successfully.",
+                autoClose: 3000,
+            });
+            setJobToDelete(null);
+        } catch (error) {
+            notifications.show({
+                color: "red",
+                message: error instanceof Error ? error.message : "Failed to delete job.",
+                autoClose: 3000,
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <Box style={{minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0"}}>
@@ -200,6 +313,88 @@ export default function ExecutiveViewPage() {
                                 Top 15 Skills
                             </Title>
                             <SkillsBarChart skills={dashboard.top_skills} />
+                        </Stack>
+
+                        <Stack gap="sm">
+                            <Group justify="space-between" align="center">
+                                <Stack gap={2}>
+                                    <Title order={3} style={{color: "#623a26"}}>
+                                        Job Management
+                                    </Title>
+                                    <Text size="sm" c="dimmed">
+                                        Create, edit, and remove listings shown to candidates.
+                                    </Text>
+                                </Stack>
+                                <Button
+                                    leftSection={<IconPlus size={18} />}
+                                    style={{backgroundColor: BROWN}}
+                                    disabled={!adminToken}
+                                    onClick={handleAddJob}
+                                >
+                                    Add job
+                                </Button>
+                            </Group>
+
+                            {!adminToken && (
+                                <Paper p="md" radius="md" style={{border: "1px solid rgba(119, 67, 38, 0.16)"}}>
+                                    <Text c="red" fw={600}>
+                                        Admin login is required to manage jobs.
+                                    </Text>
+                                </Paper>
+                            )}
+
+                            <Paper
+                                radius="md"
+                                style={{
+                                    border: "1px solid rgba(119, 67, 38, 0.16)",
+                                    backgroundColor: "#ffffff",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <ScrollArea>
+                                    <Table highlightOnHover verticalSpacing="md" miw={980}>
+                                        <Table.Thead>
+                                            <Table.Tr>
+                                                <Table.Th>Position</Table.Th>
+                                                <Table.Th>Company</Table.Th>
+                                                <Table.Th>Location</Table.Th>
+                                                <Table.Th>Type</Table.Th>
+                                                <Table.Th>Requirements</Table.Th>
+                                                <Table.Th>Salary</Table.Th>
+                                                <Table.Th style={{textAlign: "right"}}>Actions</Table.Th>
+                                            </Table.Tr>
+                                        </Table.Thead>
+                                        <Table.Tbody>
+                                            {jobsLoading ? (
+                                                <Table.Tr>
+                                                    <Table.Td colSpan={7}>
+                                                        <Group justify="center" py="lg">
+                                                            <Loader color={BROWN} size="sm" />
+                                                            <Text c="dimmed">Loading jobs...</Text>
+                                                        </Group>
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                            ) : jobError ? (
+                                                <Table.Tr>
+                                                    <Table.Td colSpan={7}>
+                                                        <Text c="red" fw={600} ta="center" py="lg">
+                                                            {jobError}
+                                                        </Text>
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                            ) : jobRows.length ? jobRows : (
+                                                <Table.Tr>
+                                                    <Table.Td colSpan={7}>
+                                                        <Text c="dimmed" ta="center" py="lg">
+                                                            No jobs found.
+                                                        </Text>
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                            )}
+                                        </Table.Tbody>
+                                    </Table>
+                                </ScrollArea>
+                            </Paper>
                         </Stack>
 
                         <Stack gap="sm">
@@ -265,6 +460,48 @@ export default function ExecutiveViewPage() {
                         }
                     />
                 )}
+            </Modal>
+
+            {adminToken && (
+                <AddJobModal
+                    opened={jobModalOpen}
+                    onClose={handleCloseJobModal}
+                    adminToken={adminToken}
+                    job={selectedJob}
+                    onJobSaved={fetchJobs}
+                />
+            )}
+
+            <Modal
+                opened={jobToDelete !== null}
+                onClose={() => setJobToDelete(null)}
+                centered
+                title={<Text fw={700} size="lg">Delete job</Text>}
+            >
+                <Stack>
+                    <Text>
+                        {jobToDelete
+                            ? `Are you sure you want to delete ${jobToDelete.position} at ${jobToDelete.company_name}? This action cannot be undone.`
+                            : ""}
+                    </Text>
+                    <Group justify="flex-end">
+                        <Button
+                            variant="light"
+                            color={BROWN}
+                            onClick={() => setJobToDelete(null)}
+                            disabled={isDeleting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            color="red"
+                            loading={isDeleting}
+                            onClick={handleDeleteJob}
+                        >
+                            Delete
+                        </Button>
+                    </Group>
+                </Stack>
             </Modal>
         </Box>
     );
