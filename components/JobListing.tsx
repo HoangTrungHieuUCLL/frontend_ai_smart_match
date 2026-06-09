@@ -119,10 +119,9 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                 {/* HEADER */}
                 <Group justify="space-between" align="flex-start" wrap="nowrap">
                     <Group gap="md" wrap="nowrap">
-                        <Box
+                        <Box w={64}
+                             h={64}
                             style={{
-                                width: 52,
-                                height: 52,
                                 borderRadius: 14,
                                 backgroundColor: "#f6f1ee",
                                 display: "flex",
@@ -137,7 +136,7 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                             {getInitials(job.company_name)}
                         </Box>
 
-                        <Stack gap={2}>
+                        <Stack gap={1}>
                             <Text size="md" fw={700} lineClamp={1}>
                                 {job.position}
                             </Text>
@@ -151,11 +150,21 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                                     • {job.location}
                                 </Text>
                             </Group>
-                        </Stack>
 
+                            <Text size="xs" c="dimmed">
+                                {new Intl.DateTimeFormat("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                }).format(new Date("2026-06-07"))}
+                            </Text>
+                        </Stack>
+                    </Group>
+
+                    <Group gap="sm" align="center">
                         {job.compatibility_score != null && (
                             <RingProgress
-                                size={60}
+                                size={68}
                                 thickness={6}
                                 roundCaps
                                 sections={[
@@ -174,20 +183,6 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                                 }
                             />
                         )}
-                    </Group>
-
-                    <Group gap="sm" align="center">
-                        <Badge
-                            radius="xl"
-                            variant="outline"
-                            style={{
-                                borderColor: BROWN,
-                                color: BROWN,
-                                fontWeight: 500,
-                            }}
-                        >
-                            {job.type}
-                        </Badge>
                     </Group>
                 </Group>
 
@@ -227,16 +222,29 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                         >
                             {saved ? t("jobListing.saved") : t("jobListing.save")}
                         </Button>
+
+                        <Button
+                            radius="xl"
+                            size="xs"
+                            variant="outline"
+                            onClick={() => onShare?.(job.id)}
+                        >
+                            {t("jobListing.share")}
+                        </Button>
                     </Group>
 
-                    <Button
+                    <Badge
                         radius="xl"
-                        size="xs"
+                        h={32}
                         variant="outline"
-                        onClick={() => onShare?.(job.id)}
+                        style={{
+                            borderColor: "BROWN",
+                            color: "BROWN",
+                            fontWeight: 500,
+                        }}
                     >
-                        {t("jobListing.share")}
-                    </Button>
+                        {job.type}
+                    </Badge>
                 </Group>
 
             </Stack>
