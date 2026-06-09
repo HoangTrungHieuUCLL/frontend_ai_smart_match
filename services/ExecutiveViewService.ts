@@ -31,6 +31,16 @@ export type ExecutiveViewParams = {
     pageSize?: number;
 };
 
+export class ExecutiveViewRequestError extends Error {
+    status: number;
+
+    constructor(status: number, message = "Failed to fetch executive view dashboard") {
+        super(message);
+        this.name = "ExecutiveViewRequestError";
+        this.status = status;
+    }
+}
+
 const getDashboard = async ({
     search = "",
     sortBy = "id",
@@ -52,16 +62,25 @@ const getDashboard = async ({
     }
 
     try {
+        const token = typeof window !== "undefined"
+            ? window.localStorage.getItem("access_token")
+            : null;
+        const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_URL}/executive-view?${params.toString()}`, {
             method: "GET",
             signal: controller.signal,
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers,
         });
 
         if (!response.ok) {
-            throw new Error("Failed to fetch executive view dashboard");
+            throw new ExecutiveViewRequestError(response.status);
         }
 
         const text = await response.text();
