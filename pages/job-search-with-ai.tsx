@@ -10,6 +10,7 @@ import { CvConfirmReturn } from "../services/CvService";
 import { getSavedJobs } from "../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
 import AddJobModal from "../components/AddJobModal";
+import JobListingSkeleton from "../components/skeleton/JobListingSkeleton";
 
 type SortOption = "best_match" | "newest_first" | "company_az";
 
@@ -396,13 +397,18 @@ export default function JobSearchWithAIPage() {
                     </Box>
                 ) : (
                     <Stack gap="md">
-                        {currentJobs.map((job) => (
-                            <JobListing
-                                key={job.id}
-                                job={job}
-                                onShare={handleShare}
-                            />
-                        ))}
+                        { isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <JobListingSkeleton key={i} />
+                            ))
+                        ) : (
+                            jobs.map((job) => (
+                                <JobListing key={job.id}
+                                            job={job}
+                                            onShare={handleShare}
+                                />
+                            ))
+                        )}
                     </Stack>
                 )}
 
