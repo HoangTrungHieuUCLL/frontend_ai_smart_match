@@ -25,6 +25,7 @@ import ExecutiveViewService, {
 } from "../services/ExecutiveViewService";
 import { CVSummaryDetails } from "../components/CVUploadConfirmation";
 import JobService from "../services/JobService";
+import CvService from "../services/CvService";
 import AddJobModal from "../components/AddJobModal";
 
 const BROWN = "#774326";
@@ -122,6 +123,7 @@ export default function ExecutiveViewPage() {
     const [dashboard, setDashboard] = useState<ExecutiveViewDashboard | null>(null);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [selectedCv, setSelectedCv] = useState<CV | null>(null);
+    const [cvToDelete, setCvToDelete] = useState<CV | null>(null);
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
     const [jobModalOpen, setJobModalOpen] = useState(false);
@@ -131,6 +133,7 @@ export default function ExecutiveViewPage() {
     const [jobError, setJobError] = useState("");
     const [adminToken, setAdminToken] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [deletingCvId, setDeletingCvId] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchDashboard = async () => {
@@ -178,7 +181,10 @@ export default function ExecutiveViewPage() {
             <Table.Tr
                 key={cv.id}
                 onClick={() => setSelectedCv(cv)}
-                style={{cursor: "pointer"}}
+                style={{
+                    cursor: "pointer",
+                    opacity: deletingCvId === cv.id ? 0.55 : 1,
+                }}
             >
                 <Table.Td>{cv.id}</Table.Td>
                 <Table.Td>
@@ -190,9 +196,31 @@ export default function ExecutiveViewPage() {
                         {cv.candidate_profile?.skills || "No skills extracted"}
                     </Text>
                 </Table.Td>
+                <Table.Td>
+                    <Group justify="flex-end">
+                        <Tooltip label="Delete CV">
+                            <ActionIcon
+                                variant="light"
+                                color="red"
+                                aria-label={`Delete ${cv.filename}`}
+                                disabled={!adminToken || deletingCvId !== null}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setCvToDelete(cv);
+                                }}
+                            >
+                                {deletingCvId === cv.id ? (
+                                    <Loader size={16} color="red" />
+                                ) : (
+                                    <IconTrash size={18} />
+                                )}
+                            </ActionIcon>
+                        </Tooltip>
+                    </Group>
+                </Table.Td>
             </Table.Tr>
         ));
-    }, [cvs]);
+    }, [adminToken, cvs, deletingCvId]);
 
     const jobRows = useMemo(() => {
         return jobs.map((job) => (
@@ -272,6 +300,47 @@ export default function ExecutiveViewPage() {
             });
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleDeleteCv = async () => {
+        if (!cvToDelete || !adminToken || deletingCvId !== null) {
+            return;
+        }
+
+        try {
+            setDeletingCvId(cvToDelete.id);
+            await CvService.deleteCv(cvToDelete.id, adminToken);
+
+            setDashboard((current) => {
+                if (!current) {
+                    return current;
+                }
+
+                return {
+                    ...current,
+                    total_cvs: Math.max(0, current.total_cvs - 1),
+                    cvs: current.cvs.filter((cv) => cv.id !== cvToDelete.id),
+                };
+            });
+
+            if (selectedCv?.id === cvToDelete.id) {
+                setSelectedCv(null);
+            }
+
+            notifications.show({
+                message: "CV deleted successfully",
+                autoClose: 3000,
+            });
+            setCvToDelete(null);
+        } catch (error) {
+            notifications.show({
+                color: "red",
+                message: error instanceof Error ? error.message : "Failed to delete CV.",
+                autoClose: 3000,
+            });
+        } finally {
+            setDeletingCvId(null);
         }
     };
 
@@ -429,12 +498,13 @@ export default function ExecutiveViewPage() {
                                                 <Table.Th>CV file name</Table.Th>
                                                 <Table.Th>Candidate full name</Table.Th>
                                                 <Table.Th>Skills</Table.Th>
+                                                <Table.Th style={{textAlign: "right"}}>Actions</Table.Th>
                                             </Table.Tr>
                                         </Table.Thead>
                                         <Table.Tbody>
                                             {rows.length ? rows : (
                                                 <Table.Tr>
-                                                    <Table.Td colSpan={4}>
+                                                    <Table.Td colSpan={5}>
                                                         <Text c="dimmed" ta="center" py="lg">
                                                             No uploaded CVs found.
                                                         </Text>
@@ -460,9 +530,20 @@ export default function ExecutiveViewPage() {
                     <CVSummaryDetails
                         cv={selectedCv}
                         footer={
-                            <Button color={BROWN} onClick={() => setSelectedCv(null)}>
-                                Close
-                            </Button>
+                            <Group justify="space-between">
+                                <Button
+                                    color="red"
+                                    variant="light"
+                                    leftSection={<IconTrash size={18} />}
+                                    disabled={!adminToken || deletingCvId !== null}
+                                    onClick={() => setCvToDelete(selectedCv)}
+                                >
+                                    Delete
+                                </Button>
+                                <Button color={BROWN} onClick={() => setSelectedCv(null)}>
+                                    Close
+                                </Button>
+                            </Group>
                         }
                     />
                 )}
@@ -503,6 +584,42 @@ export default function ExecutiveViewPage() {
                             color="red"
                             loading={isDeleting}
                             onClick={handleDeleteJob}
+                        >
+                            Delete
+                        </Button>
+                    </Group>
+                </Stack>
+            </Modal>
+
+            <Modal
+                opened={cvToDelete !== null}
+                onClose={() => {
+                    if (deletingCvId === null) {
+                        setCvToDelete(null);
+                    }
+                }}
+                centered
+                title={<Text fw={700} size="lg">Delete CV</Text>}
+            >
+                <Stack>
+                    <Text>
+                        {cvToDelete
+                            ? `Delete CV '${cvToDelete.filename}' and all associated data for ${getCandidateName(cvToDelete)}? This cannot be undone.`
+                            : ""}
+                    </Text>
+                    <Group justify="flex-end">
+                        <Button
+                            variant="light"
+                            color={BROWN}
+                            onClick={() => setCvToDelete(null)}
+                            disabled={deletingCvId !== null}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            color="red"
+                            loading={deletingCvId !== null}
+                            onClick={handleDeleteCv}
                         >
                             Delete
                         </Button>
