@@ -9,7 +9,7 @@ export const Header = () => {
     const router = useRouter();
     const { language, setLanguage, t } = useTranslation();
     const [loginOpened, setLoginOpened] = useState(false);
-    const [loggedInUsername, setLoggedInUsername] = useState<string>("");
+    const [loggedInEmail, setLoggedInEmail] = useState<string>("");
     const [logoutOpened, setLogoutOpened] = useState(false);
 
     const navItems = [
@@ -19,7 +19,10 @@ export const Header = () => {
         { label: t("nav.clients"), href: "#" },
         { label: t("nav.consultation"), href: "#" }
     ];
-
+    const syncAuth = () => {
+        const email = localStorage.getItem("email");
+        setLoggedInEmail(email ?? "");
+    };
     const handleNavClick = (href: string) => {
         if (href !== "#") {
             router.push(href);
@@ -32,20 +35,30 @@ export const Header = () => {
 
     const handleLogout = async () => {
         localStorage.removeItem("access_token");
-        localStorage.removeItem("username");
-        setLoggedInUsername("");
+        localStorage.removeItem("email");
+        setLoggedInEmail("");
         setLogoutOpened(false);
         await router.push("/");
     };
 
+    // useEffect(() => {
+    //     const email = localStorage.getItem("email");
+
+    //     if (email != null) {
+    //         setLoggedInEmail(email);
+    //     }
+    // }, []);
     useEffect(() => {
-        const username = localStorage.getItem("username");
+        syncAuth();
 
-        if (username != null) {
-            setLoggedInUsername(username);
-        }
+        window.addEventListener("storage", syncAuth);
+        window.addEventListener("auth-change", syncAuth);
+
+        return () => {
+            window.removeEventListener("storage", syncAuth);
+            window.removeEventListener("auth-change", syncAuth);
+        };
     }, []);
-
     return (
         <Group 
             justify="space-between" 
@@ -101,7 +114,7 @@ export const Header = () => {
                     {t("nav.jobSearch")}
                 </Button>
 
-                {loggedInUsername ? (
+                {loggedInEmail ? (
                     <Popover
                         opened={logoutOpened}
                         onChange={setLogoutOpened}
@@ -118,7 +131,7 @@ export const Header = () => {
                                 className={styles.adminGreeting}
                                 onClick={() => setLogoutOpened((opened) => !opened)}
                             >
-                                Hello, {loggedInUsername}!
+                                Hello, {loggedInEmail}!
                             </Text>
                         </Popover.Target>
                         <Popover.Dropdown className={styles.logoutPopover}>
@@ -176,7 +189,12 @@ export const Header = () => {
                 padding="lg"
                 size={450}
             >
-                <Login />
+                <Login onSuccess={(email: string) => {
+                        setLoggedInEmail(email);
+                        setLoginOpened(false);
+                    }} 
+                    onClose={() => setLoginOpened(false)}
+                />
             </Modal>
         </Group>
     );
