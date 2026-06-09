@@ -24,7 +24,7 @@ export const Login = () => {
             localStorage.setItem("access_token", data.access_token);
             localStorage.setItem("username", data.username);
 
-            await router.push("/executive-view");
+            window.location.href = "/executive-view";
         } catch (err) {
             setError(
                 err instanceof Error

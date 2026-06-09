@@ -121,6 +121,12 @@ export default function ExecutiveViewPage() {
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
+                const loggedInUser = localStorage.getItem("username");
+                if (!loggedInUser || loggedInUser != "admin") {
+                    setError("You are not authorized to view this page.");
+                    return;
+                }
+
                 const response = await ExecutiveViewService.getDashboard();
                 setDashboard(response);
             } catch {
