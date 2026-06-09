@@ -138,7 +138,7 @@ export const Header = () => {
                         </Popover.Target>
                         <Popover.Dropdown className={styles.logoutPopover}>
                             <Stack align="center" gap={8}>
-                                {loggedInUsername === "admin" && (
+                                {loggedInEmail === "admin" && (
                                     <Button
                                         radius="xl"
                                         size="sm"
