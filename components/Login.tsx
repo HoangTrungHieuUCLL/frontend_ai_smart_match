@@ -42,6 +42,7 @@ export const Login = ({ onSuccess,onClose
                 await router.push("/job-search-with-ai");
             }
 
+            window.location.href = "/executive-view";
         } catch (err) {
             setError(
                 err instanceof Error
