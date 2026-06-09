@@ -25,6 +25,7 @@ export const Login = () => {
             localStorage.setItem("username", data.username);
 
             await router.push("/executive-view");
+            window.location.reload();
         } catch (err) {
             setError(
                 err instanceof Error
