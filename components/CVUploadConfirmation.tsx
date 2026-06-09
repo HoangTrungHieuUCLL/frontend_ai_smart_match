@@ -1,6 +1,6 @@
 import {
+    Alert,
     Button,
-    Divider,
     Group,
     Paper,
     Pill,
@@ -21,6 +21,7 @@ interface Props {
     cv: CV;
     onClose: (scores: CvConfirmReturn[]) => void;
     profileId: number | null;
+    sourceBanner?: string;
 }
 
 interface CVSummaryDetailsProps {
@@ -285,6 +286,7 @@ export default function CVUploadConfirmation({
                                                  cv,
                                                  onClose,
                                                  profileId,
+                                                 sourceBanner,
                                              }: Props) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -376,35 +378,43 @@ export default function CVUploadConfirmation({
     };
 
     return (
-        <CVSummaryDetails
-            cv={cv}
-            profile={profile}
-            isEditing={isEditing}
-            onProfileFieldChange={updateProfileField}
-            onCollectionItemChange={updateCollectionItem}
-            footer={
-                <>
-                    {!isEditing && (
-                        <Button
-                            variant="outline"
-                            color={BROWN}
-                            onClick={() => setIsEditing(true)}
-                            disabled={isSubmitting}
-                        >
-                            Edit
-                        </Button>
-                    )}
+        <Stack gap="md">
+            {sourceBanner && (
+                <Alert color="blue" variant="light">
+                    {sourceBanner}
+                </Alert>
+            )}
 
-                    <Button
-                        color={BROWN}
-                        loading={isSaving || isSubmitting}
-                        disabled={isSaving || isSubmitting}
-                        onClick={isEditing ? onSaveChanges : onSubmit}
-                    >
-                        {isEditing ? "Save changes" : "Everything looks good!"}
-                    </Button>
-                </>
-            }
-        />
+            <CVSummaryDetails
+                cv={cv}
+                profile={profile}
+                isEditing={isEditing}
+                onProfileFieldChange={updateProfileField}
+                onCollectionItemChange={updateCollectionItem}
+                footer={
+                    <>
+                        {!isEditing && (
+                            <Button
+                                variant="outline"
+                                color={BROWN}
+                                onClick={() => setIsEditing(true)}
+                                disabled={isSubmitting}
+                            >
+                                Edit
+                            </Button>
+                        )}
+
+                        <Button
+                            color={BROWN}
+                            loading={isSaving || isSubmitting}
+                            disabled={isSaving || isSubmitting}
+                            onClick={isEditing ? onSaveChanges : onSubmit}
+                        >
+                            {isEditing ? "Save changes" : "Everything looks good!"}
+                        </Button>
+                    </>
+                }
+            />
+        </Stack>
     );
 }

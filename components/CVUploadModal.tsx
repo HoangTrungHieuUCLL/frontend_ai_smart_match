@@ -1,8 +1,9 @@
-import {useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {
     ActionIcon,
     Box,
     Button,
+    Divider,
     Group,
     Loader,
     Modal,
@@ -16,6 +17,7 @@ import CvService, {CvConfirmReturn, ParsedCvResponse} from "../services/CvServic
 import {CV, Certification, Education, Experience, Language, Project} from "../types";
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import CVUploadConfirmation from "./CVUploadConfirmation";
+import LinkedInImportButton from "./LinkedInImportButton";
 
 const BROWN = "#774326";
 
@@ -23,7 +25,7 @@ type FileRejection = {
     errors: readonly { code: string }[];
 };
 
-type CvFormData = {
+export type CvFormData = {
     familyName: string;
     middleName: string;
     givenName: string;
@@ -33,9 +35,10 @@ type CvFormData = {
 type Props = {
     opened: boolean;
     onClose: (results: CvConfirmReturn[] | undefined, cvName?: string) => void;
+    initialUploadError?: string;
 };
 
-export default function CVUploadModal({opened, onClose}: Props) {
+export default function CVUploadModal({opened, onClose, initialUploadError}: Props) {
     const {t} = useTranslation();
     const [step, setStep] = useState<"form" | "upload">("form");
     const [formData, setFormData] = useState<CvFormData>({
@@ -73,6 +76,13 @@ export default function CVUploadModal({opened, onClose}: Props) {
     );
     const formErrors = getCvFormErrors(formData, validationMessages);
     const canContinue = isCvFormValid(formData, validationMessages);
+
+    useEffect(() => {
+        if (!opened || !initialUploadError) return;
+
+        setStep("upload");
+        setFileError(initialUploadError);
+    }, [initialUploadError, opened]);
 
     const reset = () => {
         setStep("form");
@@ -173,6 +183,19 @@ export default function CVUploadModal({opened, onClose}: Props) {
         }
     };
 
+    const handleLinkedInImport = () => {
+        const hasExistingCv = Boolean(localStorage.getItem("cvName"));
+
+        if (
+            hasExistingCv &&
+            !window.confirm("This will replace your current CV data with data from LinkedIn. Continue?")
+        ) {
+            return;
+        }
+
+        window.location.href = CvService.getLinkedInImportUrl();
+    };
+
     return (
         <Modal
             opened={opened}
@@ -230,9 +253,13 @@ export default function CVUploadModal({opened, onClose}: Props) {
                     >
                         {t("upload.continue")}
                     </Button>
+                    <Divider label="or" labelPosition="center" />
+                    <LinkedInImportButton onClick={handleLinkedInImport} />
                 </Stack>
             ) : (
                 <Stack gap="md">
+                    <LinkedInImportButton onClick={handleLinkedInImport} />
+                    <Divider label="or upload a PDF" labelPosition="center" />
                     <Dropzone
                         onDrop={handleFileDrop}
                         onReject={handleFileReject}
@@ -378,7 +405,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
     );
 }
 
-function toConfirmationCv(
+export function toConfirmationCv(
     response: ParsedCvResponse,
     filename: string,
     formData: CvFormData,

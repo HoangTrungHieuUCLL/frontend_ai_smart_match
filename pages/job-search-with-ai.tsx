@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, TextInput} from "@mantine/core";
+import { useRouter } from "next/router";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
 import JobService from "../services/JobService";
@@ -40,12 +41,14 @@ const applyStoredScores = (jobList: Job[]): Job[] => {
 
 export default function JobSearchWithAIPage() {
     const { t } = useTranslation();
+    const router = useRouter();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [page, setPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
     const [addJobOpen, setAddJobOpen] = useState(false);
     const [adminToken, setAdminToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [linkedinImportError, setLinkedinImportError] = useState<string | undefined>();
 
     const [search, setSearch] = useState("");
     const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
@@ -56,6 +59,13 @@ export default function JobSearchWithAIPage() {
         setUploadedCvName(stored);
         if (stored) setSortOption("best_match");
     }, []);
+
+    useEffect(() => {
+        if (!router.isReady || router.query.linkedinImport !== "failed") return;
+
+        setLinkedinImportError("LinkedIn import failed. You can upload a PDF instead.");
+        setModalOpen(true);
+    }, [router.isReady, router.query.linkedinImport]);
 
     const [showSavedOnly, setShowSavedOnly] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
@@ -379,8 +389,10 @@ export default function JobSearchWithAIPage() {
 
             <CVUploadModal
                 opened={modalOpen}
+                initialUploadError={linkedinImportError}
                 onClose={(results, cvName) => {
                     setModalOpen(false);
+                    setLinkedinImportError(undefined);
 
                     if (!results) return;
                     if (cvName) {
