@@ -2,10 +2,10 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MantineProvider } from "@mantine/core";
 
-import JobListing from "./JobListing";
-import { I18nProvider } from "../contexts/I18nContext";
-import type { Job } from "../types";
-import * as savedJobs from "../utils/savedJobs";
+import JobListing from "../../components/JobListing";
+import { I18nProvider } from "../../contexts/I18nContext";
+import type { Job } from "../../types";
+import * as savedJobs from "../../utils/savedJobs";
 
 const mockPush = jest.fn();
 
@@ -21,7 +21,7 @@ jest.mock("@mantine/notifications", () => ({
     },
 }));
 
-jest.mock("../utils/savedJobs", () => {
+jest.mock("../../utils/savedJobs", () => {
     const readSavedJobs = () => JSON.parse(localStorage.getItem("savedJobs") || "[]");
 
     return {
