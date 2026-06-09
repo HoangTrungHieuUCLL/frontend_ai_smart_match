@@ -1,12 +1,15 @@
-import { Button, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
-import { useRouter } from "next/router";
+import { Anchor, Button, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import AuthService from "../services/AuthService";
 
-export const Login = () => {
+export const Login = ({ onSuccess,onClose 
+}: { onSuccess?: (email: string) => void;
+     onClose?: () => void;
+ }) => {
     const router = useRouter();
 
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -17,19 +20,34 @@ export const Login = () => {
             setError("");
 
             const data = await AuthService.login({
-                username,
+                email,
                 password,
             });
 
             localStorage.setItem("access_token", data.access_token);
-            localStorage.setItem("username", data.username);
+            localStorage.setItem("email", email);
+            window.dispatchEvent(new Event("auth-change"));
+
+
+            onSuccess?.(email);
+            onClose?.();
+
+            const payload = JSON.parse(
+                atob(data.access_token.split(".")[0])
+            );
+
+            if (payload.role === "admin") {
+                await router.push("/executive-view");
+            } else {
+                await router.push("/job-search-with-ai");
+            }
 
             window.location.href = "/executive-view";
         } catch (err) {
             setError(
                 err instanceof Error
                     ? err.message
-                    : "Invalid username or password"
+                    : "Invalid email or password"
             );
         } finally {
             setIsLoading(false);
@@ -39,9 +57,9 @@ export const Login = () => {
     return (
         <Stack gap="md">
             <TextInput
-                placeholder="username"
-                value={username}
-                onChange={(e) => setUsername(e.currentTarget.value)}
+                placeholder="email"
+                value={email}
+                onChange={(e) => setEmail(e.currentTarget.value)}
                 radius="xl"
                 size="lg"
                 styles={{
@@ -72,6 +90,7 @@ export const Login = () => {
 
             <Button
                 radius="xl"
+                type="button"
                 size="lg"
                 fullWidth
                 loading={isLoading}
@@ -84,6 +103,23 @@ export const Login = () => {
             >
                 Log in
             </Button>
+            <Text size="sm" ta="center" mt="md" c="black">
+                Don’t have an account?{" "}
+                <Anchor
+                    component="button"
+                    onClick={() =>{ 
+                         onClose?.();
+                        router.push("/register");
+                    }}
+                    style={{
+                        color: "#774326",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                    }}
+                >
+                    Create one
+                </Anchor>
+                </Text>
         </Stack>
     );
 };
