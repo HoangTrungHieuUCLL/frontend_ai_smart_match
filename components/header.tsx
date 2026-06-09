@@ -5,6 +5,8 @@ import styles from "../styles/header.module.css";
 import {useEffect, useState} from "react";
 import Login from "./Login";
 
+const BROWN = "#774326";
+
 export const Header = () => {
     const router = useRouter();
     const { language, setLanguage, t } = useTranslation();
@@ -135,7 +137,21 @@ export const Header = () => {
                             </Text>
                         </Popover.Target>
                         <Popover.Dropdown className={styles.logoutPopover}>
-                            <Stack align="center" gap={0}>
+                            <Stack align="center" gap={8}>
+                                {loggedInUsername === "admin" && (
+                                    <Button
+                                        radius="xl"
+                                        size="sm"
+                                        variant="outline"
+                                        color={BROWN}
+                                        onClick={() => {
+                                            setLogoutOpened(false);
+                                            router.push("/executive-view");
+                                        }}
+                                    >
+                                        Executive view
+                                    </Button>
+                                )}
                                 <Button
                                     radius="xl"
                                     size="sm"

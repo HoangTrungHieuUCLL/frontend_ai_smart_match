@@ -1,32 +1,34 @@
-import { useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Button, Group, Modal, Stack, Textarea, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import JobService from "../services/JobService";
-import { JobCreatePayload } from "../types";
+import { Job, JobCreatePayload } from "../types";
 
 const BROWN = "#774326";
 
 type JobFormState = {
     company_name: string;
     position: string;
-    date_posted: string;
+    date: string;
     location: string;
-    job_type: string;
+    type: string;
     overview: string;
     responsibilities: string;
     requirements: string;
     offers: string;
-    salary_usd: string;
+    salary: string;
     notes: string;
-    requirements_simplified: string;
 };
+
+type JobFormErrors = Partial<Record<"company_name" | "position", string>>;
 
 type AddJobModalProps = {
     opened: boolean;
     onClose: () => void;
     adminToken: string;
-    onJobCreated: () => Promise<void>;
+    onJobSaved: () => Promise<void>;
+    job?: Job | null;
 };
 
 const getTodayDate = () => {
@@ -41,90 +43,120 @@ const getTodayDate = () => {
 const getEmptyJobForm = (): JobFormState => ({
     company_name: "",
     position: "",
-    date_posted: getTodayDate(),
+    date: getTodayDate(),
     location: "",
-    job_type: "",
+    type: "",
     overview: "",
     responsibilities: "",
     requirements: "",
     offers: "",
-    salary_usd: "",
+    salary: "",
     notes: "",
-    requirements_simplified: "",
 });
 
-const requiredJobFields: Array<keyof JobFormState> = [
-    "company_name",
-    "position",
-    "date_posted",
-    "location",
-    "job_type",
-    "overview",
-    "responsibilities",
-    "requirements",
-    "offers",
-    "requirements_simplified",
-];
+const getJobForm = (job?: Job | null): JobFormState => {
+    if (!job) {
+        return getEmptyJobForm();
+    }
+
+    return {
+        company_name: job.company_name ?? "",
+        position: job.position ?? "",
+        date: job.date || getTodayDate(),
+        location: job.location ?? "",
+        type: job.type ?? "",
+        overview: job.overview ?? "",
+        responsibilities: job.responsibilities ?? "",
+        requirements: job.requirements ?? "",
+        offers: job.offers ?? "",
+        salary: job.salary ?? "",
+        notes: job.notes ?? "",
+    };
+};
 
 export default function AddJobModal({
-                                        opened,
-                                        onClose,
-                                        adminToken,
-                                        onJobCreated,
-                                    }: AddJobModalProps) {
-    const [jobForm, setJobForm] = useState<JobFormState>(getEmptyJobForm);
-    const [isRegistering, setIsRegistering] = useState(false);
+    opened,
+    onClose,
+    adminToken,
+    onJobSaved,
+    job,
+}: AddJobModalProps) {
+    const [jobForm, setJobForm] = useState<JobFormState>(() => getJobForm(job));
+    const [errors, setErrors] = useState<JobFormErrors>({});
+    const [isSaving, setIsSaving] = useState(false);
+    const isEditing = Boolean(job);
 
-    const updateJobForm = (
-        field: keyof JobFormState,
-        value: string
-    ) => {
+    useEffect(() => {
+        if (opened) {
+            setJobForm(getJobForm(job));
+            setErrors({});
+        }
+    }, [opened, job]);
+
+    const updateJobForm = (field: keyof JobFormState, value: string) => {
         setJobForm((current) => ({
             ...current,
             [field]: value,
         }));
+
+        if (field === "company_name" || field === "position") {
+            setErrors((current) => ({
+                ...current,
+                [field]: undefined,
+            }));
+        }
     };
 
-    const handleRegisterJob = async () => {
-        const hasMissingRequiredField = requiredJobFields.some(
-            (field) => !jobForm[field].trim()
-        );
+    const validate = () => {
+        const nextErrors: JobFormErrors = {};
 
-        if (hasMissingRequiredField) {
-            notifications.show({
-                color: "red",
-                message: "Please complete all required job fields.",
-                autoClose: 3000,
-            });
+        if (!jobForm.company_name.trim()) {
+            nextErrors.company_name = "Company name is required.";
+        }
+
+        if (!jobForm.position.trim()) {
+            nextErrors.position = "Position is required.";
+        }
+
+        setErrors(nextErrors);
+        return Object.keys(nextErrors).length === 0;
+    };
+
+    const buildPayload = (): JobCreatePayload => ({
+        company_name: jobForm.company_name.trim(),
+        position: jobForm.position.trim(),
+        date: jobForm.date || getTodayDate(),
+        location: jobForm.location.trim() || null,
+        type: jobForm.type.trim() || null,
+        overview: jobForm.overview.trim() || null,
+        responsibilities: jobForm.responsibilities.trim() || null,
+        requirements: jobForm.requirements.trim() || null,
+        offers: jobForm.offers.trim() || null,
+        salary: jobForm.salary.trim() || null,
+        notes: jobForm.notes.trim() || null,
+        requirements_simplified: jobForm.requirements.trim() || null,
+    });
+
+    const handleSaveJob = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!validate()) {
             return;
         }
 
-        const payload: JobCreatePayload = {
-            company_name: jobForm.company_name.trim(),
-            position: jobForm.position.trim(),
-            date: jobForm.date_posted,
-            location: jobForm.location.trim(),
-            type: jobForm.job_type.trim(),
-            overview: jobForm.overview.trim(),
-            responsibilities: jobForm.responsibilities.trim(),
-            requirements: jobForm.requirements.trim(),
-            offers: jobForm.offers.trim(),
-            salary: jobForm.salary_usd.trim() || null,
-            notes: jobForm.notes.trim() || null,
-            requirements_simplified:
-                jobForm.requirements_simplified.trim(),
-        };
-
         try {
-            setIsRegistering(true);
+            setIsSaving(true);
 
-            await JobService.createJob(payload, adminToken);
-            await onJobCreated();
+            if (job) {
+                await JobService.updateJob(job.id, buildPayload(), adminToken);
+            } else {
+                await JobService.createJob(buildPayload(), adminToken);
+            }
 
-            setJobForm(getEmptyJobForm());
+            await onJobSaved();
 
             notifications.show({
-                message: "Job registered successfully.",
+                message: isEditing ? "Job updated successfully." : "Job created successfully.",
                 autoClose: 3000,
             });
 
@@ -135,11 +167,13 @@ export default function AddJobModal({
                 message:
                     error instanceof Error
                         ? error.message
-                        : "Failed to register job.",
+                        : isEditing
+                            ? "Failed to update job."
+                            : "Failed to create job.",
                 autoClose: 3000,
             });
         } finally {
-            setIsRegistering(false);
+            setIsSaving(false);
         }
     };
 
@@ -149,181 +183,114 @@ export default function AddJobModal({
             onClose={onClose}
             centered
             size="lg"
-            title="Add a new job"
+            title={isEditing ? "Edit job" : "Add job"}
         >
-            <Stack gap="sm">
-                <Group grow align="flex-start">
-                    <TextInput
-                        label="Company name"
-                        value={jobForm.company_name}
-                        onChange={(e) =>
-                            updateJobForm(
-                                "company_name",
-                                e.currentTarget.value
-                            )
-                        }
-                        required
-                    />
-                    <TextInput
-                        label="Position"
-                        value={jobForm.position}
-                        onChange={(e) =>
-                            updateJobForm(
-                                "position",
-                                e.currentTarget.value
-                            )
-                        }
-                        required
-                    />
-                </Group>
+            <form onSubmit={handleSaveJob}>
+                <Stack gap="sm">
+                    <Group grow align="flex-start">
+                        <TextInput
+                            label="Position"
+                            value={jobForm.position}
+                            onChange={(e) => updateJobForm("position", e.currentTarget.value)}
+                            error={errors.position}
+                            required
+                        />
+                        <TextInput
+                            label="Company name"
+                            value={jobForm.company_name}
+                            onChange={(e) => updateJobForm("company_name", e.currentTarget.value)}
+                            error={errors.company_name}
+                            required
+                        />
+                    </Group>
 
-                <Group grow align="flex-start">
-                    <TextInput
-                        label="Date posted"
-                        value={jobForm.date_posted}
-                        readOnly
-                        required
-                    />
-                    <TextInput
-                        label="Location"
-                        value={jobForm.location}
-                        onChange={(e) =>
-                            updateJobForm(
-                                "location",
-                                e.currentTarget.value
-                            )
-                        }
-                        required
-                    />
-                </Group>
+                    <Group grow align="flex-start">
+                        <TextInput
+                            label="Location"
+                            value={jobForm.location}
+                            onChange={(e) => updateJobForm("location", e.currentTarget.value)}
+                            placeholder="Optional"
+                        />
+                        <TextInput
+                            label="Job type"
+                            value={jobForm.type}
+                            onChange={(e) => updateJobForm("type", e.currentTarget.value)}
+                            placeholder="Optional"
+                        />
+                    </Group>
 
-                <Group grow align="flex-start">
                     <TextInput
-                        label="Job type"
-                        value={jobForm.job_type}
-                        onChange={(e) =>
-                            updateJobForm(
-                                "job_type",
-                                e.currentTarget.value
-                            )
-                        }
-                        required
-                    />
-                    <TextInput
-                        label="Salary USD"
-                        value={jobForm.salary_usd}
-                        onChange={(e) =>
-                            updateJobForm(
-                                "salary_usd",
-                                e.currentTarget.value
-                            )
-                        }
+                        label="Salary"
+                        value={jobForm.salary}
+                        onChange={(e) => updateJobForm("salary", e.currentTarget.value)}
                         placeholder="Optional"
                     />
-                </Group>
 
-                <Textarea
-                    label="Overview"
-                    value={jobForm.overview}
-                    onChange={(e) =>
-                        updateJobForm(
-                            "overview",
-                            e.currentTarget.value
-                        )
-                    }
-                    minRows={3}
-                    autosize
-                    required
-                />
+                    <Textarea
+                        label="Overview"
+                        value={jobForm.overview}
+                        onChange={(e) => updateJobForm("overview", e.currentTarget.value)}
+                        minRows={3}
+                        autosize
+                        placeholder="Optional"
+                    />
 
-                <Textarea
-                    label="Responsibilities"
-                    value={jobForm.responsibilities}
-                    onChange={(e) =>
-                        updateJobForm(
-                            "responsibilities",
-                            e.currentTarget.value
-                        )
-                    }
-                    minRows={3}
-                    autosize
-                    required
-                />
+                    <Textarea
+                        label="Responsibilities"
+                        value={jobForm.responsibilities}
+                        onChange={(e) => updateJobForm("responsibilities", e.currentTarget.value)}
+                        minRows={3}
+                        autosize
+                        placeholder="Optional"
+                    />
 
-                <Textarea
-                    label="Requirements"
-                    value={jobForm.requirements}
-                    onChange={(e) =>
-                        updateJobForm(
-                            "requirements",
-                            e.currentTarget.value
-                        )
-                    }
-                    minRows={3}
-                    autosize
-                    required
-                />
+                    <Textarea
+                        label="Requirements"
+                        value={jobForm.requirements}
+                        onChange={(e) => updateJobForm("requirements", e.currentTarget.value)}
+                        minRows={3}
+                        autosize
+                        placeholder="Optional"
+                    />
 
-                <Textarea
-                    label="Offers"
-                    value={jobForm.offers}
-                    onChange={(e) =>
-                        updateJobForm(
-                            "offers",
-                            e.currentTarget.value
-                        )
-                    }
-                    minRows={3}
-                    autosize
-                    required
-                />
+                    <Textarea
+                        label="Benefits/offers"
+                        value={jobForm.offers}
+                        onChange={(e) => updateJobForm("offers", e.currentTarget.value)}
+                        minRows={3}
+                        autosize
+                        placeholder="Optional"
+                    />
 
-                <Textarea
-                    label="Notes"
-                    value={jobForm.notes}
-                    onChange={(e) =>
-                        updateJobForm(
-                            "notes",
-                            e.currentTarget.value
-                        )
-                    }
-                    minRows={2}
-                    autosize
-                    placeholder="Optional"
-                />
+                    <Textarea
+                        label="Notes"
+                        value={jobForm.notes}
+                        onChange={(e) => updateJobForm("notes", e.currentTarget.value)}
+                        minRows={2}
+                        autosize
+                        placeholder="Optional"
+                    />
 
-                <Textarea
-                    label="Requirements simplified"
-                    value={jobForm.requirements_simplified}
-                    onChange={(e) =>
-                        updateJobForm(
-                            "requirements_simplified",
-                            e.currentTarget.value
-                        )
-                    }
-                    minRows={3}
-                    autosize
-                    required
-                />
+                    <Group justify="flex-end" mt="sm">
+                        <Button
+                            type="button"
+                            variant="light"
+                            color={BROWN}
+                            onClick={onClose}
+                        >
+                            Cancel
+                        </Button>
 
-                <Group justify="flex-end" mt="sm">
-                    <Button
-                        variant="light"
-                        color={BROWN}
-                        onClick={onClose}
-                    >
-                        Cancel
-                    </Button>
-
-                    <Button
-                        style={{ backgroundColor: BROWN }}
-                        loading={isRegistering}
-                        onClick={handleRegisterJob}
-                    >
-                        Register
-                    </Button>
-                </Group>
-            </Stack>
+                        <Button
+                            type="submit"
+                            style={{ backgroundColor: BROWN }}
+                            loading={isSaving}
+                        >
+                            {isEditing ? "Save changes" : "Create job"}
+                        </Button>
+                    </Group>
+                </Stack>
+            </form>
         </Modal>
     );
 }
