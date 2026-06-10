@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import AuthService from "../services/AuthService";
 import Login from "../components/Login";
+import { ensureAccountCreatedAt } from "../utils/profileStorage";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LINKEDIN_BLUE = "#0A66C2";
 
@@ -21,11 +22,7 @@ const hasMinLength = (pw: string) => pw.length >= 8;
 const hasUppercase = (pw: string) => /[A-Z]/.test(pw);
 const hasNumber = (pw: string) => /\d/.test(pw);
 
-export const Register = ({
-    onSuccess,
-}: {
-    onSuccess?: (email: string) => void;
-}) => {
+export const Register = () => {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -48,9 +45,6 @@ export const Register = ({
 
   const [loading, setLoading] = useState(false);
 
-{showLogin && (
-  <Login onClose={() => setShowLogin(false)} />
-)}
   // Redirect if already logged in
   useEffect(() => {
     if (localStorage.getItem("access_token")) {
@@ -84,11 +78,6 @@ export const Register = ({
     passwordChecks.length &&
     passwordChecks.uppercase &&
     passwordChecks.number;
-
-  const isFormValid =
-    emailRegex.test(email) &&
-    isPasswordValid &&
-    password === confirmPassword;
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -130,6 +119,7 @@ export const Register = ({
 
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("email", email);
+      ensureAccountCreatedAt(email);
       window.dispatchEvent(new Event("auth-change"));
 
     //   onSuccess?.(email);

@@ -1,5 +1,5 @@
 import {
-    Alert,
+    ActionIcon,
     Button,
     Group,
     Paper,
@@ -12,8 +12,10 @@ import {
     Tooltip,
 } from "@mantine/core";
 import { ReactNode, useState } from "react";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
 import CvService, { CvConfirmReturn } from "../services/CvService";
 import { CV, Profile } from "../types";
+import { saveStoredProfileCv } from "../utils/profileStorage";
 
 const BROWN = "#774326";
 
@@ -36,6 +38,13 @@ interface CVSummaryDetailsProps {
         field: string,
         value: string,
     ) => void;
+    onCollectionAdd?: (
+        collection: "work_experiences" | "educations" | "projects" | "languages" | "certifications",
+    ) => void;
+    onCollectionDelete?: (
+        collection: "work_experiences" | "educations" | "projects" | "languages" | "certifications",
+        index: number,
+    ) => void;
 }
 
 const parseSkills = (skillsStr?: string | null): string[] =>
@@ -54,6 +63,8 @@ export function CVSummaryDetails({
                                      isEditing = false,
                                      onProfileFieldChange,
                                      onCollectionItemChange,
+                                     onCollectionAdd,
+                                     onCollectionDelete,
                                  }: CVSummaryDetailsProps) {
     const profile = profileOverride ?? cv?.candidate_profile;
 
@@ -63,6 +74,10 @@ export function CVSummaryDetails({
     };
 
     const [skillInput, setSkillInput] = useState("");
+    const [pendingDelete, setPendingDelete] = useState<{
+        collection: "work_experiences" | "educations" | "projects" | "languages" | "certifications";
+        index: number;
+    } | null>(null);
 
     const skills = parseSkills(profile?.skills);
 
@@ -92,6 +107,206 @@ export function CVSummaryDetails({
             skills.filter(
                 (s) => s.toLowerCase() !== skillToRemove.toLowerCase(),
             ),
+        );
+    };
+
+    const renderEditableField = (
+        label: string,
+        value: string | null | undefined,
+        onChange: (value: string) => void,
+        multiline = false,
+    ) => {
+        if (multiline) {
+            return (
+                <Textarea
+                    label={label}
+                    value={value ?? ""}
+                    readOnly={!isEditing}
+                    autosize
+                    minRows={2}
+                    onChange={(event) => onChange(event.currentTarget.value)}
+                />
+            );
+        }
+
+        return (
+            <TextInput
+                label={label}
+                value={value ?? ""}
+                readOnly={!isEditing}
+                onChange={(event) => onChange(event.currentTarget.value)}
+            />
+        );
+    };
+
+    const collectionConfigs = [
+        {
+            key: "work_experiences" as const,
+            title: "Work Experience",
+            empty: "No work experience extracted yet.",
+            fields: [
+                ["job_title", "Job Title"],
+                ["company_name", "Company"],
+                ["start_date", "Start Date"],
+                ["end_date", "End Date"],
+            ],
+        },
+        {
+            key: "educations" as const,
+            title: "Education",
+            empty: "No education extracted yet.",
+            fields: [
+                ["institution", "Institution"],
+                ["degree", "Degree"],
+                ["field_of_study", "Field of Study"],
+                ["start_date", "Start Date"],
+                ["end_date", "End Date"],
+            ],
+        },
+        {
+            key: "projects" as const,
+            title: "Projects",
+            empty: "No projects extracted yet.",
+            fields: [
+                ["project_name", "Project Name"],
+                ["description", "Description"],
+            ],
+        },
+        {
+            key: "languages" as const,
+            title: "Languages",
+            empty: "No languages extracted yet.",
+            fields: [
+                ["language_name", "Language"],
+                ["proficiency_level", "Proficiency"],
+            ],
+        },
+        {
+            key: "certifications" as const,
+            title: "Certifications",
+            empty: "No certifications extracted yet.",
+            fields: [
+                ["certification_name", "Certification"],
+                ["issue_date", "Issue Date"],
+            ],
+        },
+    ];
+
+    const renderCollectionSection = (config: typeof collectionConfigs[number]) => {
+        const items = profile?.[config.key] ?? [];
+
+        return (
+            <Paper key={config.key} p="md" radius="md" style={sectionStyle}>
+                <Stack gap="md">
+                    <Group justify="space-between" align="center">
+                        <Text fw={700} c={BROWN}>
+                            {config.title}
+                        </Text>
+                    </Group>
+
+                    {items.length === 0 && (
+                        <Text size="sm" c="dimmed" fs="italic">
+                            {config.empty}
+                        </Text>
+                    )}
+
+                    {items.map((item, index) => {
+                        const isPendingDelete =
+                            pendingDelete?.collection === config.key &&
+                            pendingDelete.index === index;
+
+                        return (
+                            <Paper
+                                key={`${config.key}-${item.id ?? index}`}
+                                p="sm"
+                                radius="sm"
+                                style={{
+                                    backgroundColor: "#ffffff",
+                                    border: "1px solid rgba(119, 67, 38, 0.12)",
+                                }}
+                            >
+                                <Stack gap="sm">
+                                    <Group justify="space-between" align="center">
+                                        <Text size="sm" fw={600} c={BROWN}>
+                                            {config.title} {index + 1}
+                                        </Text>
+
+                                        {isEditing && (
+                                            isPendingDelete ? (
+                                                <Group gap="xs">
+                                                    <Button
+                                                        size="xs"
+                                                        variant="light"
+                                                        color="red"
+                                                        onClick={() => {
+                                                            onCollectionDelete?.(config.key, index);
+                                                            setPendingDelete(null);
+                                                        }}
+                                                    >
+                                                        Confirm delete
+                                                    </Button>
+                                                    <Button
+                                                        size="xs"
+                                                        variant="subtle"
+                                                        color="gray"
+                                                        onClick={() => setPendingDelete(null)}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                </Group>
+                                            ) : (
+                                                <ActionIcon
+                                                    variant="subtle"
+                                                    color="red"
+                                                    aria-label={`Delete ${config.title} ${index + 1}`}
+                                                    onClick={() =>
+                                                        setPendingDelete({
+                                                            collection: config.key,
+                                                            index,
+                                                        })
+                                                    }
+                                                >
+                                                    <IconTrash size={18} />
+                                                </ActionIcon>
+                                            )
+                                        )}
+                                    </Group>
+
+                                    <Group grow align="flex-start">
+                                        {config.fields.map(([field, label]) => (
+                                            <div key={field}>
+                                                {renderEditableField(
+                                                    label,
+                                                    (item as Record<string, string | null | undefined>)[field],
+                                                    (value) =>
+                                                        onCollectionItemChange?.(
+                                                            config.key,
+                                                            index,
+                                                            field,
+                                                            value,
+                                                        ),
+                                                    field === "description",
+                                                )}
+                                            </div>
+                                        ))}
+                                    </Group>
+                                </Stack>
+                            </Paper>
+                        );
+                    })}
+
+                    {isEditing && (
+                        <Button
+                            leftSection={<IconPlus size={16} />}
+                            variant="outline"
+                            color={BROWN}
+                            onClick={() => onCollectionAdd?.(config.key)}
+                        >
+                            Add {config.title}
+                        </Button>
+                    )}
+                </Stack>
+            </Paper>
         );
     };
 
@@ -277,6 +492,8 @@ export function CVSummaryDetails({
                 </Stack>
             </Paper>
 
+            {collectionConfigs.map(renderCollectionSection)}
+
             {footer && <Group justify="flex-end">{footer}</Group>}
         </Stack>
     );
@@ -331,6 +548,10 @@ export default function CVUploadConfirmation({
                 throw new Error(await response.text());
             }
 
+            saveStoredProfileCv({
+                ...cv,
+                candidate_profile: profile,
+            }, localStorage.getItem("email"));
             setIsEditing(false);
             await onSubmit();
         } catch (error) {
@@ -377,32 +598,99 @@ export default function CVUploadConfirmation({
         });
     };
 
-    return (
-        <Stack gap="md">
-            {sourceBanner && (
-                <Alert color="blue" variant="light">
-                    {sourceBanner}
-                </Alert>
-            )}
+    const addCollectionItem = (
+        collection:
+            | "work_experiences"
+            | "educations"
+            | "projects"
+            | "languages"
+            | "certifications",
+    ) => {
+        setProfile((current) => {
+            if (!current) return current;
 
-            <CVSummaryDetails
-                cv={cv}
-                profile={profile}
-                isEditing={isEditing}
-                onProfileFieldChange={updateProfileField}
-                onCollectionItemChange={updateCollectionItem}
-                footer={
-                    <>
-                        {!isEditing && (
-                            <Button
-                                variant="outline"
-                                color={BROWN}
-                                onClick={() => setIsEditing(true)}
-                                disabled={isSubmitting}
-                            >
-                                Edit
-                            </Button>
-                        )}
+            const nextId = Date.now();
+            const base = { id: nextId, profile_id: current.id };
+            const factories = {
+                work_experiences: {
+                    ...base,
+                    job_title: "",
+                    company_name: "",
+                    start_date: "",
+                    end_date: "",
+                },
+                educations: {
+                    ...base,
+                    institution: "",
+                    degree: "",
+                    field_of_study: "",
+                    start_date: "",
+                    end_date: "",
+                },
+                projects: {
+                    ...base,
+                    project_name: "",
+                    description: "",
+                },
+                languages: {
+                    ...base,
+                    language_name: "",
+                    proficiency_level: "",
+                },
+                certifications: {
+                    ...base,
+                    certification_name: "",
+                    issue_date: "",
+                },
+            };
+
+            return {
+                ...current,
+                [collection]: [...current[collection], factories[collection]],
+            };
+        });
+    };
+
+    const deleteCollectionItem = (
+        collection:
+            | "work_experiences"
+            | "educations"
+            | "projects"
+            | "languages"
+            | "certifications",
+        index: number,
+    ) => {
+        setProfile((current) => {
+            if (!current) return current;
+
+            return {
+                ...current,
+                [collection]: current[collection].filter((_, itemIndex) => itemIndex !== index),
+            };
+        });
+    };
+
+    return (
+        <CVSummaryDetails
+            cv={cv}
+            profile={profile}
+            isEditing={isEditing}
+            onProfileFieldChange={updateProfileField}
+            onCollectionItemChange={updateCollectionItem}
+            onCollectionAdd={addCollectionItem}
+            onCollectionDelete={deleteCollectionItem}
+            footer={
+                <>
+                    {!isEditing && (
+                        <Button
+                            variant="outline"
+                            color={BROWN}
+                            onClick={() => setIsEditing(true)}
+                            disabled={isSubmitting}
+                        >
+                            Edit
+                        </Button>
+                    )}
 
                         <Button
                             color={BROWN}

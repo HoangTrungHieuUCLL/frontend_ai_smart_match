@@ -93,7 +93,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("EN");
 
   useEffect(() => {
-    const storedLanguage = window.localStorage.getItem("language");
+    const storedLanguage = window.sessionStorage.getItem("language");
     if (isLanguage(storedLanguage)) {
       setLanguageState(storedLanguage);
     }
@@ -101,7 +101,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (nextLanguage: Language) => {
     setLanguageState(nextLanguage);
-    window.localStorage.setItem("language", nextLanguage);
+    window.sessionStorage.setItem("language", nextLanguage);
     document.documentElement.lang = nextLanguage === "VN" ? "vi" : "en";
   };
 
