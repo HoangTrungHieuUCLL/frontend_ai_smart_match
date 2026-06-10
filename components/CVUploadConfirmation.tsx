@@ -692,17 +692,16 @@ export default function CVUploadConfirmation({
                         </Button>
                     )}
 
-                        <Button
-                            color={BROWN}
-                            loading={isSaving || isSubmitting}
-                            disabled={isSaving || isSubmitting}
-                            onClick={isEditing ? onSaveChanges : onSubmit}
-                        >
-                            {isEditing ? "Save changes" : "Everything looks good!"}
-                        </Button>
-                    </>
-                }
-            />
-        </Stack>
+                    <Button
+                        color={BROWN}
+                        loading={isSaving || isSubmitting}
+                        disabled={isSaving || isSubmitting}
+                        onClick={isEditing ? onSaveChanges : onSubmit}
+                    >
+                        {isEditing ? "Save changes" : "Everything looks good!"}
+                    </Button>
+                </>
+            }
+        />
     );
 }

@@ -14,6 +14,8 @@ import { useEffect, useState } from "react";
 import AuthService from "../services/AuthService";
 import { ensureAccountCreatedAt } from "../utils/profileStorage";
 
+const LINKEDIN_BLUE = "#0A66C2";
+
 export const Login = ({
   onSuccess,
   onClose,
@@ -75,7 +77,7 @@ export const Login = ({
       const role = getRoleFromToken(data.access_token);
 
       await router.push(
-        payload.role === "admin" ? "/executive-view" : "/job-search-with-ai",
+        role === "admin" ? "/executive-view" : "/job-search-with-ai",
       );
     } catch (err) {
       setError(

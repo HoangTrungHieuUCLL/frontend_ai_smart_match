@@ -80,6 +80,7 @@ export default function JobSearchWithAIPage() {
 
   const [search, setSearch] = useState("");
   const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
+  const [linkedinImportError, setLinkedinImportError] = useState<string | undefined>();
   const [sortOption, setSortOption] = useState<SortOption>("newest_first");
 
   const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
