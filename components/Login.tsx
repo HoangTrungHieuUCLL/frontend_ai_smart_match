@@ -2,6 +2,7 @@ import { Anchor, Button, PasswordInput, Stack, Text, TextInput } from "@mantine/
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import AuthService from "../services/AuthService";
+import { ensureAccountCreatedAt } from "../utils/profileStorage";
 
 export const Login = ({ onSuccess,onClose 
 }: { onSuccess?: (email: string) => void;
@@ -28,6 +29,7 @@ export const Login = ({ onSuccess,onClose
             localStorage.setItem("access_token", data.access_token);
             localStorage.setItem("email", email);
             localStorage.setItem("profile_id", data.profile_id);
+            ensureAccountCreatedAt(email);
             window.dispatchEvent(new Event("auth-change"));
 
 
@@ -38,13 +40,7 @@ export const Login = ({ onSuccess,onClose
                 atob(data.access_token.split(".")[0])
             );
 
-            if (payload.role === "admin") {
-                await router.push("/executive-view");
-            } else {
-                await router.push("/job-search-with-ai");
-            }
-
-            window.location.href = "/executive-view";
+            await router.push(payload.role === "admin" ? "/executive-view" : "/job-search-with-ai");
         } catch (err) {
             setError(
                 err instanceof Error

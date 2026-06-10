@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, TextInput} from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
@@ -11,6 +12,8 @@ import { CvConfirmReturn } from "../services/CvService";
 import AddJobModal from "../components/AddJobModal";
 import ProfileService from "../services/ProfileService";
 import { getGuestSavedJobs } from "../utils/savedJobs";
+import JobListingSkeleton from "../components/skeleton/JobListingSkeleton";
+import { isAdminToken } from "../utils/auth";
 
 type SortOption = "best_match" | "newest_first" | "company_az";
 
@@ -21,17 +24,17 @@ const SCORE_STORAGE_KEY = "jobScores";
 const CV_NAME_STORAGE_KEY = "cvName";
 
 const saveScoresToStorage = (results: CvConfirmReturn[]) => {
-    const existing: CvConfirmReturn[] = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
+    const existing: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
     const merged = new Map(existing.map((r) => [r.job_id, r.compatibility_score]));
     results.forEach((r) => merged.set(r.job_id, r.compatibility_score));
-    localStorage.setItem(
+    sessionStorage.setItem(
         SCORE_STORAGE_KEY,
         JSON.stringify(Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({ job_id, compatibility_score })))
     );
 };
 
 const applyStoredScores = (jobList: Job[]): Job[] => {
-    const stored: CvConfirmReturn[] = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
+    const stored: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
     if (!stored.length) return jobList;
     const scoreMap = new Map(stored.map((r) => [r.job_id, r.compatibility_score]));
     return jobList.map((job) => ({
@@ -42,25 +45,63 @@ const applyStoredScores = (jobList: Job[]): Job[] => {
 
 export default function JobSearchWithAIPage() {
     const { t } = useTranslation();
+    const router = useRouter();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [page, setPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
     const [addJobOpen, setAddJobOpen] = useState(false);
     const [adminToken, setAdminToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [authVersion, setAuthVersion] = useState(0);
 
     const [search, setSearch] = useState("");
     const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
     const [sortOption, setSortOption] = useState<SortOption>("newest_first");
     const [savedIds, setSavedIds] = useState<number[]>([]);
+
+    const [compareMode, setCompareMode] = useState(false);
+    const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
+
+    const MAX_COMPARE = 4;
+
+    const handleToggleSelect = (jobId: number) => {
+        setSelectedJobs((prev) => {
+            const next = new Set(prev);
+            if (next.has(jobId)) {
+                next.delete(jobId);
+            } else if (next.size < MAX_COMPARE) {
+                next.add(jobId);
+            }
+            return next;
+        });
+    };
+
+    const handleCompare = () => {
+        router.push({
+            pathname: "/compare",
+            query: { jobs: Array.from(selectedJobs) },
+        });
+    };
+
+    const handleToggleCompareMode = () => {
+        setCompareMode((current) => {
+            if (current) {
+                setSelectedJobs(new Set());
+            }
+
+            return !current;
+        });
+    };
+
     useEffect(() => {
-        const stored = localStorage.getItem(CV_NAME_STORAGE_KEY);
+        const stored = sessionStorage.getItem(CV_NAME_STORAGE_KEY);
         setUploadedCvName(stored);
         if (stored) setSortOption("best_match");
     }, []);
 
     const [showSavedOnly, setShowSavedOnly] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
+    const isAdmin = isAdminToken(adminToken);
     // const [copiedUrl, setCopiedUrl] = useState("");
     const fetchJobs = async () => {
         try {
@@ -83,8 +124,29 @@ export default function JobSearchWithAIPage() {
     }, []);
 
     useEffect(() => {
+        const syncAuthState = () => {
+            setAdminToken(localStorage.getItem("access_token"));
+            setAuthVersion((current) => current + 1);
+        };
+
+        window.addEventListener("storage", syncAuthState);
+        window.addEventListener("auth-change", syncAuthState);
+
+        return () => {
+            window.removeEventListener("storage", syncAuthState);
+            window.removeEventListener("auth-change", syncAuthState);
+        };
+    }, []);
+
+    useEffect(() => {
         setPage(1);
     }, [search, showSavedOnly, sortOption]);
+
+    useEffect(() => {
+        if (isAdmin) {
+            setShowSavedOnly(false);
+        }
+    }, [isAdmin]);
 
     const scoredJobs = useMemo(() => {
         return jobs.map((job) => ({
@@ -132,7 +194,7 @@ export default function JobSearchWithAIPage() {
 
             return matchesSearch && matchesSaved;
         });
-    }, [sortedJobs, search, showSavedOnly]);
+    }, [sortedJobs, search, showSavedOnly, authVersion]);
 
     const hasSearch = search.trim().length > 0;
     const noJobsInDatabase = jobs.length === 0;
@@ -227,9 +289,11 @@ export default function JobSearchWithAIPage() {
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
             <Container size="1100px">
                 <Group justify="flex-end" gap="xs" align="center" style={{ marginBottom: 24 }}>
-                    <CVUploadButton
-                        label={uploadedCvName ?? undefined}
-                        onClick={() => setModalOpen(true)} />
+                    {!isAdmin && (
+                        <CVUploadButton
+                            label={uploadedCvName ?? undefined}
+                            onClick={() => setModalOpen(true)} />
+                    )}
 
                     <TextInput
                         placeholder="Search jobs..."
@@ -247,23 +311,43 @@ export default function JobSearchWithAIPage() {
                             },
                         }}
                     />
-                    <Button
-                        radius="xl"
-                        variant={showSavedOnly ? "filled" : "light"}
-                        h={40}
-                        style={{
-                            backgroundColor: showSavedOnly ? BROWN : "transparent",
-                            border: `1px solid ${BROWN}`,
-                            color: showSavedOnly ? "#fff" : BROWN,
-                            whiteSpace: "nowrap",
-                            flexShrink: 0,
-                        }}
-                        onClick={() => setShowSavedOnly((prev) => !prev)}
-                    >
-                        Saved jobs
-                    </Button>
+                    {!isAdmin && (
+                        <>
+                            <Button
+                                radius="xl"
+                                variant={showSavedOnly ? "filled" : "light"}
+                                h={40}
+                                style={{
+                                    backgroundColor: showSavedOnly ? BROWN : "transparent",
+                                    border: `1px solid ${BROWN}`,
+                                    color: showSavedOnly ? "#fff" : BROWN,
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0,
+                                }}
+                                onClick={() => setShowSavedOnly((prev) => !prev)}
+                            >
+                                Saved jobs
+                            </Button>
 
-                    {adminToken && (
+                            <Button
+                                radius="xl"
+                                variant={compareMode ? "filled" : "light"}
+                                h={40}
+                                style={{
+                                    backgroundColor: compareMode ? BROWN : "transparent",
+                                    border: `1px solid ${BROWN}`,
+                                    color: compareMode ? "#fff" : BROWN,
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0,
+                                }}
+                                onClick={handleToggleCompareMode}
+                            >
+                                Compare jobs
+                            </Button>
+                        </>
+                    )}
+
+                    {isAdmin && (
                         <Button
                             radius="xl"
                             h={40}
@@ -363,13 +447,24 @@ export default function JobSearchWithAIPage() {
                     </Box>
                 ) : (
                     <Stack gap="md">
-                        {currentJobs.map((job) => (
-                            <JobListing
-                                key={job.id}
-                                job={job}
-                                onShare={handleShare}
-                            />
-                        ))}
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <JobListingSkeleton key={i} />
+                            ))
+                        ) : (
+                            currentJobs.map((job) => (
+                                <JobListing
+                                    key={job.id}
+                                    job={job}
+                                    onShare={handleShare}
+                                    isSelected={selectedJobs.has(job.id)}
+                                    onToggleSelect={compareMode ? () => handleToggleSelect(job.id) : undefined}
+                                    selectDisabled={selectedJobs.size >= MAX_COMPARE}
+                                    showSelectControl={compareMode}
+                                    hideSaveAction={isAdmin}
+                                />
+                            ))
+                        )}
                     </Stack>
                 )}
 
@@ -405,11 +500,11 @@ export default function JobSearchWithAIPage() {
                     if (!results) return;
                     if (cvName) {
                         setUploadedCvName(cvName);
-                        localStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
-                        setSortOption("best_match");
+                        sessionStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
                     }
 
                     saveScoresToStorage(results);
+                    setSortOption("best_match");
 
                     const scoreMap = new Map(
                         results.map(r => [r.job_id, r.compatibility_score])
@@ -455,6 +550,46 @@ export default function JobSearchWithAIPage() {
                     setPage(1);
                 }}
             />
+
+            {/* Sticky compare bar */}
+            {compareMode && selectedJobs.size >= 2 && (
+                <Box
+                    style={{
+                        position: "fixed",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        zIndex: 100,
+                        display: "flex",
+                        justifyContent: "center",
+                        padding: "16px 24px",
+                        backgroundColor: "rgba(255, 255, 255, 0.92)",
+                        backdropFilter: "blur(8px)",
+                        borderTop: `1px solid rgba(119, 67, 38, 0.18)`,
+                        boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+                    }}
+                >
+                    <Group gap="md" align="center">
+                        <Button
+                            radius="xl"
+                            size="md"
+                            style={{ backgroundColor: BROWN, minWidth: 160 }}
+                            onClick={handleCompare}
+                        >
+                            Compare ({selectedJobs.size})
+                        </Button>
+                        <Button
+                            radius="xl"
+                            size="md"
+                            variant="subtle"
+                            style={{ color: BROWN }}
+                            onClick={() => setSelectedJobs(new Set())}
+                        >
+                            Clear
+                        </Button>
+                    </Group>
+                </Box>
+            )}
         </Box>
     );
 }
