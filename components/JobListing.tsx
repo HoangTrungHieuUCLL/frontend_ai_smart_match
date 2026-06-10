@@ -39,7 +39,16 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
 
 
     useEffect(() => {
-        setSaved(isJobSaved(job.id));
+        const syncSaved = () => setSaved(isJobSaved(job.id));
+
+        syncSaved();
+        window.addEventListener("storage", syncSaved);
+        window.addEventListener("auth-change", syncSaved);
+
+        return () => {
+            window.removeEventListener("storage", syncSaved);
+            window.removeEventListener("auth-change", syncSaved);
+        };
     }, [job.id]);
 
     const handleLearnMore = async (jobId: number) => {

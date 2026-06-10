@@ -46,6 +46,7 @@ export default function JobSearchWithAIPage() {
     const [addJobOpen, setAddJobOpen] = useState(false);
     const [adminToken, setAdminToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [authVersion, setAuthVersion] = useState(0);
 
     const [search, setSearch] = useState("");
     const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
@@ -78,6 +79,21 @@ export default function JobSearchWithAIPage() {
 
     useEffect(() => {
         setAdminToken(localStorage.getItem("access_token"));
+    }, []);
+
+    useEffect(() => {
+        const syncAuthState = () => {
+            setAdminToken(localStorage.getItem("access_token"));
+            setAuthVersion((current) => current + 1);
+        };
+
+        window.addEventListener("storage", syncAuthState);
+        window.addEventListener("auth-change", syncAuthState);
+
+        return () => {
+            window.removeEventListener("storage", syncAuthState);
+            window.removeEventListener("auth-change", syncAuthState);
+        };
     }, []);
 
     useEffect(() => {
@@ -130,7 +146,7 @@ export default function JobSearchWithAIPage() {
 
             return matchesSearch && matchesSaved;
         });
-    }, [sortedJobs, search, showSavedOnly]);
+    }, [sortedJobs, search, showSavedOnly, authVersion]);
 
     const hasSearch = search.trim().length > 0;
     const noJobsInDatabase = jobs.length === 0;

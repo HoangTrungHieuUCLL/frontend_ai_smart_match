@@ -79,6 +79,20 @@ export default function JobInfoDetailPage() {
         setSaved(isJobSaved(job.id));
     }, [job]);
 
+    useEffect(() => {
+        if (!job) return;
+
+        const syncSaved = () => setSaved(isJobSaved(job.id));
+
+        window.addEventListener("storage", syncSaved);
+        window.addEventListener("auth-change", syncSaved);
+
+        return () => {
+            window.removeEventListener("storage", syncSaved);
+            window.removeEventListener("auth-change", syncSaved);
+        };
+    }, [job]);
+
     if (loading) {
         return (
             <Container size="800px" style={{ padding: "48px 0" }}>

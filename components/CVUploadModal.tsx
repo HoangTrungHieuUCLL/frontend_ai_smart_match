@@ -15,6 +15,7 @@ import {useTranslation} from "../contexts/I18nContext";
 import CvService, {CvConfirmReturn, ParsedCvResponse} from "../services/CvService";
 import {CV, Certification, Education, Experience, Language, Project} from "../types";
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
+import { saveStoredProfileCv } from "../utils/profileStorage";
 import CVUploadConfirmation from "./CVUploadConfirmation";
 
 const BROWN = "#774326";
@@ -152,7 +153,9 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 message: "Calculating Compatibility Score",
             }));
 
-            setCv(toConfirmationCv(response, response.cv_file_name ?? uploadedFile.name, formData));
+            const confirmationCv = toConfirmationCv(response, response.cv_file_name ?? uploadedFile.name, formData);
+            setCv(confirmationCv);
+            saveStoredProfileCv(confirmationCv, localStorage.getItem("email"));
             setProfileId(response.profile_id);
             setCvFileName(response.cv_file_name ?? uploadedFile.name);
 
