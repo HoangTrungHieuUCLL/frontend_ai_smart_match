@@ -13,9 +13,14 @@ import {
     RingProgress
 } from "@mantine/core";
 import { useTranslation } from "../contexts/I18nContext";
-import { isJobSaved, saveJob, removeJob } from "../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
-
+// import { isJobSaved, saveJob, removeJob } from "../utils/savedJobs";
+import ProfileService from "../services/ProfileService";
+import {
+    addGuestSavedJob,
+    removeGuestSavedJob,
+} from "../utils/savedJobs";
+import { getGuestSavedJobs } from "../utils/savedJobs";
 interface Props {
     job: Job;
     onShare?: (jobId: number) => void;
@@ -37,11 +42,29 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
 
     const [saved, setSaved] = useState(false);
 
+    const profileId =
+        typeof window !== "undefined"
+            ? Number(localStorage.getItem("profile_id"))
+            : null;
 
     useEffect(() => {
-        setSaved(isJobSaved(job.id));
-    }, [job.id]);
+        const fetchSaved = async () => {
+            const profileId = localStorage.getItem("profile_id");
 
+            // GUEST
+            if (!profileId) {
+                const guestSaved = getGuestSavedJobs();
+                setSaved(guestSaved.map(Number).includes(job.id));
+                return;
+            }
+
+            // LOGGED IN
+            const savedJobs = await ProfileService.getSavedJobs(Number(profileId));
+            setSaved(savedJobs.includes(job.id));
+        };
+
+        fetchSaved();
+    }, [job.id]);
     const handleLearnMore = async (jobId: number) => {
         try {
             await router.push({ pathname: `/job-info/[id]`, query: { id: jobId } });
@@ -52,54 +75,74 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
         }
     };
 
-    const handleSave = () => {
-        if (saved) {
-            removeJob(job.id);
-            setSaved(false);
+    const handleSave = async () => {
+        const profileId = localStorage.getItem("profile_id");
+
+        // GUEST USER (localStorage)
+
+        if (!profileId) {
+            if (saved) {
+                removeGuestSavedJob(job.id);
+                setSaved(false);
+
+                notifications.show({
+                    message: (
+                        <>
+                            <strong>{job.position}</strong> removed from saved jobs (guest mode).
+                        </>
+                    ),
+                    autoClose: 3000,
+                });
+            } else {
+                addGuestSavedJob(job.id);
+                setSaved(true);
+
+                notifications.show({
+                    message: (
+                        <>
+                            <strong>{job.position}</strong> saved locally.
+                            Login to sync across devices.
+                        </>
+                    ),
+                    autoClose: 3000,
+                });
+            }
+
+            return;
+        }
+        // LOGGED IN USER (DB)
+        try {
+            if (saved) {
+                await ProfileService.removeJob(Number(profileId), job.id);
+                setSaved(false);
+
+                notifications.show({
+                    message: (
+                        <>
+                            <strong>{job.position}</strong> has been removed.
+                        </>
+                    ),
+                    autoClose: 3000,
+                });
+            } else {
+                await ProfileService.saveJob(Number(profileId), job.id);
+                setSaved(true);
+
+                notifications.show({
+                    message: (
+                        <>
+                            <strong>{job.position}</strong> has been saved.
+                        </>
+                    ),
+                    autoClose: 3000,
+                });
+            }
+        } catch (err) {
+            console.error(err);
 
             notifications.show({
-                message: (
-                    <>
-                        <strong>{job.position}</strong> has been removed.{" "}
-                        <a
-                            href="#"
-                            onClick={(e) => e.preventDefault()}
-                            style={{
-                                color: BROWN,
-                                fontWeight: 600,
-                                textDecoration: "underline",
-                            }}
-                        >
-                            Login
-                        </a>{" "}
-                        to keep your saved jobs across sessions.
-                    </>
-                ),
-                autoClose: 3000,
-            });
-        } else {
-            saveJob(job.id);
-            setSaved(true);
-
-            notifications.show({
-                message: (
-                    <>
-                        <strong>{job.position}</strong> has been saved.{" "}
-                        <a
-                            href="#"
-                            onClick={(e) => e.preventDefault()}
-                            style={{
-                                color: BROWN,
-                                fontWeight: 600,
-                                textDecoration: "underline",
-                            }}
-                        >
-                            Login
-                        </a>{" "}
-                        to keep your saved jobs across sessions.
-                    </>
-                ),
-                autoClose: 3000,
+                color: "red",
+                message: "Something went wrong while saving job",
             });
         }
     };

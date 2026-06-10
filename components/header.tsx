@@ -36,6 +36,7 @@ export const Header = () => {
     };
 
     const handleLogout = async () => {
+        localStorage.removeItem("profile_id");
         localStorage.removeItem("access_token");
         localStorage.removeItem("email");
         setLoggedInEmail("");

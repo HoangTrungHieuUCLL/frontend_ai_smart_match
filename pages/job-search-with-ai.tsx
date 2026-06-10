@@ -7,8 +7,10 @@ import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
 import { CvConfirmReturn } from "../services/CvService";
-import { getSavedJobs } from "../utils/savedJobs";
+// import { getSavedJobs } from "../utils/savedJobs";
 import AddJobModal from "../components/AddJobModal";
+import ProfileService from "../services/ProfileService";
+import { getGuestSavedJobs } from "../utils/savedJobs";
 
 type SortOption = "best_match" | "newest_first" | "company_az";
 
@@ -50,7 +52,7 @@ export default function JobSearchWithAIPage() {
     const [search, setSearch] = useState("");
     const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
     const [sortOption, setSortOption] = useState<SortOption>("newest_first");
-
+    const [savedIds, setSavedIds] = useState<number[]>([]);
     useEffect(() => {
         const stored = localStorage.getItem(CV_NAME_STORAGE_KEY);
         setUploadedCvName(stored);
@@ -91,6 +93,8 @@ export default function JobSearchWithAIPage() {
         }));
     }, [jobs]);
 
+
+
     const sortedJobs = useMemo(() => {
         return [...scoredJobs].sort((a, b) => {
             if (sortOption === "best_match") {
@@ -117,8 +121,6 @@ export default function JobSearchWithAIPage() {
 
     const filteredJobs = useMemo(() => {
         const q = search.toLowerCase();
-        const savedIds = getSavedJobs();
-
         return sortedJobs.filter((job) => {
             const matchesSearch =
                 job.position?.toLowerCase().includes(q) ||
@@ -202,6 +204,24 @@ export default function JobSearchWithAIPage() {
         // setCopiedUrl(url);
         setShareOpened(true);
     };
+    
+    useEffect(() => {
+        const loadSaved = async () => {
+            const profileId = localStorage.getItem("profile_id");
+
+            if (profileId) {
+                const data = await ProfileService.getSavedJobs(
+                    Number(profileId)
+                );
+
+                setSavedIds(data);
+            } else {
+                setSavedIds(getGuestSavedJobs());
+            }
+        };
+
+        loadSaved();
+    }, []);
 
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>

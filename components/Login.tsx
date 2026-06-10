@@ -16,6 +16,7 @@ export const Login = ({ onSuccess,onClose
 
     const handleLogin = async () => {
         try {
+            localStorage.removeItem("savedJobs");
             setIsLoading(true);
             setError("");
 
@@ -26,6 +27,7 @@ export const Login = ({ onSuccess,onClose
 
             localStorage.setItem("access_token", data.access_token);
             localStorage.setItem("email", email);
+            localStorage.setItem("profile_id", data.profile_id);
             window.dispatchEvent(new Event("auth-change"));
 
 
