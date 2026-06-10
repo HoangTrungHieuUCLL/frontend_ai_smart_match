@@ -24,6 +24,7 @@ import { saveJob, removeJob } from "../../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
 import { CvConfirmReturn } from "../../services/CvService";
 import styles from "../../styles/header.module.css";
+import JobInfoSkeleton from "../../components/skeleton/JobInfoSkeleton";
 import { isAdminToken } from "../../utils/auth";
 const BROWN = "#774326";
 
@@ -111,9 +112,7 @@ export default function JobInfoDetailPage() {
 
     if (loading) {
         return (
-            <Container size="800px" style={{ padding: "48px 0" }}>
-                <Text>{t("jobInfo.loading")}</Text>
-            </Container>
+            <JobInfoSkeleton />
         );
     }
 
@@ -261,7 +260,7 @@ export default function JobInfoDetailPage() {
                                             </Text>
                                         </Stack>
                                     </Stack>
-                                    <Button radius="xl" 
+                                    <Button radius="xl"
                                             style={{ backgroundColor: BROWN, borderColor: BROWN, marginTop: 16 }}
                                             onClick={card.onClick}
                                             className={styles.jobStepCardButton}
@@ -331,9 +330,9 @@ export default function JobInfoDetailPage() {
                                                             style={{ pointerEvents: 'none' }}
                                                             fw={700}
                                                         >
-                                                            {compatibilityScore}% 
+                                                            {compatibilityScore}%
                                                         </Text>
-                                                        
+
                                                         <Text size="xs">{t("jobInfo.match")}</Text>
                                                     </Stack>
                                                 }
