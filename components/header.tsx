@@ -54,13 +54,6 @@ export const Header = () => {
         await router.push("/");
     };
 
-    // useEffect(() => {
-    //     const email = localStorage.getItem("email");
-
-    //     if (email != null) {
-    //         setLoggedInEmail(email);
-    //     }
-    // }, []);
     useEffect(() => {
         syncAuth();
 

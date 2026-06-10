@@ -19,9 +19,9 @@ export const getSavedJobs = (): number[] => {
     const key = getKey();
     if (!key) return [];
 
-    const saved = localStorage.getItem(key) ?? localStorage.getItem(KEY);
-    if (saved && !localStorage.getItem(key)) {
-        localStorage.setItem(key, saved);
+    const saved = sessionStorage.getItem(key) ?? sessionStorage.getItem(KEY);
+    if (saved && !sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, saved);
     }
 
     return JSON.parse(saved || "[]");
@@ -35,7 +35,7 @@ export const saveJob = (jobId: number) => {
 
     if (!saved.includes(jobId)) {
         const updated = [...saved, jobId];
-        localStorage.setItem(key, JSON.stringify(updated));
+        sessionStorage.setItem(key, JSON.stringify(updated));
     }
 };
 
@@ -46,7 +46,7 @@ export const removeJob = (jobId: number) => {
     const saved = getSavedJobs();
 
     const updated = saved.filter((id) => id !== jobId);
-    localStorage.setItem(key, JSON.stringify(updated));
+    sessionStorage.setItem(key, JSON.stringify(updated));
 };
 
 export const isJobSaved = (jobId: number) => {

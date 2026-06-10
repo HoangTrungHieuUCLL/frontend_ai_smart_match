@@ -28,9 +28,9 @@ export const getStoredProfileCv = (email?: string | null): CV | null => {
 
     try {
         const key = getProfileCvKey(email);
-        const value = localStorage.getItem(key) ?? localStorage.getItem(PROFILE_CV_STORAGE_KEY);
-        if (value && !localStorage.getItem(key)) {
-            localStorage.setItem(key, value);
+        const value = sessionStorage.getItem(key) ?? sessionStorage.getItem(PROFILE_CV_STORAGE_KEY);
+        if (value && !sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, value);
         }
         return value ? JSON.parse(value) : null;
     } catch {
@@ -41,34 +41,34 @@ export const getStoredProfileCv = (email?: string | null): CV | null => {
 export const saveStoredProfileCv = (cv: CV, email?: string | null) => {
     if (typeof window === "undefined") return;
 
-    localStorage.setItem(getProfileCvKey(email || getCvEmail(cv)), JSON.stringify(cv));
+    sessionStorage.setItem(getProfileCvKey(email || getCvEmail(cv)), JSON.stringify(cv));
 };
 
 export const clearStoredProfileCv = (email?: string | null) => {
     if (typeof window === "undefined") return;
 
-    localStorage.removeItem(getProfileCvKey(email));
+    sessionStorage.removeItem(getProfileCvKey(email));
 };
 
 export const getAccountCreatedAt = (email?: string | null) => {
     if (typeof window === "undefined") return null;
 
-    return localStorage.getItem(getAccountCreatedAtKey(email)) ?? localStorage.getItem(ACCOUNT_CREATED_AT_STORAGE_KEY);
+    return sessionStorage.getItem(getAccountCreatedAtKey(email)) ?? sessionStorage.getItem(ACCOUNT_CREATED_AT_STORAGE_KEY);
 };
 
 export const ensureAccountCreatedAt = (email?: string | null) => {
     if (typeof window === "undefined") return null;
 
     const key = getAccountCreatedAtKey(email);
-    const existing = localStorage.getItem(key) ?? localStorage.getItem(ACCOUNT_CREATED_AT_STORAGE_KEY);
+    const existing = sessionStorage.getItem(key) ?? sessionStorage.getItem(ACCOUNT_CREATED_AT_STORAGE_KEY);
     if (existing) {
-        if (!localStorage.getItem(key)) {
-            localStorage.setItem(key, existing);
+        if (!sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, existing);
         }
         return existing;
     }
 
     const createdAt = new Date().toISOString();
-    localStorage.setItem(key, createdAt);
+    sessionStorage.setItem(key, createdAt);
     return createdAt;
 };

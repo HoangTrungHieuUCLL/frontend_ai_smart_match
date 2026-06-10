@@ -19,6 +19,7 @@ import { notifications } from "@mantine/notifications";
 interface Props {
     job: Job;
     onShare?: (jobId: number) => void;
+    hideSaveAction?: boolean;
 }
 
 const BROWN = "#774326";
@@ -31,7 +32,7 @@ const getInitials = (name: string) =>
         .join("")
         .toUpperCase();
 
-const JobListing: React.FC<Props> = ({ job, onShare }) => {
+const JobListing: React.FC<Props> = ({ job, onShare, hideSaveAction = false }) => {
     const router = useRouter();
     const { t } = useTranslation();
 
@@ -81,7 +82,7 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                         >
                             Login
                         </a>{" "}
-                        to keep your saved jobs across sessions.
+                        to keep your saved jobs during this session.
                     </>
                 ),
                 autoClose: 3000,
@@ -105,7 +106,7 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                         >
                             Login
                         </a>{" "}
-                        to keep your saved jobs across sessions.
+                        to keep your saved jobs during this session.
                     </>
                 ),
                 autoClose: 3000,
@@ -217,25 +218,27 @@ const JobListing: React.FC<Props> = ({ job, onShare }) => {
                             {t("jobListing.learnMore")}
                         </Button>
 
-                        <Button
-                            radius="xl"
-                            size="xs"
-                            variant="light"
-                            onClick={handleSave}
-                            styles={{
-                                root: {
-                                    border: `1px solid ${BROWN}`,
-                                    backgroundColor: saved ? BROWN : "transparent",
-                                    transition: "all 150ms ease",
-                                },
-                                label: {
-                                    color: saved ? "#ffffff" : BROWN,
-                                    fontWeight: 500,
-                                },
-                            }}
-                        >
-                            {saved ? t("jobListing.saved") : t("jobListing.save")}
-                        </Button>
+                        {!hideSaveAction && (
+                            <Button
+                                radius="xl"
+                                size="xs"
+                                variant="light"
+                                onClick={handleSave}
+                                styles={{
+                                    root: {
+                                        border: `1px solid ${BROWN}`,
+                                        backgroundColor: saved ? BROWN : "transparent",
+                                        transition: "all 150ms ease",
+                                    },
+                                    label: {
+                                        color: saved ? "#ffffff" : BROWN,
+                                        fontWeight: 500,
+                                    },
+                                }}
+                            >
+                                {saved ? t("jobListing.saved") : t("jobListing.save")}
+                            </Button>
+                        )}
                     </Group>
 
                     <Button

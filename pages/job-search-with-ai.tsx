@@ -9,6 +9,7 @@ import { useTranslation } from "../contexts/I18nContext";
 import { CvConfirmReturn } from "../services/CvService";
 import { getSavedJobs } from "../utils/savedJobs";
 import AddJobModal from "../components/AddJobModal";
+import { isAdminToken } from "../utils/auth";
 
 type SortOption = "best_match" | "newest_first" | "company_az";
 
@@ -19,17 +20,17 @@ const SCORE_STORAGE_KEY = "jobScores";
 const CV_NAME_STORAGE_KEY = "cvName";
 
 const saveScoresToStorage = (results: CvConfirmReturn[]) => {
-    const existing: CvConfirmReturn[] = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
+    const existing: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
     const merged = new Map(existing.map((r) => [r.job_id, r.compatibility_score]));
     results.forEach((r) => merged.set(r.job_id, r.compatibility_score));
-    localStorage.setItem(
+    sessionStorage.setItem(
         SCORE_STORAGE_KEY,
         JSON.stringify(Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({ job_id, compatibility_score })))
     );
 };
 
 const applyStoredScores = (jobList: Job[]): Job[] => {
-    const stored: CvConfirmReturn[] = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
+    const stored: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
     if (!stored.length) return jobList;
     const scoreMap = new Map(stored.map((r) => [r.job_id, r.compatibility_score]));
     return jobList.map((job) => ({
@@ -53,13 +54,14 @@ export default function JobSearchWithAIPage() {
     const [sortOption, setSortOption] = useState<SortOption>("newest_first");
 
     useEffect(() => {
-        const stored = localStorage.getItem(CV_NAME_STORAGE_KEY);
+        const stored = sessionStorage.getItem(CV_NAME_STORAGE_KEY);
         setUploadedCvName(stored);
         if (stored) setSortOption("best_match");
     }, []);
 
     const [showSavedOnly, setShowSavedOnly] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
+    const isAdmin = isAdminToken(adminToken);
     // const [copiedUrl, setCopiedUrl] = useState("");
     const fetchJobs = async () => {
         try {
@@ -99,6 +101,12 @@ export default function JobSearchWithAIPage() {
     useEffect(() => {
         setPage(1);
     }, [search, showSavedOnly, sortOption]);
+
+    useEffect(() => {
+        if (isAdmin) {
+            setShowSavedOnly(false);
+        }
+    }, [isAdmin]);
 
     const scoredJobs = useMemo(() => {
         return jobs.map((job) => ({
@@ -223,9 +231,11 @@ export default function JobSearchWithAIPage() {
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
             <Container size="1100px">
                 <Group justify="flex-end" gap="xs" align="center" style={{ marginBottom: 24 }}>
-                    <CVUploadButton
-                        label={uploadedCvName ?? undefined}
-                        onClick={() => setModalOpen(true)} />
+                    {!isAdmin && (
+                        <CVUploadButton
+                            label={uploadedCvName ?? undefined}
+                            onClick={() => setModalOpen(true)} />
+                    )}
 
                     <TextInput
                         placeholder="Search jobs..."
@@ -243,23 +253,25 @@ export default function JobSearchWithAIPage() {
                             },
                         }}
                     />
-                    <Button
-                        radius="xl"
-                        variant={showSavedOnly ? "filled" : "light"}
-                        h={40}
-                        style={{
-                            backgroundColor: showSavedOnly ? BROWN : "transparent",
-                            border: `1px solid ${BROWN}`,
-                            color: showSavedOnly ? "#fff" : BROWN,
-                            whiteSpace: "nowrap",
-                            flexShrink: 0,
-                        }}
-                        onClick={() => setShowSavedOnly((prev) => !prev)}
-                    >
-                        Saved jobs
-                    </Button>
+                    {!isAdmin && (
+                        <Button
+                            radius="xl"
+                            variant={showSavedOnly ? "filled" : "light"}
+                            h={40}
+                            style={{
+                                backgroundColor: showSavedOnly ? BROWN : "transparent",
+                                border: `1px solid ${BROWN}`,
+                                color: showSavedOnly ? "#fff" : BROWN,
+                                whiteSpace: "nowrap",
+                                flexShrink: 0,
+                            }}
+                            onClick={() => setShowSavedOnly((prev) => !prev)}
+                        >
+                            Saved jobs
+                        </Button>
+                    )}
 
-                    {adminToken && (
+                    {isAdmin && (
                         <Button
                             radius="xl"
                             h={40}
@@ -364,6 +376,7 @@ export default function JobSearchWithAIPage() {
                                 key={job.id}
                                 job={job}
                                 onShare={handleShare}
+                                hideSaveAction={isAdmin}
                             />
                         ))}
                     </Stack>
@@ -401,11 +414,11 @@ export default function JobSearchWithAIPage() {
                     if (!results) return;
                     if (cvName) {
                         setUploadedCvName(cvName);
-                        localStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
-                        setSortOption("best_match");
+                        sessionStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
                     }
 
                     saveScoresToStorage(results);
+                    setSortOption("best_match");
 
                     const scoreMap = new Map(
                         results.map(r => [r.job_id, r.compatibility_score])
