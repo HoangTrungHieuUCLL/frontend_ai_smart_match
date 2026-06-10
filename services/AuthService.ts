@@ -43,9 +43,14 @@ const register = async ({
   return await response.json();
 };
 
+const getLinkedInLoginUrl = () => `${API_URL}/auth/linkedin/login-start`;
+const getLinkedInRegisterUrl = () => `${API_URL}/auth/linkedin/register-start`;
+
 const AuthService = {
   login,
-  register
+  register,
+  getLinkedInLoginUrl,
+  getLinkedInRegisterUrl,
 };
 
 export default AuthService;

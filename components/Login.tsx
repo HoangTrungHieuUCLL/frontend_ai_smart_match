@@ -1,7 +1,10 @@
-import { Anchor, Button, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
+import { Anchor, Button, Divider, Group, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
+import { IconBrandLinkedin } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthService from "../services/AuthService";
+
+const LINKEDIN_BLUE = "#0A66C2";
 
 export const Login = ({ onSuccess,onClose 
 }: { onSuccess?: (email: string) => void;
@@ -13,6 +16,26 @@ export const Login = ({ onSuccess,onClose
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const params = new URLSearchParams(window.location.search);
+        const linkedinLogin = params.get("linkedinLogin");
+
+        if (linkedinLogin === "not_found") {
+            setError("No account is linked to this LinkedIn profile. Please create an account first, or sign in another way.");
+        } else if (linkedinLogin === "missing_email") {
+            setError("LinkedIn did not return an email address. Please sign in another way.");
+        } else if (linkedinLogin === "failed") {
+            setError("LinkedIn login failed. Please try again or sign in another way.");
+        }
+    }, []);
+
+    const getRoleFromToken = (token: string) => {
+        const payload = JSON.parse(atob(token.split(".")[0]));
+        return payload.role;
+    };
 
     const handleLogin = async () => {
         try {
@@ -32,17 +55,13 @@ export const Login = ({ onSuccess,onClose
             onSuccess?.(email);
             onClose?.();
 
-            const payload = JSON.parse(
-                atob(data.access_token.split(".")[0])
-            );
+            const role = getRoleFromToken(data.access_token);
 
-            if (payload.role === "admin") {
+            if (role === "admin") {
                 await router.push("/executive-view");
             } else {
                 await router.push("/job-search-with-ai");
             }
-
-            window.location.href = "/executive-view";
         } catch (err) {
             setError(
                 err instanceof Error
@@ -52,6 +71,10 @@ export const Login = ({ onSuccess,onClose
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleLinkedInLogin = () => {
+        window.location.href = AuthService.getLinkedInLoginUrl();
     };
 
     return (
@@ -103,8 +126,28 @@ export const Login = ({ onSuccess,onClose
             >
                 Log in
             </Button>
+            <Divider label="or" labelPosition="center" />
+            <Button
+                radius="xl"
+                type="button"
+                size="lg"
+                fullWidth
+                onClick={handleLinkedInLogin}
+                styles={{
+                    root: {
+                        backgroundColor: LINKEDIN_BLUE,
+                    },
+                }}
+            >
+                <Group justify="center" gap="xs" wrap="nowrap">
+                    <IconBrandLinkedin size={22} aria-hidden="true" />
+                    <Text component="span" fw={700} size="sm" c="#ffffff">
+                        Continue with LinkedIn
+                    </Text>
+                </Group>
+            </Button>
             <Text size="sm" ta="center" mt="md" c="black">
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <Anchor
                     component="button"
                     onClick={() =>{ 
