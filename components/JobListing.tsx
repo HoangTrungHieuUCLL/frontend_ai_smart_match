@@ -29,6 +29,7 @@ interface Props {
 }
 
 const BROWN = "#774326";
+
 const getInitials = (name: string) =>
     name
         .split(" ")
@@ -71,7 +72,6 @@ const JobListing: React.FC<Props> = ({
             await router.push({ pathname: `/job-info/[id]`, query: { id: jobId } });
         } catch (e) {
             console.error("Navigation failed, falling back to full redirect:", e);
-            // Fallback to full page load if client-side navigation fails
             window.location.href = `/job-info/${jobId}`;
         }
     };
@@ -84,19 +84,7 @@ const JobListing: React.FC<Props> = ({
             notifications.show({
                 message: (
                     <>
-                        <strong>{job.position}</strong> has been removed.{" "}
-                        <a
-                            href="#"
-                            onClick={(e) => e.preventDefault()}
-                            style={{
-                                color: BROWN,
-                                fontWeight: 600,
-                                textDecoration: "underline",
-                            }}
-                        >
-                            Login
-                        </a>{" "}
-                        to keep your saved jobs during this session.
+                        <strong>{job.position}</strong> has been removed.
                     </>
                 ),
                 autoClose: 3000,
@@ -108,19 +96,7 @@ const JobListing: React.FC<Props> = ({
             notifications.show({
                 message: (
                     <>
-                        <strong>{job.position}</strong> has been saved.{" "}
-                        <a
-                            href="#"
-                            onClick={(e) => e.preventDefault()}
-                            style={{
-                                color: BROWN,
-                                fontWeight: 600,
-                                textDecoration: "underline",
-                            }}
-                        >
-                            Login
-                        </a>{" "}
-                        to keep your saved jobs during this session.
+                        <strong>{job.position}</strong> has been saved.
                     </>
                 ),
                 autoClose: 3000,
@@ -134,56 +110,22 @@ const JobListing: React.FC<Props> = ({
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
-            {/* Checkbox — always visible on mobile, hover-reveal on desktop */}
             {(isMobile || hovered || isSelected) && onToggleSelect && (
-                <Box
-                    style={{
-                        position: "absolute",
-                        top: 14,
-                        left: 14,
-                        zIndex: 2,
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <Tooltip
-                        label="You can compare up to 4 jobs at a time."
-                        disabled={!selectDisabled || isSelected}
-                        withArrow
-                        position="right"
-                    >
-                        <Checkbox
-                            checked={isSelected}
-                            onChange={() => {
-                                if (!selectDisabled || isSelected) {
-                                    onToggleSelect();
-                                }
-                            }}
-                            styles={{
-                                input: {
-                                    cursor: selectDisabled && !isSelected ? "not-allowed" : "pointer",
-                                    borderColor: BROWN,
-                                    backgroundColor: isSelected ? BROWN : undefined,
-                                },
-                            }}
-                        />
-                    </Tooltip>
+                <Box style={{ position: "absolute", top: 14, left: 14, zIndex: 2 }}>
+                    <Checkbox
+                        checked={isSelected}
+                        onChange={() => {
+                            if (!selectDisabled || isSelected) {
+                                onToggleSelect();
+                            }
+                        }}
+                    />
                 </Box>
             )}
 
-            <Paper
-                withBorder
-                radius="lg"
-                p="lg"
-                style={{
-                    backgroundColor: "#fff",
-                    borderColor: isSelected
-                        ? BROWN
-                        : "rgba(119, 67, 38, 0.15)",
-                    transition: "border-color 150ms ease",
-                    cursor: "default",
-                }}
-            >
+            <Paper withBorder radius="lg" p="lg">
                 <Stack gap="md">
+
                     {/* HEADER */}
                     <Group justify="space-between" align="flex-start" wrap="nowrap">
                         <Group gap="md" wrap="nowrap">
@@ -214,58 +156,44 @@ const JobListing: React.FC<Props> = ({
                                     <Text size="xs" c="dimmed">
                                         {job.company_name}
                                     </Text>
-
                                     <Text size="xs" c="dimmed">
                                         • {job.location}
                                     </Text>
                                 </Group>
                             </Stack>
-
-                            {job.compatibility_score != null && (
-                                <RingProgress
-                                    size={60}
-                                    thickness={6}
-                                    roundCaps
-                                    sections={[
-                                        {
-                                            value: job.compatibility_score,
-                                            color:
-                                                job.compatibility_score >= 70
-                                                    ? "#34C759"
-                                                    : "#FF383C",
-                                        },
-                                    ]}
-                                    label={
-                                        <Text size="xs" ta="center" fw={700}>
-                                            {job.compatibility_score}%
-                                        </Text>
-                                    }
-                                />
-                            )}
                         </Group>
 
-                        <Group gap="sm" align="center">
-                            <Badge
-                                radius="xl"
-                                variant="outline"
-                                style={{
-                                    borderColor: BROWN,
-                                    color: BROWN,
-                                    fontWeight: 500,
-                                }}
-                            >
-                                {job.type}
-                            </Badge>
-                        </Group>
+                        {/* compatibility score TOP RIGHT */}
+                        {job.compatibility_score != null && (
+                            <RingProgress
+                                size={64}
+                                thickness={6}
+                                roundCaps
+                                sections={[
+                                    {
+                                        value: job.compatibility_score,
+                                        color:
+                                            job.compatibility_score >= 70
+                                                ? "#34C759"
+                                                : "#FF383C",
+                                    },
+                                ]}
+                                label={
+                                    <Text size="xs" ta="center" fw={700}>
+                                        {job.compatibility_score}%
+                                    </Text>
+                                }
+                            />
+                        )}
                     </Group>
 
                     {/* BODY */}
-                    <Text size="sm" c="dimmed" lineClamp={2} style={{ lineHeight: 1.5 }}>
+                    <Text size="sm" c="dimmed" lineClamp={2}>
                         {job.requirements}
                     </Text>
 
                     {/* FOOTER */}
-                    <Group justify="space-between" align="center">
+                    <Group justify="space-between" align="flex-end">
                         <Group gap={8}>
                             <Button
                                 radius="xl"
@@ -286,27 +214,36 @@ const JobListing: React.FC<Props> = ({
                                         root: {
                                             border: `1px solid ${BROWN}`,
                                             backgroundColor: saved ? BROWN : "transparent",
-                                            transition: "all 150ms ease",
                                         },
                                         label: {
-                                            color: saved ? "#ffffff" : BROWN,
-                                            fontWeight: 500,
+                                            color: saved ? "#fff" : BROWN,
                                         },
                                     }}
                                 >
                                     {saved ? t("jobListing.saved") : t("jobListing.save")}
                                 </Button>
                             )}
+
+                            <Button
+                                radius="xl"
+                                size="xs"
+                                variant="outline"
+                                onClick={() => onShare?.(job.id)}
+                            >
+                                {t("jobListing.share")}
+                            </Button>
                         </Group>
 
-                        <Button
+                        <Badge
                             radius="xl"
-                            size="xs"
                             variant="outline"
-                            onClick={() => onShare?.(job.id)}
+                            style={{
+                                borderColor: BROWN,
+                                color: BROWN,
+                            }}
                         >
-                            {t("jobListing.share")}
-                        </Button>
+                            {job.type}
+                        </Badge>
                     </Group>
                 </Stack>
             </Paper>
