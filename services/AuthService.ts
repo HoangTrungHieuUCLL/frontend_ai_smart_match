@@ -1,11 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-const login = async ({ username, password }: { username: string; password: string }) => {
+const login = async ({ email, password }: { email: string; password: string }) => {
     const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            username,
+            email,
             password,
         }),
     });
@@ -18,8 +18,63 @@ const login = async ({ username, password }: { username: string; password: strin
     return await response.json();
 };
 
+
+const register = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
+  const response = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Registration failed");
+  }
+
+  return await response.json();
+};
+
+const changePassword = async ({
+  currentPassword,
+  newPassword,
+}: {
+  currentPassword: string;
+  newPassword: string;
+}) => {
+  const token = localStorage.getItem("access_token");
+  const response = await fetch(`${API_URL}/auth/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail || "Password could not be changed");
+  }
+
+  return await response.json();
+};
+
 const AuthService = {
-    login
+  login,
+  register,
+  changePassword,
 };
 
 export default AuthService;

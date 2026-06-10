@@ -130,11 +130,28 @@ const updateExtractedData = async (profileId: number, cvData: unknown): Promise<
     });
 };
 
+const deleteCv = async (id: number, token: string): Promise<{ message: string; cv_id: number }> => {
+    const response = await fetch(`${API_URL}/cv/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(await readErrorMessage(response) || "Failed to delete CV");
+    }
+
+    return await response.json();
+};
+
 const CvService = {
     uploadCv,
     parseCv,
     confirmCv,
     updateExtractedData,
+    deleteCv,
 };
 
 export default CvService;
