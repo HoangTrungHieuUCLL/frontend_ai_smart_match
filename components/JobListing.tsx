@@ -25,6 +25,7 @@ interface Props {
     isSelected?: boolean;
     onToggleSelect?: () => void;
     selectDisabled?: boolean;
+    hideSaveAction?: boolean;
 }
 
 const BROWN = "#774326";
@@ -43,6 +44,7 @@ const JobListing: React.FC<Props> = ({
                                          isSelected = false,
                                          onToggleSelect,
                                          selectDisabled = false,
+                                         hideSaveAction = false
                                      }) => {
     const router = useRouter();
     const { t } = useTranslation();
@@ -52,7 +54,16 @@ const JobListing: React.FC<Props> = ({
     const isMobile = useMediaQuery("(max-width: 768px)");
 
     useEffect(() => {
-        setSaved(isJobSaved(job.id));
+        const syncSaved = () => setSaved(isJobSaved(job.id));
+
+        syncSaved();
+        window.addEventListener("storage", syncSaved);
+        window.addEventListener("auth-change", syncSaved);
+
+        return () => {
+            window.removeEventListener("storage", syncSaved);
+            window.removeEventListener("auth-change", syncSaved);
+        };
     }, [job.id]);
 
     const handleLearnMore = async (jobId: number) => {
@@ -85,7 +96,7 @@ const JobListing: React.FC<Props> = ({
                         >
                             Login
                         </a>{" "}
-                        to keep your saved jobs across sessions.
+                        to keep your saved jobs during this session.
                     </>
                 ),
                 autoClose: 3000,
@@ -109,7 +120,7 @@ const JobListing: React.FC<Props> = ({
                         >
                             Login
                         </a>{" "}
-                        to keep your saved jobs across sessions.
+                        to keep your saved jobs during this session.
                     </>
                 ),
                 autoClose: 3000,
@@ -173,7 +184,6 @@ const JobListing: React.FC<Props> = ({
                 }}
             >
                 <Stack gap="md">
-
                     {/* HEADER */}
                     <Group justify="space-between" align="flex-start" wrap="nowrap">
                         <Group gap="md" wrap="nowrap">
@@ -266,25 +276,27 @@ const JobListing: React.FC<Props> = ({
                                 {t("jobListing.learnMore")}
                             </Button>
 
-                            <Button
-                                radius="xl"
-                                size="xs"
-                                variant="light"
-                                onClick={handleSave}
-                                styles={{
-                                    root: {
-                                        border: `1px solid ${BROWN}`,
-                                        backgroundColor: saved ? BROWN : "transparent",
-                                        transition: "all 150ms ease",
-                                    },
-                                    label: {
-                                        color: saved ? "#ffffff" : BROWN,
-                                        fontWeight: 500,
-                                    },
-                                }}
-                            >
-                                {saved ? t("jobListing.saved") : t("jobListing.save")}
-                            </Button>
+                            {!hideSaveAction && (
+                                <Button
+                                    radius="xl"
+                                    size="xs"
+                                    variant="light"
+                                    onClick={handleSave}
+                                    styles={{
+                                        root: {
+                                            border: `1px solid ${BROWN}`,
+                                            backgroundColor: saved ? BROWN : "transparent",
+                                            transition: "all 150ms ease",
+                                        },
+                                        label: {
+                                            color: saved ? "#ffffff" : BROWN,
+                                            fontWeight: 500,
+                                        },
+                                    }}
+                                >
+                                    {saved ? t("jobListing.saved") : t("jobListing.save")}
+                                </Button>
+                            )}
                         </Group>
 
                         <Button
@@ -296,7 +308,6 @@ const JobListing: React.FC<Props> = ({
                             {t("jobListing.share")}
                         </Button>
                     </Group>
-
                 </Stack>
             </Paper>
         </Box>

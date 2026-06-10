@@ -43,9 +43,38 @@ const register = async ({
   return await response.json();
 };
 
+const changePassword = async ({
+  currentPassword,
+  newPassword,
+}: {
+  currentPassword: string;
+  newPassword: string;
+}) => {
+  const token = localStorage.getItem("access_token");
+  const response = await fetch(`${API_URL}/auth/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail || "Password could not be changed");
+  }
+
+  return await response.json();
+};
+
 const AuthService = {
   login,
-  register
+  register,
+  changePassword,
 };
 
 export default AuthService;

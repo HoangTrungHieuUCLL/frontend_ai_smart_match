@@ -1,4 +1,4 @@
-import {Button, Group, Image, Text, Select, Modal, Popover, Stack} from "@mantine/core";
+import {Avatar, Button, Group, Image, Text, Select, Modal, Popover, Stack} from "@mantine/core";
 import { useRouter } from "next/router";
 import { Language, useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/header.module.css";
@@ -6,12 +6,14 @@ import {useEffect, useState} from "react";
 import Login from "./Login";
 
 const BROWN = "#774326";
+const MENU_BUTTON_WIDTH = 160;
 
 export const Header = () => {
     const router = useRouter();
     const { language, setLanguage, t } = useTranslation();
     const [loginOpened, setLoginOpened] = useState(false);
     const [loggedInEmail, setLoggedInEmail] = useState<string>("");
+    const [loggedInRole, setLoggedInRole] = useState<string>("");
     const [logoutOpened, setLogoutOpened] = useState(false);
 
     const navItems = [
@@ -23,7 +25,14 @@ export const Header = () => {
     ];
     const syncAuth = () => {
         const email = localStorage.getItem("email");
+        const token = localStorage.getItem("access_token");
         setLoggedInEmail(email ?? "");
+        try {
+            const payload = token ? JSON.parse(atob(token.split(".")[0])) : null;
+            setLoggedInRole(payload?.role ?? "");
+        } catch {
+            setLoggedInRole("");
+        }
     };
     const handleNavClick = (href: string) => {
         if (href !== "#") {
@@ -39,17 +48,12 @@ export const Header = () => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("email");
         setLoggedInEmail("");
+        setLoggedInRole("");
         setLogoutOpened(false);
+        window.dispatchEvent(new Event("auth-change"));
         await router.push("/");
     };
 
-    // useEffect(() => {
-    //     const email = localStorage.getItem("email");
-
-    //     if (email != null) {
-    //         setLoggedInEmail(email);
-    //     }
-    // }, []);
     useEffect(() => {
         syncAuth();
 
@@ -126,22 +130,69 @@ export const Header = () => {
                         shadow="md"
                     >
                         <Popover.Target>
-                            <Text
-                                component="button"
-                                type="button"
-                                c="black"
-                                className={styles.adminGreeting}
+                            <Button
+                                variant="subtle"
+                                radius="xl"
+                                px={6}
+                                leftSection={
+                                    <Avatar
+                                        radius="xl"
+                                        styles={{
+                                            root: {
+                                                backgroundColor: "#f4dfc6",
+                                                color: BROWN,
+                                            },
+                                        }}
+                                    >
+                                        {loggedInEmail.slice(0, 1).toUpperCase()}
+                                    </Avatar>
+                                }
+                                style={{
+                                    color: "#111",
+                                }}
                                 onClick={() => setLogoutOpened((opened) => !opened)}
                             >
-                                Hello, {loggedInEmail}!
-                            </Text>
+                                <Text
+                                    c="black"
+                                    className={styles.adminGreeting}
+                                >
+                                    Hello, {loggedInEmail}!
+                                </Text>
+                            </Button>
                         </Popover.Target>
                         <Popover.Dropdown className={styles.logoutPopover}>
                             <Stack align="center" gap={8}>
-                                {loggedInEmail === "admin" && (
+                                <Button
+                                    radius="xl"
+                                    size="sm"
+                                    w={MENU_BUTTON_WIDTH}
+                                    variant="outline"
+                                    color={BROWN}
+                                    onClick={() => {
+                                        setLogoutOpened(false);
+                                        router.push("/profile");
+                                    }}
+                                >
+                                    My profile
+                                </Button>
+                                <Button
+                                    radius="xl"
+                                    size="sm"
+                                    w={MENU_BUTTON_WIDTH}
+                                    variant="outline"
+                                    color={BROWN}
+                                    onClick={() => {
+                                        setLogoutOpened(false);
+                                        router.push("/job-search-with-ai");
+                                    }}
+                                >
+                                    Edit job list
+                                </Button>
+                                {loggedInRole === "admin" && (
                                     <Button
                                         radius="xl"
                                         size="sm"
+                                        w={MENU_BUTTON_WIDTH}
                                         variant="outline"
                                         color={BROWN}
                                         onClick={() => {
@@ -155,6 +206,7 @@ export const Header = () => {
                                 <Button
                                     radius="xl"
                                     size="sm"
+                                    w={MENU_BUTTON_WIDTH}
                                     className={styles.logoutButton}
                                     onClick={handleLogout}
                                 >
