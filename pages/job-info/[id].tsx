@@ -25,6 +25,7 @@ import { notifications } from "@mantine/notifications";
 import { CvConfirmReturn } from "../../services/CvService";
 import styles from "../../styles/header.module.css";
 import JobInfoSkeleton from "../../components/skeleton/JobInfoSkeleton";
+import { isAdminToken } from "../../utils/auth";
 const BROWN = "#774326";
 
 const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) ?? [];
@@ -39,10 +40,12 @@ export default function JobInfoDetailPage() {
     const [compatibilityScore, setCompatibilityScore] = useState<number | null>(null);
     const [Saved, setSaved] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
+    const [authToken, setAuthToken] = useState<string | null>(null);
 
     const jobDescriptionRef = useRef<HTMLDivElement | null>(null);
     const matchScoreRef = useRef<HTMLDivElement | null>(null);
     const [cvUploaded, setCvUploaded] = useState(false);
+    const isAdmin = isAdminToken(authToken);
 
     const fetchJob = async () => {
         setLoading(true);
@@ -62,10 +65,23 @@ export default function JobInfoDetailPage() {
     }, [id]);
 
     useEffect(() => {
+        const syncAuth = () => setAuthToken(localStorage.getItem("access_token"));
+
+        syncAuth();
+        window.addEventListener("storage", syncAuth);
+        window.addEventListener("auth-change", syncAuth);
+
+        return () => {
+            window.removeEventListener("storage", syncAuth);
+            window.removeEventListener("auth-change", syncAuth);
+        };
+    }, []);
+
+    useEffect(() => {
         if (!job) return;
 
         const savedScores: CvConfirmReturn[] = JSON.parse(
-            localStorage.getItem("jobScores") ?? "[]"
+            sessionStorage.getItem("jobScores") ?? "[]"
         );
 
         const match = savedScores.find(
@@ -78,6 +94,20 @@ export default function JobInfoDetailPage() {
         setCvUploaded(!!match);
 
         setSaved(isJobSaved(job.id));
+    }, [job]);
+
+    useEffect(() => {
+        if (!job) return;
+
+        const syncSaved = () => setSaved(isJobSaved(job.id));
+
+        window.addEventListener("storage", syncSaved);
+        window.addEventListener("auth-change", syncSaved);
+
+        return () => {
+            window.removeEventListener("storage", syncSaved);
+            window.removeEventListener("auth-change", syncSaved);
+        };
     }, [job]);
 
     if (loading) {
@@ -135,10 +165,12 @@ export default function JobInfoDetailPage() {
     };
 
     const handleCvUpload = () => {
+        if (isAdmin) return;
         setModalOpen(true);
     };
 
     const handleMatchClick = () => {
+        if (isAdmin) return;
         if (!cvUploaded) {
             setModalOpen(true);
             return;
@@ -177,7 +209,7 @@ export default function JobInfoDetailPage() {
             button: t("jobInfo.compatible"),
             onClick: handleMatchClick,
         },
-    ];
+    ].filter((card) => !isAdmin || card.number === "1");
 
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
@@ -314,16 +346,20 @@ export default function JobInfoDetailPage() {
                                         )}
 
                                         <Stack gap="sm" justify="flex-end">
-                                            <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
+                                            {!isAdmin && (
+                                                <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
+                                            )}
                                             <Group grow>
-                                                <Button
-                                                    variant={Saved ? "filled" : "light"}
-                                                    size="sm"
-                                                    color={BROWN}
-                                                    onClick={handleSave}
-                                                >
-                                                    {Saved ? "Saved" : t("jobInfo.save")}
-                                                </Button>
+                                                {!isAdmin && (
+                                                    <Button
+                                                        variant={Saved ? "filled" : "light"}
+                                                        size="sm"
+                                                        color={BROWN}
+                                                        onClick={handleSave}
+                                                    >
+                                                        {Saved ? "Saved" : t("jobInfo.save")}
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="light"
                                                     size="sm"
@@ -404,10 +440,10 @@ export default function JobInfoDetailPage() {
 
                     if (!results || results.length === 0) return;
 
-                    const existing: CvConfirmReturn[] = JSON.parse(localStorage.getItem("jobScores") ?? "[]");
+                    const existing: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem("jobScores") ?? "[]");
                     const merged = new Map(existing.map((r) => [r.job_id, r.compatibility_score]));
                     results.forEach((r) => merged.set(r.job_id, r.compatibility_score));
-                    localStorage.setItem(
+                    sessionStorage.setItem(
                         "jobScores",
                         JSON.stringify(Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({ job_id, compatibility_score })))
                     );

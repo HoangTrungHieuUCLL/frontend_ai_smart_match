@@ -11,22 +11,23 @@ export interface Job {
     offers: string;
     salary: string;
     notes: string;
+    requirements_simplified?: string | null;
     compatibility_score: number | null;
 }
 
 export interface JobCreatePayload {
     company_name: string;
     position: string;
-    date: string;
-    location: string;
-    type: string;
-    overview: string;
-    responsibilities: string;
-    requirements: string;
-    offers: string;
+    date?: string | null;
+    location?: string | null;
+    type?: string | null;
+    overview?: string | null;
+    responsibilities?: string | null;
+    requirements?: string | null;
+    offers?: string | null;
     salary: string | null;
     notes: string | null;
-    requirements_simplified: string;
+    requirements_simplified?: string | null;
 }
 
 export interface CV {

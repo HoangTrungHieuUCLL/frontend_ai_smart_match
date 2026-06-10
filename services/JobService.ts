@@ -42,10 +42,47 @@ const createJob = async (job: JobCreatePayload, token: string): Promise<Job> => 
   return await response.json();
 };
 
+const updateJob = async (id: number, job: JobCreatePayload, token: string): Promise<Job> => {
+  const response = await fetch(`${API_URL}/jobs/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(job),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail || "Failed to update job");
+  }
+
+  return await response.json();
+};
+
+const deleteJob = async (id: number, token: string): Promise<Job> => {
+  const response = await fetch(`${API_URL}/jobs/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail || "Failed to delete job");
+  }
+
+  return await response.json();
+};
+
 const JobService = {
   getAllJobs,
   getJobById,
   createJob,
+  updateJob,
+  deleteJob,
 };
 
 export default JobService;
