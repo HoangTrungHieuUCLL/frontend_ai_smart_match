@@ -69,7 +69,7 @@ export default function Compare() {
             {jobs.length === 0 ? (
                 <p>No jobs selected. Choose some from the listings.</p>
             ) : (
-                <Table w="80%" withColumnBorders>
+                <Table w="80%" withColumnBorders mt={12} mb={12}>
                     <Table.Thead>
                         <Table.Tr>
                             <Table.Th></Table.Th>
