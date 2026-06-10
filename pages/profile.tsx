@@ -90,10 +90,10 @@ const passwordMeetsRequirements = (password: string) =>
     password.length >= 8 && /[A-Z]/.test(password) && /\d/.test(password);
 
 const saveScoresToStorage = (results: CvConfirmReturn[]) => {
-    const existing: CvConfirmReturn[] = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
+    const existing: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
     const merged = new Map(existing.map((r) => [r.job_id, r.compatibility_score]));
     results.forEach((r) => merged.set(r.job_id, r.compatibility_score));
-    localStorage.setItem(
+    sessionStorage.setItem(
         SCORE_STORAGE_KEY,
         JSON.stringify(Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({ job_id, compatibility_score }))),
     );
