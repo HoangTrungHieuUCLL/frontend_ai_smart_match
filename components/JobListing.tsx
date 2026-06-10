@@ -11,7 +11,6 @@ import {
     Paper,
     Stack,
     Text,
-    Tooltip,
     RingProgress
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
@@ -25,6 +24,7 @@ interface Props {
     isSelected?: boolean;
     onToggleSelect?: () => void;
     selectDisabled?: boolean;
+    showSelectControl?: boolean;
     hideSaveAction?: boolean;
 }
 
@@ -45,6 +45,7 @@ const JobListing: React.FC<Props> = ({
                                          isSelected = false,
                                          onToggleSelect,
                                          selectDisabled = false,
+                                         showSelectControl = false,
                                          hideSaveAction = false
                                      }) => {
     const router = useRouter();
@@ -110,7 +111,7 @@ const JobListing: React.FC<Props> = ({
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
-            {(isMobile || hovered || isSelected) && onToggleSelect && (
+            {(showSelectControl || isMobile || hovered || isSelected) && onToggleSelect && (
                 <Box style={{ position: "absolute", top: 14, left: 14, zIndex: 2 }}>
                     <Checkbox
                         checked={isSelected}

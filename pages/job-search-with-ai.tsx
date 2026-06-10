@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, TextInput, Tooltip} from "@mantine/core";
+import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, TextInput} from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
 import JobService from "../services/JobService";
@@ -55,6 +55,7 @@ export default function JobSearchWithAIPage() {
     const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
     const [sortOption, setSortOption] = useState<SortOption>("newest_first");
 
+    const [compareMode, setCompareMode] = useState(false);
     const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
 
     const MAX_COMPARE = 4;
@@ -75,6 +76,16 @@ export default function JobSearchWithAIPage() {
         router.push({
             pathname: "/compare",
             query: { jobs: Array.from(selectedJobs) },
+        });
+    };
+
+    const handleToggleCompareMode = () => {
+        setCompareMode((current) => {
+            if (current) {
+                setSelectedJobs(new Set());
+            }
+
+            return !current;
         });
     };
 
@@ -279,21 +290,39 @@ export default function JobSearchWithAIPage() {
                         }}
                     />
                     {!isAdmin && (
-                        <Button
-                            radius="xl"
-                            variant={showSavedOnly ? "filled" : "light"}
-                            h={40}
-                            style={{
-                                backgroundColor: showSavedOnly ? BROWN : "transparent",
-                                border: `1px solid ${BROWN}`,
-                                color: showSavedOnly ? "#fff" : BROWN,
-                                whiteSpace: "nowrap",
-                                flexShrink: 0,
-                            }}
-                            onClick={() => setShowSavedOnly((prev) => !prev)}
-                        >
-                            Saved jobs
-                        </Button>
+                        <>
+                            <Button
+                                radius="xl"
+                                variant={showSavedOnly ? "filled" : "light"}
+                                h={40}
+                                style={{
+                                    backgroundColor: showSavedOnly ? BROWN : "transparent",
+                                    border: `1px solid ${BROWN}`,
+                                    color: showSavedOnly ? "#fff" : BROWN,
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0,
+                                }}
+                                onClick={() => setShowSavedOnly((prev) => !prev)}
+                            >
+                                Saved jobs
+                            </Button>
+
+                            <Button
+                                radius="xl"
+                                variant={compareMode ? "filled" : "light"}
+                                h={40}
+                                style={{
+                                    backgroundColor: compareMode ? BROWN : "transparent",
+                                    border: `1px solid ${BROWN}`,
+                                    color: compareMode ? "#fff" : BROWN,
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0,
+                                }}
+                                onClick={handleToggleCompareMode}
+                            >
+                                Compare jobs
+                            </Button>
+                        </>
                     )}
 
                     {isAdmin && (
@@ -402,8 +431,9 @@ export default function JobSearchWithAIPage() {
                                 job={job}
                                 onShare={handleShare}
                                 isSelected={selectedJobs.has(job.id)}
-                                onToggleSelect={() => handleToggleSelect(job.id)}
+                                onToggleSelect={compareMode ? () => handleToggleSelect(job.id) : undefined}
                                 selectDisabled={selectedJobs.size >= MAX_COMPARE}
+                                showSelectControl={compareMode}
                                 hideSaveAction={isAdmin}
                             />
                         ))}
@@ -494,7 +524,7 @@ export default function JobSearchWithAIPage() {
             />
 
             {/* Sticky compare bar */}
-            {selectedJobs.size >= 2 && (
+            {compareMode && selectedJobs.size >= 2 && (
                 <Box
                     style={{
                         position: "fixed",
