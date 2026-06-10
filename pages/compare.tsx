@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import {Badge, Group, Loader, Stack, Table, Text} from "@mantine/core";
+import {Badge, Box, Divider, Group, Loader, Progress, ScrollArea, Stack, Table, Text} from "@mantine/core";
 import {Job} from "../types";
 import JobService from "../services/JobService";
+import {BriefcaseBusiness, Building2, CircleDollarSign, MapPin, Settings, ShieldPlus} from "lucide-react";
 
 const BROWN = "#774326";
 
@@ -69,52 +70,11 @@ export default function Compare() {
             {jobs.length === 0 ? (
                 <p>No jobs selected. Choose some from the listings.</p>
             ) : (
-                <Table w="80%" withColumnBorders mt={12} mb={12}>
+                <Table style={{ tableLayout: "fixed", width: "80%" }} withRowBorders={false} mt={12} mb={12}>
                     <Table.Thead>
                         <Table.Tr>
-                            <Table.Th></Table.Th>
-                            {jobs.map((job) => (
-                                <Table.Th key={job.id}>{job.position}</Table.Th>
-                            ))}
-                        </Table.Tr>
-                    </Table.Thead>
+                            <Table.Th style={{ width: "5%" }} />
 
-                    <Table.Tbody>
-                        {/* Company */}
-                        <Table.Tr>
-                            <Table.Td>Company</Table.Td>
-                            {jobs.map((job) => (
-                                <Table.Td key={job.id}>{job.company_name}</Table.Td>
-                            ))}
-                        </Table.Tr>
-
-                        {/* Location */}
-                        <Table.Tr>
-                            <Table.Td>Location</Table.Td>
-                            {jobs.map((job) => (
-                                <Table.Td key={job.id}>{job.location}</Table.Td>
-                            ))}
-                        </Table.Tr>
-
-                        {/* Job type */}
-                        <Table.Tr>
-                            <Table.Td>Job type</Table.Td>
-                            {jobs.map((job) => (
-                                <Table.Td key={job.id}>{job.type}</Table.Td>
-                            ))}
-                        </Table.Tr>
-
-                        {/* Salary */}
-                        <Table.Tr>
-                            <Table.Td>Salary</Table.Td>
-                            {jobs.map((job) => (
-                                <Table.Td key={job.id}>{job.salary}</Table.Td>
-                            ))}
-                        </Table.Tr>
-
-                        {/* Compatibility */}
-                        <Table.Tr>
-                            <Table.Td>Compatibility</Table.Td>
                             {jobs.map((job) => {
                                 const score = jobScoresMap.get(job.id) ?? null;
 
@@ -128,34 +88,81 @@ export default function Compare() {
                                                 : "red";
 
                                 return (
-                                    <Table.Td key={job.id}>
+                                    <Table.Th key={job.id}>
+                                        <Text truncate="end" inherit>
+                                            {job.position}
+                                        </Text>
+
                                         {score !== null ? (
-                                            <Badge color={color}>{score.toFixed(2)}%</Badge>
+                                            <Box mt={4}>
+                                                <Text size="xs" c={color} mb={4}>{score.toFixed(2)}%</Text>
+                                                <Progress value={score} color={color} size="sm" />
+                                            </Box>
                                         ) : (
                                             "-"
                                         )}
-                                    </Table.Td>
+
+                                        <Divider mt={12} />
+                                    </Table.Th>
                                 );
                             })}
+                        </Table.Tr>
+                    </Table.Thead>
+
+                    <Table.Tbody>
+                        {/* Company */}
+                        <Table.Tr>
+                            <Table.Td><Building2 /></Table.Td>
+                            {jobs.map((job) => (
+                                <Table.Td key={job.id}>{job.company_name}</Table.Td>
+                            ))}
+                        </Table.Tr>
+
+                        {/* Location */}
+                        <Table.Tr>
+                            <Table.Td><MapPin /></Table.Td>
+                            {jobs.map((job) => (
+                                <Table.Td key={job.id}>{job.location}</Table.Td>
+                            ))}
+                        </Table.Tr>
+
+                        {/* Job type */}
+                        <Table.Tr>
+                            <Table.Td><BriefcaseBusiness /></Table.Td>
+                            {jobs.map((job) => (
+                                <Table.Td key={job.id}>{job.type}</Table.Td>
+                            ))}
+                        </Table.Tr>
+
+                        {/* Salary */}
+                        <Table.Tr>
+                            <Table.Td><CircleDollarSign /></Table.Td>
+                            {jobs.map((job) => (
+                                <Table.Td key={job.id}>
+                                    {job.salary ? job.salary : "-"}
+                                </Table.Td>
+                            ))}
                         </Table.Tr>
 
                         {/* Skills */}
                         <Table.Tr>
-                            <Table.Td>Top skills</Table.Td>
+                            <Table.Td><Settings /></Table.Td>
                             {jobs.map((job) => {
                                 const skills = job.requirements_simplified
                                     ? job.requirements_simplified.split(",").map(s => s.trim())
                                     : [];
 
                                 return (
-                                    <Table.Td key={job.id}>
-                                        <Group gap="xs">
-                                            {skills.map((skill, idx) => (
-                                                <Badge key={idx} variant="light" color={BROWN}>
-                                                    {skill}
-                                                </Badge>
-                                            ))}
-                                        </Group>
+                                    <Table.Td key={job.id} style={{ verticalAlign: "top" }}>
+                                        <ScrollArea h={200} type="auto">
+                                            <Group gap="xs">
+                                                {skills.map((skill, idx) => (
+                                                    <Badge key={idx} variant="light" color={BROWN}>
+                                                        {skill}
+                                                    </Badge>
+                                                ))}
+                                            </Group>
+                                        </ScrollArea>
                                     </Table.Td>
                                 );
                             })}
@@ -163,9 +170,13 @@ export default function Compare() {
 
                         {/* Benefits */}
                         <Table.Tr>
-                            <Table.Td>Benefits</Table.Td>
+                            <Table.Td><ShieldPlus /></Table.Td>
                             {jobs.map((job) => (
-                                <Table.Td key={job.id}>{job.offers}</Table.Td>
+                                <Table.Td key={job.id} style={{ verticalAlign: "top" }}>
+                                    <ScrollArea h={200} type="auto">
+                                        {job.offers}
+                                    </ScrollArea>
+                                </Table.Td>
                             ))}
                         </Table.Tr>
                     </Table.Tbody>

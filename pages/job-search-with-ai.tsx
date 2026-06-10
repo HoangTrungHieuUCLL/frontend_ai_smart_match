@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, TextInput} from "@mantine/core";
+import { useRouter } from "next/router";
+import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, TextInput, Tooltip} from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
 import JobService from "../services/JobService";
@@ -40,6 +41,7 @@ const applyStoredScores = (jobList: Job[]): Job[] => {
 
 export default function JobSearchWithAIPage() {
     const { t } = useTranslation();
+    const router = useRouter();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [page, setPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
@@ -50,6 +52,29 @@ export default function JobSearchWithAIPage() {
     const [search, setSearch] = useState("");
     const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
     const [sortOption, setSortOption] = useState<SortOption>("newest_first");
+
+    const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
+
+    const MAX_COMPARE = 4;
+
+    const handleToggleSelect = (jobId: number) => {
+        setSelectedJobs((prev) => {
+            const next = new Set(prev);
+            if (next.has(jobId)) {
+                next.delete(jobId);
+            } else if (next.size < MAX_COMPARE) {
+                next.add(jobId);
+            }
+            return next;
+        });
+    };
+
+    const handleCompare = () => {
+        router.push({
+            pathname: "/compare",
+            query: { jobs: Array.from(selectedJobs) },
+        });
+    };
 
     useEffect(() => {
         const stored = localStorage.getItem(CV_NAME_STORAGE_KEY);
@@ -348,6 +373,9 @@ export default function JobSearchWithAIPage() {
                                 key={job.id}
                                 job={job}
                                 onShare={handleShare}
+                                isSelected={selectedJobs.has(job.id)}
+                                onToggleSelect={() => handleToggleSelect(job.id)}
+                                selectDisabled={selectedJobs.size >= MAX_COMPARE}
                             />
                         ))}
                     </Stack>
@@ -435,6 +463,46 @@ export default function JobSearchWithAIPage() {
                     setPage(1);
                 }}
             />
+
+            {/* Sticky compare bar */}
+            {selectedJobs.size >= 2 && (
+                <Box
+                    style={{
+                        position: "fixed",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        zIndex: 100,
+                        display: "flex",
+                        justifyContent: "center",
+                        padding: "16px 24px",
+                        backgroundColor: "rgba(255, 255, 255, 0.92)",
+                        backdropFilter: "blur(8px)",
+                        borderTop: `1px solid rgba(119, 67, 38, 0.18)`,
+                        boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+                    }}
+                >
+                    <Group gap="md" align="center">
+                        <Button
+                            radius="xl"
+                            size="md"
+                            style={{ backgroundColor: BROWN, minWidth: 160 }}
+                            onClick={handleCompare}
+                        >
+                            Compare ({selectedJobs.size})
+                        </Button>
+                        <Button
+                            radius="xl"
+                            size="md"
+                            variant="subtle"
+                            style={{ color: BROWN }}
+                            onClick={() => setSelectedJobs(new Set())}
+                        >
+                            Clear
+                        </Button>
+                    </Group>
+                </Box>
+            )}
         </Box>
     );
 }
