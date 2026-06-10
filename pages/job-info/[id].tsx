@@ -19,8 +19,12 @@ import JobService from "../../services/JobService";
 import CVUploadButton from "../../components/CVUploadButton";
 import CVUploadModal from "../../components/CVUploadModal";
 import { useTranslation } from "../../contexts/I18nContext";
-import { isJobSaved } from "../../utils/savedJobs";
-import { saveJob, removeJob } from "../../utils/savedJobs";
+import ProfileService from "../../services/ProfileService";
+import {
+  addGuestSavedJob,
+  removeGuestSavedJob,
+  getGuestSavedJobs,
+} from "../../utils/savedJobs";
 import { notifications } from "@mantine/notifications";
 import { CvConfirmReturn } from "../../services/CvService";
 import styles from "../../styles/header.module.css";
@@ -93,7 +97,19 @@ export default function JobInfoDetailPage() {
         );
         setCvUploaded(!!match);
 
-        setSaved(isJobSaved(job.id));
+        const fetchSaved = async () => {
+            const profileId = localStorage.getItem("profile_id");
+
+            if (!profileId) {
+                const guestSaved = getGuestSavedJobs();
+                setSaved(guestSaved.includes(job.id));
+            } else {
+                const savedJobs = await ProfileService.getSavedJobs(Number(profileId));
+                setSaved(savedJobs.includes(job.id));
+            }
+        };
+
+        fetchSaved();
     }, [job]);
 
     useEffect(() => {
@@ -129,27 +145,77 @@ export default function JobInfoDetailPage() {
     const benefits = splitLines(job.offers);
     const notes = splitLines(job.notes);
 
-    const handleSave = () => {
+    const handleSave = async () => {
+    const profileId = localStorage.getItem("profile_id");
+
+    // GUEST USER (localStorage)
+    if (!profileId) {
         if (Saved) {
-            removeJob(job.id);
+            removeGuestSavedJob(job.id);
             setSaved(false);
 
             notifications.show({
-                title: "Removed",
-                message: "Job removed from saved list",
+                message: (
+                    <>
+                        <strong>{job.position}</strong> removed from saved jobs (guest mode).
+                    </>
+                ),
                 autoClose: 3000,
             });
         } else {
-            saveJob(job.id);
+            addGuestSavedJob(job.id);
             setSaved(true);
 
             notifications.show({
-                title: "Saved",
-                message: "Job added to saved list",
+                message: (
+                    <>
+                        <strong>{job.position}</strong> saved locally.
+                        Login to sync across devices.
+                    </>
+                ),
                 autoClose: 3000,
             });
         }
-    };
+
+        return;
+    }
+
+    // LOGGED IN USER (DB)
+    try {
+        if (Saved) {
+            await ProfileService.removeJob(Number(profileId), job.id);
+            setSaved(false);
+
+            notifications.show({
+                message: (
+                    <>
+                        <strong>{job.position}</strong> has been removed.
+                    </>
+                ),
+                autoClose: 3000,
+            });
+        } else {
+            await ProfileService.saveJob(Number(profileId), job.id);
+            setSaved(true);
+
+            notifications.show({
+                message: (
+                    <>
+                        <strong>{job.position}</strong> has been saved.
+                    </>
+                ),
+                autoClose: 3000,
+            });
+        }
+    } catch (err) {
+        console.error(err);
+
+        notifications.show({
+            color: "red",
+            message: "Something went wrong while saving job",
+        });
+    }
+};
     const handleShare = async () => {
         const url = window.location.href;
 
