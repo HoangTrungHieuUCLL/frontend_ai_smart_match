@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import {Box, Button, Container, Group, Image, Modal, Select, Stack, Text, TextInput} from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Group,
+  Image,
+  Modal,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
 import JobService from "../services/JobService";
@@ -8,10 +19,8 @@ import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
 import { CvConfirmReturn } from "../services/CvService";
-// import { getSavedJobs } from "../utils/savedJobs";
+import { getSavedJobs } from "../utils/savedJobs";
 import AddJobModal from "../components/AddJobModal";
-import ProfileService from "../services/ProfileService";
-import { getGuestSavedJobs } from "../utils/savedJobs";
 import JobListingSkeleton from "../components/skeleton/JobListingSkeleton";
 import { isAdminToken } from "../utils/auth";
 
@@ -24,266 +33,266 @@ const SCORE_STORAGE_KEY = "jobScores";
 const CV_NAME_STORAGE_KEY = "cvName";
 
 const saveScoresToStorage = (results: CvConfirmReturn[]) => {
-    const existing: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
-    const merged = new Map(existing.map((r) => [r.job_id, r.compatibility_score]));
-    results.forEach((r) => merged.set(r.job_id, r.compatibility_score));
-    sessionStorage.setItem(
-        SCORE_STORAGE_KEY,
-        JSON.stringify(Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({ job_id, compatibility_score })))
-    );
+  const existing: CvConfirmReturn[] = JSON.parse(
+    sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]",
+  );
+  const merged = new Map(
+    existing.map((r) => [r.job_id, r.compatibility_score]),
+  );
+  results.forEach((r) => merged.set(r.job_id, r.compatibility_score));
+  sessionStorage.setItem(
+    SCORE_STORAGE_KEY,
+    JSON.stringify(
+      Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({
+        job_id,
+        compatibility_score,
+      })),
+    ),
+  );
 };
 
 const applyStoredScores = (jobList: Job[]): Job[] => {
-    const stored: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
-    if (!stored.length) return jobList;
-    const scoreMap = new Map(stored.map((r) => [r.job_id, r.compatibility_score]));
-    return jobList.map((job) => ({
-        ...job,
-        compatibility_score: scoreMap.get(job.id) ?? job.compatibility_score ?? null,
-    }));
+  const stored: CvConfirmReturn[] = JSON.parse(
+    sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]",
+  );
+  if (!stored.length) return jobList;
+  const scoreMap = new Map(
+    stored.map((r) => [r.job_id, r.compatibility_score]),
+  );
+  return jobList.map((job) => ({
+    ...job,
+    compatibility_score:
+      scoreMap.get(job.id) ?? job.compatibility_score ?? null,
+  }));
 };
 
 export default function JobSearchWithAIPage() {
-    const { t } = useTranslation();
-    const router = useRouter();
-    const [jobs, setJobs] = useState<Job[]>([]);
-    const [page, setPage] = useState(1);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [addJobOpen, setAddJobOpen] = useState(false);
-    const [adminToken, setAdminToken] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [authVersion, setAuthVersion] = useState(0);
+  const { t } = useTranslation();
+  const router = useRouter();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [page, setPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [addJobOpen, setAddJobOpen] = useState(false);
+  const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authVersion, setAuthVersion] = useState(0);
 
-    const [search, setSearch] = useState("");
-    const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
-    const [sortOption, setSortOption] = useState<SortOption>("newest_first");
-    const [savedIds, setSavedIds] = useState<number[]>([]);
+  const [search, setSearch] = useState("");
+  const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
+  const [linkedinImportError, setLinkedinImportError] = useState<string | undefined>();
+  const [sortOption, setSortOption] = useState<SortOption>("newest_first");
 
-    const [compareMode, setCompareMode] = useState(false);
-    const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
 
-    const MAX_COMPARE = 4;
+  const MAX_COMPARE = 4;
 
-    const handleToggleSelect = (jobId: number) => {
-        setSelectedJobs((prev) => {
-            const next = new Set(prev);
-            if (next.has(jobId)) {
-                next.delete(jobId);
-            } else if (next.size < MAX_COMPARE) {
-                next.add(jobId);
-            }
-            return next;
-        });
+  const handleToggleSelect = (jobId: number) => {
+    setSelectedJobs((prev) => {
+      const next = new Set(prev);
+      if (next.has(jobId)) {
+        next.delete(jobId);
+      } else if (next.size < MAX_COMPARE) {
+        next.add(jobId);
+      }
+      return next;
+    });
+  };
+
+  const handleCompare = () => {
+    router.push({
+      pathname: "/compare",
+      query: { jobs: Array.from(selectedJobs) },
+    });
+  };
+
+  const handleToggleCompareMode = () => {
+    setCompareMode((current) => {
+      if (current) {
+        setSelectedJobs(new Set());
+      }
+
+      return !current;
+    });
+  };
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(CV_NAME_STORAGE_KEY);
+    setUploadedCvName(stored);
+    if (stored) setSortOption("best_match");
+  }, []);
+
+  useEffect(() => {
+    if (!router.isReady || router.query.linkedinImport !== "failed") return;
+
+    setLinkedinImportError(
+      "LinkedIn import failed. You can upload a PDF instead.",
+    );
+    setModalOpen(true);
+  }, [router.isReady, router.query.linkedinImport]);
+
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const [shareOpened, setShareOpened] = useState(false);
+  const isAdmin = isAdminToken(adminToken);
+  // const [copiedUrl, setCopiedUrl] = useState("");
+  const fetchJobs = async () => {
+    try {
+      setIsLoading(true);
+      const response = await JobService.getAllJobs();
+      setJobs(applyStoredScores(response));
+    } catch (error) {
+      console.error("Failed to fetch jobs", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  useEffect(() => {
+    setAdminToken(localStorage.getItem("access_token"));
+  }, []);
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      setAdminToken(localStorage.getItem("access_token"));
+      setAuthVersion((current) => current + 1);
     };
 
-    const handleCompare = () => {
-        router.push({
-            pathname: "/compare",
-            query: { jobs: Array.from(selectedJobs) },
-        });
+    window.addEventListener("storage", syncAuthState);
+    window.addEventListener("auth-change", syncAuthState);
+
+    return () => {
+      window.removeEventListener("storage", syncAuthState);
+      window.removeEventListener("auth-change", syncAuthState);
     };
+  }, []);
 
-    const handleToggleCompareMode = () => {
-        setCompareMode((current) => {
-            if (current) {
-                setSelectedJobs(new Set());
-            }
+  useEffect(() => {
+    setPage(1);
+  }, [search, showSavedOnly, sortOption]);
 
-            return !current;
-        });
+  useEffect(() => {
+    if (isAdmin) {
+      setShowSavedOnly(false);
+    }
+  }, [isAdmin]);
+
+  const scoredJobs = useMemo(() => {
+    return jobs.map((job) => ({
+      ...job,
+      compatibility_score: job.compatibility_score ?? null,
+    }));
+  }, [jobs]);
+
+  const sortedJobs = useMemo(() => {
+    return [...scoredJobs].sort((a, b) => {
+      if (sortOption === "best_match") {
+        const diff =
+          (b.compatibility_score ?? 0) - (a.compatibility_score ?? 0);
+        return diff !== 0 ? diff : a.id - b.id;
+      }
+      if (sortOption === "newest_first") {
+        const dateA = a.date ? new Date(a.date).getTime() : null;
+        const dateB = b.date ? new Date(b.date).getTime() : null;
+        if (dateA === null && dateB === null) return a.id - b.id;
+        if (dateA === null) return 1;
+        if (dateB === null) return -1;
+        return dateB - dateA !== 0 ? dateB - dateA : a.id - b.id;
+      }
+      if (sortOption === "company_az") {
+        const cmp = (a.company_name ?? "").localeCompare(b.company_name ?? "");
+        return cmp !== 0 ? cmp : a.id - b.id;
+      }
+      return 0;
+    });
+  }, [scoredJobs, sortOption]);
+
+  const pageCount = Math.max(1, Math.ceil(sortedJobs.length / JOBS_PER_PAGE));
+
+  const filteredJobs = useMemo(() => {
+    const q = search.toLowerCase();
+    const savedIds = getSavedJobs();
+
+    return sortedJobs.filter((job) => {
+      const matchesSearch =
+        job.position?.toLowerCase().includes(q) ||
+        job.company_name?.toLowerCase().includes(q) ||
+        job.location?.toLowerCase().includes(q) ||
+        job.requirements?.toLowerCase().includes(q);
+
+      const matchesSaved = showSavedOnly ? savedIds.includes(job.id) : true;
+
+      return matchesSearch && matchesSaved;
+    });
+  }, [sortedJobs, search, showSavedOnly, authVersion]);
+
+  const hasSearch = search.trim().length > 0;
+  const noJobsInDatabase = jobs.length === 0;
+  const showEmptyState = !isLoading && filteredJobs.length === 0;
+
+  const emptyStateContent = useMemo(() => {
+    if (noJobsInDatabase) {
+      return {
+        title: "No jobs are available at the moment.",
+        description: "Check back soon.",
+        showClearFilters: false,
+      };
+    }
+
+    if (hasSearch && showSavedOnly) {
+      return {
+        title: "No jobs found",
+        description:
+          "No saved jobs match your search. Try clearing the search or the saved filter.",
+        showClearFilters: true,
+      };
+    }
+
+    if (showSavedOnly) {
+      return {
+        title: "No jobs found",
+        description:
+          "You haven't saved any jobs yet. Browse the full list to save jobs you like.",
+        showClearFilters: true,
+      };
+    }
+
+    if (hasSearch) {
+      return {
+        title: "No jobs found",
+        description: "Try a different search term or clear the search.",
+        showClearFilters: true,
+      };
+    }
+
+    return {
+      title: "No jobs found",
+      description: "",
+      showClearFilters: true,
     };
+  }, [noJobsInDatabase, hasSearch, showSavedOnly]);
 
-    useEffect(() => {
-        const stored = sessionStorage.getItem(CV_NAME_STORAGE_KEY);
-        setUploadedCvName(stored);
-        if (stored) setSortOption("best_match");
-    }, []);
+  const clearFilters = () => {
+    setSearch("");
+    setShowSavedOnly(false);
+    setPage(1);
+  };
 
-    const [showSavedOnly, setShowSavedOnly] = useState(false);
-    const [shareOpened, setShareOpened] = useState(false);
-    const isAdmin = isAdminToken(adminToken);
-    // const [copiedUrl, setCopiedUrl] = useState("");
-    const fetchJobs = async () => {
-        try {
-            setIsLoading(true);
-            const response = await JobService.getAllJobs();
-            setJobs(applyStoredScores(response));
-        } catch (error) {
-            console.error("Failed to fetch jobs", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const currentJobs = useMemo(() => {
+    return filteredJobs.slice((page - 1) * JOBS_PER_PAGE, page * JOBS_PER_PAGE);
+  }, [filteredJobs, page]);
 
-    useEffect(() => {
-        fetchJobs();
-    }, []);
+  const handleShare = async (jobId: number) => {
+    const url = `${window.location.origin}/job-info/${jobId}`;
 
-    useEffect(() => {
-        setAdminToken(localStorage.getItem("access_token"));
-    }, []);
+    await navigator.clipboard.writeText(url);
 
-    useEffect(() => {
-        const syncAuthState = () => {
-            setAdminToken(localStorage.getItem("access_token"));
-            setAuthVersion((current) => current + 1);
-        };
-
-        window.addEventListener("storage", syncAuthState);
-        window.addEventListener("auth-change", syncAuthState);
-
-        return () => {
-            window.removeEventListener("storage", syncAuthState);
-            window.removeEventListener("auth-change", syncAuthState);
-        };
-    }, []);
-
-    useEffect(() => {
-        setPage(1);
-    }, [search, showSavedOnly, sortOption]);
-
-    useEffect(() => {
-        if (isAdmin) {
-            setShowSavedOnly(false);
-        }
-    }, [isAdmin]);
-
-    const scoredJobs = useMemo(() => {
-        return jobs.map((job) => ({
-            ...job,
-            compatibility_score: job.compatibility_score ?? null,
-        }));
-    }, [jobs]);
-
-
-
-    const sortedJobs = useMemo(() => {
-        return [...scoredJobs].sort((a, b) => {
-            if (sortOption === "best_match") {
-                const diff = (b.compatibility_score ?? 0) - (a.compatibility_score ?? 0);
-                return diff !== 0 ? diff : a.id - b.id;
-            }
-            if (sortOption === "newest_first") {
-                const dateA = a.date ? new Date(a.date).getTime() : null;
-                const dateB = b.date ? new Date(b.date).getTime() : null;
-                if (dateA === null && dateB === null) return a.id - b.id;
-                if (dateA === null) return 1;
-                if (dateB === null) return -1;
-                return dateB - dateA !== 0 ? dateB - dateA : a.id - b.id;
-            }
-            if (sortOption === "company_az") {
-                const cmp = (a.company_name ?? "").localeCompare(b.company_name ?? "");
-                return cmp !== 0 ? cmp : a.id - b.id;
-            }
-            return 0;
-        });
-    }, [scoredJobs, sortOption]);
-
-    const pageCount = Math.max(1, Math.ceil(sortedJobs.length / JOBS_PER_PAGE));
-
-    const filteredJobs = useMemo(() => {
-        const q = search.toLowerCase();
-        return sortedJobs.filter((job) => {
-            const matchesSearch =
-                job.position?.toLowerCase().includes(q) ||
-                job.company_name?.toLowerCase().includes(q) ||
-                job.location?.toLowerCase().includes(q) ||
-                job.requirements?.toLowerCase().includes(q);
-
-            const matchesSaved = showSavedOnly ? savedIds.includes(job.id) : true;
-
-            return matchesSearch && matchesSaved;
-        });
-    }, [sortedJobs, search, showSavedOnly, authVersion]);
-
-    const hasSearch = search.trim().length > 0;
-    const noJobsInDatabase = jobs.length === 0;
-    const showEmptyState =
-        !isLoading &&
-        filteredJobs.length === 0;
-
-    const emptyStateContent = useMemo(() => {
-        if (noJobsInDatabase) {
-            return {
-                title: "No jobs are available at the moment.",
-                description: "Check back soon.",
-                showClearFilters: false,
-            };
-        }
-
-        if (hasSearch && showSavedOnly) {
-            return {
-                title: "No jobs found",
-                description:
-                    "No saved jobs match your search. Try clearing the search or the saved filter.",
-                showClearFilters: true,
-            };
-        }
-
-        if (showSavedOnly) {
-            return {
-                title: "No jobs found",
-                description:
-                    "You haven't saved any jobs yet. Browse the full list to save jobs you like.",
-                showClearFilters: true,
-            };
-        }
-
-        if (hasSearch) {
-            return {
-                title: "No jobs found",
-                description:
-                    "Try a different search term or clear the search.",
-                showClearFilters: true,
-            };
-        }
-
-        return {
-            title: "No jobs found",
-            description: "",
-            showClearFilters: true,
-        };
-    }, [noJobsInDatabase, hasSearch, showSavedOnly]);
-
-    const clearFilters = () => {
-        setSearch("");
-        setShowSavedOnly(false);
-        setPage(1);
-    };
-
-    const currentJobs = useMemo(() => {
-        return filteredJobs.slice(
-            (page - 1) * JOBS_PER_PAGE,
-            page * JOBS_PER_PAGE
-        );
-    }, [filteredJobs, page]);
-
-    const handleShare = async (jobId: number) => {
-        const url = `${window.location.origin}/job-info/${jobId}`;
-
-        await navigator.clipboard.writeText(url);
-
-        // setCopiedUrl(url);
-        setShareOpened(true);
-    };
-    
-    useEffect(() => {
-        const loadSaved = async () => {
-            const profileId = localStorage.getItem("profile_id");
-
-            if (profileId) {
-                const data = await ProfileService.getSavedJobs(
-                    Number(profileId)
-                );
-
-                setSavedIds(data);
-            } else {
-                setSavedIds(getGuestSavedJobs());
-            }
-        };
-
-        loadSaved();
-    }, []);
+    // setCopiedUrl(url);
+    setShareOpened(true);
+  };
 
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
@@ -492,104 +501,104 @@ export default function JobSearchWithAIPage() {
                 </Text>
             </Container>
 
-            <CVUploadModal
-                opened={modalOpen}
-                onClose={(results, cvName) => {
-                    setModalOpen(false);
 
-                    if (!results) return;
-                    if (cvName) {
-                        setUploadedCvName(cvName);
-                        sessionStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
-                    }
+      <CVUploadModal
+        opened={modalOpen}
+        initialUploadError={linkedinImportError}
+        onClose={(results, cvName) => {
+          setModalOpen(false);
+          setLinkedinImportError(undefined);
 
-                    saveScoresToStorage(results);
-                    setSortOption("best_match");
+          if (!results) return;
+          if (cvName) {
+            setUploadedCvName(cvName);
+            sessionStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
+          }
 
-                    const scoreMap = new Map(
-                        results.map(r => [r.job_id, r.compatibility_score])
-                    );
+          saveScoresToStorage(results);
+          setSortOption("best_match");
 
-                    setJobs(prevJobs =>
-                        prevJobs.map(job => ({
-                            ...job,
-                            compatibility_score:
-                                scoreMap.get(job.id) ?? null,
-                        }))
-                    );
-                }}
-            />
+          const scoreMap = new Map(
+            results.map((r) => [r.job_id, r.compatibility_score]),
+          );
 
-            <Modal
-                opened={shareOpened}
-                onClose={() => setShareOpened(false)}
-                centered
-                title="Share Job"
+          setJobs((prevJobs) =>
+            prevJobs.map((job) => ({
+              ...job,
+              compatibility_score: scoreMap.get(job.id) ?? null,
+            })),
+          );
+        }}
+      />
+
+      <Modal
+        opened={shareOpened}
+        onClose={() => setShareOpened(false)}
+        centered
+        title="Share Job"
+      >
+        <Stack>
+          <Text>Link to this job is saved in your clipboard</Text>
+
+          <Button
+            radius="xl"
+            color={BROWN}
+            onClick={() => setShareOpened(false)}
+          >
+            OK
+          </Button>
+        </Stack>
+      </Modal>
+
+      <AddJobModal
+        opened={addJobOpen}
+        onClose={() => setAddJobOpen(false)}
+        adminToken={adminToken!}
+        onJobSaved={async () => {
+          await fetchJobs();
+          setPage(1);
+        }}
+      />
+
+      {/* Sticky compare bar */}
+      {selectedJobs.size >= 2 && (
+        <Box
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            display: "flex",
+            justifyContent: "center",
+            padding: "16px 24px",
+            backgroundColor: "rgba(255, 255, 255, 0.92)",
+            backdropFilter: "blur(8px)",
+            borderTop: `1px solid rgba(119, 67, 38, 0.18)`,
+            boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+          }}
+        >
+          <Group gap="md" align="center">
+            <Button
+              radius="xl"
+              size="md"
+              style={{ backgroundColor: BROWN, minWidth: 160 }}
+              onClick={handleCompare}
             >
-                <Stack>
-                    <Text>
-                        Link to this job is saved in your clipboard
-                    </Text>
-
-                    <Button
-                        radius="xl"
-                        color={BROWN}
-                        onClick={() => setShareOpened(false)}
-                    >
-                        OK
-                    </Button>
-                </Stack>
-            </Modal>
-
-            <AddJobModal
-                opened={addJobOpen}
-                onClose={() => setAddJobOpen(false)}
-                adminToken={adminToken!}
-                onJobSaved={async () => {
-                    await fetchJobs();
-                    setPage(1);
-                }}
-            />
-
-            {/* Sticky compare bar */}
-            {compareMode && selectedJobs.size >= 2 && (
-                <Box
-                    style={{
-                        position: "fixed",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        zIndex: 100,
-                        display: "flex",
-                        justifyContent: "center",
-                        padding: "16px 24px",
-                        backgroundColor: "rgba(255, 255, 255, 0.92)",
-                        backdropFilter: "blur(8px)",
-                        borderTop: `1px solid rgba(119, 67, 38, 0.18)`,
-                        boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
-                    }}
-                >
-                    <Group gap="md" align="center">
-                        <Button
-                            radius="xl"
-                            size="md"
-                            style={{ backgroundColor: BROWN, minWidth: 160 }}
-                            onClick={handleCompare}
-                        >
-                            Compare ({selectedJobs.size})
-                        </Button>
-                        <Button
-                            radius="xl"
-                            size="md"
-                            variant="subtle"
-                            style={{ color: BROWN }}
-                            onClick={() => setSelectedJobs(new Set())}
-                        >
-                            Clear
-                        </Button>
-                    </Group>
-                </Box>
-            )}
+              Compare ({selectedJobs.size})
+            </Button>
+            <Button
+              radius="xl"
+              size="md"
+              variant="subtle"
+              style={{ color: BROWN }}
+              onClick={() => setSelectedJobs(new Set())}
+            >
+              Clear
+            </Button>
+          </Group>
         </Box>
-    );
+      )}
+    </Box>
+  );
 }

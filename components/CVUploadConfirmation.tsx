@@ -23,6 +23,7 @@ interface Props {
     cv: CV;
     onClose: (scores: CvConfirmReturn[]) => void;
     profileId: number | null;
+    sourceBanner?: string;
 }
 
 interface CVSummaryDetailsProps {

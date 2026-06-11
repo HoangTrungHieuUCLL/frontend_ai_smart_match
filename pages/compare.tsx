@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import {Badge, Box, Divider, Group, Loader, Progress, ScrollArea, Stack, Table, Text} from "@mantine/core";
 import {Job} from "../types";
 import JobService from "../services/JobService";
-import {BriefcaseBusiness, Building2, CircleDollarSign, MapPin, Settings, ShieldPlus} from "lucide-react";
+import {
+    IconBriefcase,
+    IconBuilding,
+    IconCurrencyDollar,
+    IconMapPin,
+    IconSettings,
+    IconShieldPlus,
+} from "@tabler/icons-react";
 
 const BROWN = "#774326";
 
@@ -112,7 +119,7 @@ export default function Compare() {
                     <Table.Tbody>
                         {/* Company */}
                         <Table.Tr>
-                            <Table.Td><Building2 /></Table.Td>
+                            <Table.Td><IconBuilding /></Table.Td>
                             {jobs.map((job) => (
                                 <Table.Td key={job.id}>{job.company_name}</Table.Td>
                             ))}
@@ -120,7 +127,7 @@ export default function Compare() {
 
                         {/* Location */}
                         <Table.Tr>
-                            <Table.Td><MapPin /></Table.Td>
+                            <Table.Td><IconMapPin /></Table.Td>
                             {jobs.map((job) => (
                                 <Table.Td key={job.id}>{job.location}</Table.Td>
                             ))}
@@ -128,7 +135,7 @@ export default function Compare() {
 
                         {/* Job type */}
                         <Table.Tr>
-                            <Table.Td><BriefcaseBusiness /></Table.Td>
+                            <Table.Td><IconBriefcase /></Table.Td>
                             {jobs.map((job) => (
                                 <Table.Td key={job.id}>{job.type}</Table.Td>
                             ))}
@@ -136,7 +143,7 @@ export default function Compare() {
 
                         {/* Salary */}
                         <Table.Tr>
-                            <Table.Td><CircleDollarSign /></Table.Td>
+                            <Table.Td><IconCurrencyDollar /></Table.Td>
                             {jobs.map((job) => (
                                 <Table.Td key={job.id}>
                                     {job.salary ? job.salary : "-"}
@@ -146,7 +153,7 @@ export default function Compare() {
 
                         {/* Skills */}
                         <Table.Tr>
-                            <Table.Td><Settings /></Table.Td>
+                            <Table.Td><IconSettings /></Table.Td>
                             {jobs.map((job) => {
                                 const skills = job.requirements_simplified
                                     ? job.requirements_simplified.split(",").map(s => s.trim())
@@ -170,7 +177,7 @@ export default function Compare() {
 
                         {/* Benefits */}
                         <Table.Tr>
-                            <Table.Td><ShieldPlus /></Table.Td>
+                            <Table.Td><IconShieldPlus /></Table.Td>
                             {jobs.map((job) => (
                                 <Table.Td key={job.id} style={{ verticalAlign: "top" }}>
                                     <ScrollArea h={200} type="auto">

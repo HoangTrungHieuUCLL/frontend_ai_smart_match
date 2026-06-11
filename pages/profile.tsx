@@ -1,6 +1,8 @@
 import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import {
     ActionIcon,
+    Avatar,
+    Badge,
     Box,
     Button,
     Container,
@@ -17,7 +19,7 @@ import {
     TextInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconCamera, IconEdit, IconLogout, IconPlus, IconX } from "@tabler/icons-react";
+import { IconBrandLinkedin, IconCamera, IconCheck, IconEdit, IconLogout, IconPlus, IconX } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 
 import CVUploadModal from "../components/CVUploadModal";
@@ -27,7 +29,9 @@ import type { CV, Profile } from "../types";
 import {
     ensureAccountCreatedAt,
     getAccountCreatedAt,
+    getLinkedInAccountMetadata,
     getStoredProfileCv,
+    type LinkedInAccountMetadata,
     saveStoredProfileCv,
 } from "../utils/profileStorage";
 
@@ -103,6 +107,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [accountCreatedAt, setAccountCreatedAt] = useState<string | null>(null);
+    const [linkedInMetadata, setLinkedInMetadata] = useState<LinkedInAccountMetadata | null>(null);
     const [savedCv, setSavedCv] = useState<CV | null>(null);
     const [draftCv, setDraftCv] = useState<CV | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -125,11 +130,24 @@ export default function ProfilePage() {
             return;
         }
 
+        const linkedInAccount = getLinkedInAccountMetadata(storedEmail);
         const storedCv = getStoredProfileCv(storedEmail) ?? emptyCv(storedEmail);
+        const cvWithLinkedInDefaults = cloneCv(storedCv);
+
+        if (linkedInAccount?.linked && cvWithLinkedInDefaults.candidate_profile) {
+            cvWithLinkedInDefaults.candidate_profile.given_name =
+                cvWithLinkedInDefaults.candidate_profile.given_name || linkedInAccount.givenName || "";
+            cvWithLinkedInDefaults.candidate_profile.family_name =
+                cvWithLinkedInDefaults.candidate_profile.family_name || linkedInAccount.familyName || "";
+            cvWithLinkedInDefaults.candidate_profile.email =
+                cvWithLinkedInDefaults.candidate_profile.email || linkedInAccount.email || storedEmail;
+        }
+
         setEmail(storedEmail);
+        setLinkedInMetadata(linkedInAccount);
         setAccountCreatedAt(getAccountCreatedAt(storedEmail) ?? ensureAccountCreatedAt(storedEmail));
-        setSavedCv(storedCv);
-        setDraftCv(cloneCv(storedCv));
+        setSavedCv(cvWithLinkedInDefaults);
+        setDraftCv(cloneCv(cvWithLinkedInDefaults));
     }, [router]);
 
     const profile = draftCv?.candidate_profile ?? null;
@@ -141,8 +159,8 @@ export default function ProfilePage() {
             profile?.family_name,
         ].filter(Boolean);
 
-        return parts.length ? parts.join(" ") : email || "My profile";
-    }, [email, profile]);
+        return parts.length ? parts.join(" ") : linkedInMetadata?.fullName || email || "My profile";
+    }, [email, linkedInMetadata?.fullName, profile]);
 
     const updateProfile = (updater: (profile: Profile) => Profile) => {
         setDraftCv((current) => {
@@ -335,12 +353,32 @@ export default function ProfilePage() {
                                     cursor: "pointer",
                                 }}
                             >
-                                <IconCamera size={48} />
+                                {linkedInMetadata?.picture ? (
+                                    <Avatar
+                                        src={linkedInMetadata.picture}
+                                        alt={fullName}
+                                        size={220}
+                                        radius="50%"
+                                    />
+                                ) : (
+                                    <IconCamera size={48} />
+                                )}
                             </ActionIcon>
 
                             <Text size="xl" fw={800} c={BROWN}>
                                 {fullName}
                             </Text>
+                            {linkedInMetadata?.linked && (
+                                <Badge
+                                    leftSection={<IconBrandLinkedin size={14} />}
+                                    rightSection={linkedInMetadata.emailVerified ? <IconCheck size={12} /> : undefined}
+                                    color="blue"
+                                    variant="filled"
+                                    radius="sm"
+                                >
+                                    LinkedIn linked
+                                </Badge>
+                            )}
                         </Stack>
 
                         <Group justify="space-between" align="center">
@@ -527,6 +565,21 @@ export default function ProfilePage() {
                                 </Text>
 
                                 <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                                    <Paper p="md" radius="sm" style={{ backgroundColor: "#fdf7ef" }}>
+                                        <Text size="xs" c="dimmed">
+                                            LinkedIn
+                                        </Text>
+                                        <Group gap="xs">
+                                            {linkedInMetadata?.linked ? (
+                                                <>
+                                                    <IconCheck size={16} color="#0A66C2" />
+                                                    <Text fw={700}>Account linked</Text>
+                                                </>
+                                            ) : (
+                                                <Text fw={700}>Not linked</Text>
+                                            )}
+                                        </Group>
+                                    </Paper>
                                     <Paper p="md" radius="sm" style={{ backgroundColor: "#fdf7ef" }}>
                                         <Text size="xs" c="dimmed">
                                             Registered email

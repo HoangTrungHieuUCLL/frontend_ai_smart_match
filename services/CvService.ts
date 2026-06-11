@@ -108,6 +108,18 @@ const parseCv = async (cv: File): Promise<ParsedCvResponse> => {
     return await response.json();
 };
 
+const getExtractedData = async (profileId: number): Promise<ParsedCvResponse> => {
+    const response = await fetch(`${API_URL}/cv/${profileId}/extracted-data`, {
+        method: "GET",
+    });
+
+    if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
+    }
+
+    return await response.json();
+};
+
 const confirmCv = async (data: CvConfirmData): Promise<CvConfirmResponse> => {
     const response = await fetch(`${API_URL}/profiles/${data.profileId}/all`, {
         method: "GET",
@@ -149,9 +161,11 @@ const deleteCv = async (id: number, token: string): Promise<{ message: string; c
 const CvService = {
     uploadCv,
     parseCv,
+    getExtractedData,
     confirmCv,
     updateExtractedData,
     deleteCv,
+    getLinkedInImportUrl: () => `${API_URL}/auth/linkedin/cv-start`,
 };
 
 export default CvService;

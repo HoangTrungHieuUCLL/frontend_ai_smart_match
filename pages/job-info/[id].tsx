@@ -112,20 +112,6 @@ export default function JobInfoDetailPage() {
         fetchSaved();
     }, [job]);
 
-    useEffect(() => {
-        if (!job) return;
-
-        const syncSaved = () => setSaved(isJobSaved(job.id));
-
-        window.addEventListener("storage", syncSaved);
-        window.addEventListener("auth-change", syncSaved);
-
-        return () => {
-            window.removeEventListener("storage", syncSaved);
-            window.removeEventListener("auth-change", syncSaved);
-        };
-    }, [job]);
-
     if (loading) {
         return (
             <JobInfoSkeleton />
