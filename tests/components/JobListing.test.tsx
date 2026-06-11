@@ -26,6 +26,7 @@ jest.mock("../../utils/savedJobs", () => {
 
     return {
         getSavedJobs: jest.fn(readSavedJobs),
+        getGuestSavedJobs: jest.fn(readSavedJobs),
         saveJob: jest.fn((jobId: number) => {
             const saved = readSavedJobs();
             if (!saved.includes(jobId)) {
@@ -33,6 +34,16 @@ jest.mock("../../utils/savedJobs", () => {
             }
         }),
         removeJob: jest.fn((jobId: number) => {
+            const saved = readSavedJobs();
+            localStorage.setItem("savedJobs", JSON.stringify(saved.filter((id: number) => id !== jobId)));
+        }),
+        addGuestSavedJob: jest.fn((jobId: number) => {
+            const saved = readSavedJobs();
+            if (!saved.includes(jobId)) {
+                localStorage.setItem("savedJobs", JSON.stringify([...saved, jobId]));
+            }
+        }),
+        removeGuestSavedJob: jest.fn((jobId: number) => {
             const saved = readSavedJobs();
             localStorage.setItem("savedJobs", JSON.stringify(saved.filter((id: number) => id !== jobId)));
         }),
@@ -111,8 +122,8 @@ describe("JobListing", () => {
 
         fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
-        expect(savedJobs.saveJob).toHaveBeenCalledWith(baseJob.id);
-        expect(savedJobs.removeJob).not.toHaveBeenCalled();
+        expect(savedJobs.addGuestSavedJob).toHaveBeenCalledWith(baseJob.id);
+        expect(savedJobs.removeGuestSavedJob).not.toHaveBeenCalled();
         expect(mockPush).not.toHaveBeenCalled();
     });
 
@@ -140,9 +151,9 @@ describe("JobListing", () => {
         fireEvent.click(savedButton);
 
         await waitFor(() => {
-            expect(savedJobs.removeJob).toHaveBeenCalledWith(baseJob.id);
+            expect(savedJobs.removeGuestSavedJob).toHaveBeenCalledWith(baseJob.id);
         });
-        expect(savedJobs.saveJob).not.toHaveBeenCalled();
+        expect(savedJobs.addGuestSavedJob).not.toHaveBeenCalled();
         expect(mockPush).not.toHaveBeenCalled();
     });
 
