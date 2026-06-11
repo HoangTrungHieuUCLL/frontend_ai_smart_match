@@ -57,6 +57,8 @@ const JobListing: React.FC<Props> = ({
     const { t } = useTranslation();
 
     const [saved, setSaved] = useState(false);
+    const [hovered, setHovered] = useState(false);
+    const isMobile = useMediaQuery("(max-width: 768px)");
 
     const profileId =
         typeof window !== "undefined"
@@ -66,21 +68,6 @@ const JobListing: React.FC<Props> = ({
     useEffect(() => {
         const fetchSaved = async () => {
             const profileId = localStorage.getItem("profile_id");
-    const [hovered, setHovered] = useState(false);
-    const isMobile = useMediaQuery("(max-width: 768px)");
-
-    useEffect(() => {
-        const syncSaved = () => setSaved(isJobSaved(job.id));
-
-        syncSaved();
-        window.addEventListener("storage", syncSaved);
-        window.addEventListener("auth-change", syncSaved);
-
-        return () => {
-            window.removeEventListener("storage", syncSaved);
-            window.removeEventListener("auth-change", syncSaved);
-        };
-    }, [job.id]);
 
             // GUEST
             if (!profileId) {

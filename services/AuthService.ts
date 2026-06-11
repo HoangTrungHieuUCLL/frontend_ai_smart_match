@@ -71,6 +71,23 @@ const changePassword = async ({
   return await response.json();
 };
 
+const linkExistingLinkedInAccount = async (linkToken: string) => {
+  const response = await fetch(`${API_URL}/auth/linkedin/link-existing`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      link_token: linkToken,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "LinkedIn sign-up failed");
+  }
+
+  return await response.json();
+};
+
 const getLinkedInLoginUrl = () => `${API_URL}/auth/linkedin/login-start`;
 const getLinkedInRegisterUrl = () => `${API_URL}/auth/linkedin/register-start`;
 
@@ -78,6 +95,7 @@ const AuthService = {
   login,
   register,
   changePassword,
+  linkExistingLinkedInAccount,
   getLinkedInLoginUrl,
   getLinkedInRegisterUrl,
 };
