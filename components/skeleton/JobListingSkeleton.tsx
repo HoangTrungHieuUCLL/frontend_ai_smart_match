@@ -1,4 +1,4 @@
-import { Box, Group, Paper, Skeleton, Stack } from "@mantine/core";
+import { Group, Paper, Skeleton, Stack } from "@mantine/core";
 
 const JobListingSkeleton: React.FC = () => (
     <Paper
