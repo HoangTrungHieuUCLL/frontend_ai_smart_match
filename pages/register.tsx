@@ -14,7 +14,10 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import AuthService from "../services/AuthService";
 import Login from "../components/Login";
-import { ensureAccountCreatedAt, saveLinkedInAccountMetadata } from "../utils/profileStorage";
+import {
+  ensureAccountCreatedAt,
+  saveLinkedInAccountMetadata,
+} from "../utils/profileStorage";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LINKEDIN_BLUE = "#0A66C2";
 const BROWN = "#774326";
@@ -60,12 +63,19 @@ export const Register = () => {
 
     const linkedinRegister = router.query.linkedinRegister;
 
-    if (linkedinRegister === "conflict" && typeof router.query.linkToken === "string") {
+    if (
+      linkedinRegister === "conflict" &&
+      typeof router.query.linkToken === "string"
+    ) {
       setErrors({});
       setLinkedinLinkToken(router.query.linkToken);
-    } else if (linkedinRegister === "missing_email" || linkedinRegister === "failed") {
+    } else if (
+      linkedinRegister === "missing_email" ||
+      linkedinRegister === "failed"
+    ) {
       setErrors({
-        general: "LinkedIn sign-up failed. Please try again or register with email.",
+        general:
+          "LinkedIn sign-up failed. Please try again or register with email.",
       });
     }
   }, [router.isReady, router.query.linkedinRegister, router.query.linkToken]);
@@ -77,9 +87,7 @@ export const Register = () => {
   };
 
   const isPasswordValid =
-    passwordChecks.length &&
-    passwordChecks.uppercase &&
-    passwordChecks.number;
+    passwordChecks.length && passwordChecks.uppercase && passwordChecks.number;
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -124,20 +132,18 @@ export const Register = () => {
       ensureAccountCreatedAt(email);
       window.dispatchEvent(new Event("auth-change"));
 
-    //   onSuccess?.(email);
+      //   onSuccess?.(email);
       router.push("/job-search-with-ai");
     } catch (err: any) {
       const message = err.message;
 
       if (message === "EMAIL_EXISTS") {
         setErrors({
-          email:
-            "An account with this email already exists. Log in instead?",
+          email: "An account with this email already exists. Log in instead?",
         });
       } else {
         setErrors({
-          general:
-            message || "Something went wrong. Please try again.",
+          general: message || "Something went wrong. Please try again.",
         });
       }
     } finally {
@@ -156,7 +162,8 @@ export const Register = () => {
     setErrors({});
 
     try {
-      const data = await AuthService.linkExistingLinkedInAccount(linkedinLinkToken);
+      const data =
+        await AuthService.linkExistingLinkedInAccount(linkedinLinkToken);
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("email", data.email);
       ensureAccountCreatedAt(data.email);
@@ -170,7 +177,8 @@ export const Register = () => {
       await router.push("/job-search-with-ai");
     } catch {
       setErrors({
-        general: "LinkedIn sign-up failed. Please try again or register with email.",
+        general:
+          "LinkedIn sign-up failed. Please try again or register with email.",
       });
     } finally {
       setIsLinkingLinkedIn(false);
@@ -227,10 +235,7 @@ export const Register = () => {
           {passwordChecks.length ? "✓" : "✗"} At least 8 characters
         </Text>
 
-        <Text
-          size="sm"
-          c={passwordChecks.uppercase ? "green" : "red"}
-        >
+        <Text size="sm" c={passwordChecks.uppercase ? "green" : "red"}>
           {passwordChecks.uppercase ? "✓" : "✗"} One uppercase letter
         </Text>
 
@@ -243,17 +248,9 @@ export const Register = () => {
         label="Confirm Password"
         placeholder="Repeat password"
         value={confirmPassword}
-        onChange={(e) =>
-          setConfirmPassword(e.currentTarget.value)
-        }
-        onBlur={() =>
-          setTouched((t) => ({ ...t, confirmPassword: true }))
-        }
-        error={
-          touched.confirmPassword
-            ? errors.confirmPassword
-            : undefined
-        }
+        onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+        onBlur={() => setTouched((t) => ({ ...t, confirmPassword: true }))}
+        error={touched.confirmPassword ? errors.confirmPassword : undefined}
         radius="xl"
         size="lg"
         styles={{
@@ -305,47 +302,44 @@ export const Register = () => {
       </Button>
 
       {/* Login link */}
-    <Text size="sm" ta="center">
+      <Text size="sm" ta="center">
         Already have an account?{" "}
-    
-      <Anchor onClick={() => setShowLogin(true)}>
-        Log in
-      </Anchor>
+        <Anchor onClick={() => setShowLogin(true)}>Log in</Anchor>
       </Text>
-          <Modal opened={showLogin} onClose={() => setShowLogin(false)}>
-      <Login onClose={() => setShowLogin(false)} />
-    </Modal>
-    <Modal
-      opened={Boolean(linkedinLinkToken)}
-      onClose={handleCancelLinkedInLink}
-      centered
-      title="Link LinkedIn account"
-    >
-      <Stack gap="md">
-        <Text>
-          An account with this email already exists. Do you want to link your HRNext account to your LinkedIn account?
-        </Text>
-        <Group justify="flex-end" gap="sm">
-          <Button
-            variant="outline"
-            color={BROWN}
-            onClick={handleDeclineLinkedInLink}
-            disabled={isLinkingLinkedIn}
-          >
-            No, I want to log in with HRNext
-          </Button>
-          <Button
-            color={BROWN}
-            loading={isLinkingLinkedIn}
-            onClick={handleConfirmLinkedInLink}
-          >
-            Yes
-          </Button>
-        </Group>
-      </Stack>
-    </Modal>
+      <Modal opened={showLogin} onClose={() => setShowLogin(false)}>
+        <Login onClose={() => setShowLogin(false)} />
+      </Modal>
+      <Modal
+        opened={Boolean(linkedinLinkToken)}
+        onClose={handleCancelLinkedInLink}
+        centered
+        title={<Text fw={700}>Link LinkedIn account</Text>}
+      >
+        <Stack gap="md">
+          <Text>
+            An account with this email already exists. Do you want to link your
+            HRNext account to your LinkedIn account?
+          </Text>
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="outline"
+              color={BROWN}
+              onClick={handleDeclineLinkedInLink}
+              disabled={isLinkingLinkedIn}
+            >
+              No, I want to log in with HRNext
+            </Button>
+            <Button
+              color={BROWN}
+              loading={isLinkingLinkedIn}
+              onClick={handleConfirmLinkedInLink}
+            >
+              Yes
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
-
   );
 };
 
