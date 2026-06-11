@@ -64,17 +64,22 @@ const changePassword = async ({
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => null);
-    throw new Error(error?.detail || "Password could not be changed");
+    const error = await response.json();
+    throw new Error(error.detail || "Password change failed");
   }
 
   return await response.json();
 };
 
+const getLinkedInLoginUrl = () => `${API_URL}/auth/linkedin/login-start`;
+const getLinkedInRegisterUrl = () => `${API_URL}/auth/linkedin/register-start`;
+
 const AuthService = {
   login,
   register,
   changePassword,
+  getLinkedInLoginUrl,
+  getLinkedInRegisterUrl,
 };
 
 export default AuthService;

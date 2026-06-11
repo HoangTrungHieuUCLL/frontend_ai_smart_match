@@ -1,18 +1,22 @@
 import {
+  Anchor,
   Button,
+  Divider,
+  Group,
+  Modal,
   PasswordInput,
   Stack,
   Text,
   TextInput,
-  Anchor,
-  Modal,
 } from "@mantine/core";
+import { IconBrandLinkedin } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import AuthService from "../services/AuthService";
 import Login from "../components/Login";
 import { ensureAccountCreatedAt } from "../utils/profileStorage";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const LINKEDIN_BLUE = "#0A66C2";
 
 const hasMinLength = (pw: string) => pw.length >= 8;
 const hasUppercase = (pw: string) => /[A-Z]/.test(pw);
@@ -47,6 +51,22 @@ export const Register = () => {
       router.replace("/job-search-with-ai");
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const linkedinRegister = router.query.linkedinRegister;
+
+    if (linkedinRegister === "missing_email") {
+      setErrors({
+        general: "LinkedIn did not return an email address. Please create an account another way.",
+      });
+    } else if (linkedinRegister === "failed") {
+      setErrors({
+        general: "LinkedIn registration failed. Please try again or create an account another way.",
+      });
+    }
+  }, [router.isReady, router.query.linkedinRegister]);
 
   const passwordChecks = {
     length: hasMinLength(password),
@@ -121,6 +141,10 @@ export const Register = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLinkedInRegister = () => {
+    window.location.href = AuthService.getLinkedInRegisterUrl();
   };
 
   return (
@@ -217,6 +241,27 @@ export const Register = () => {
         }}
       >
         Confirm and Create Account
+      </Button>
+
+      <Divider label="or" labelPosition="center" />
+
+      <Button
+        radius="xl"
+        size="lg"
+        fullWidth
+        onClick={handleLinkedInRegister}
+        styles={{
+          root: {
+            backgroundColor: LINKEDIN_BLUE,
+          },
+        }}
+      >
+        <Group justify="center" gap="xs" wrap="nowrap">
+          <IconBrandLinkedin size={22} aria-hidden="true" />
+          <Text component="span" fw={700} size="sm" c="#ffffff">
+            Create account with LinkedIn
+          </Text>
+        </Group>
       </Button>
 
       {/* Login link */}

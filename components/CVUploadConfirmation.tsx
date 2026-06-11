@@ -23,6 +23,7 @@ interface Props {
     cv: CV;
     onClose: (scores: CvConfirmReturn[]) => void;
     profileId: number | null;
+    sourceBanner?: string;
 }
 
 interface CVSummaryDetailsProps {
@@ -502,6 +503,7 @@ export default function CVUploadConfirmation({
                                                  cv,
                                                  onClose,
                                                  profileId,
+                                                 sourceBanner,
                                              }: Props) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
