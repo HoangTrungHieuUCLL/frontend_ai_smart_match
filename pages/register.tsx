@@ -14,9 +14,10 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import AuthService from "../services/AuthService";
 import Login from "../components/Login";
-import { ensureAccountCreatedAt } from "../utils/profileStorage";
+import { ensureAccountCreatedAt, saveLinkedInAccountMetadata } from "../utils/profileStorage";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LINKEDIN_BLUE = "#0A66C2";
+const BROWN = "#774326";
 
 const hasMinLength = (pw: string) => pw.length >= 8;
 const hasUppercase = (pw: string) => /[A-Z]/.test(pw);
@@ -29,6 +30,8 @@ export const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showLogin, setShowLogin] = useState(false);
+  const [linkedinLinkToken, setLinkedinLinkToken] = useState("");
+  const [isLinkingLinkedIn, setIsLinkingLinkedIn] = useState(false);
 
   const [errors, setErrors] = useState<{
     email?: string;
@@ -57,16 +60,15 @@ export const Register = () => {
 
     const linkedinRegister = router.query.linkedinRegister;
 
-    if (linkedinRegister === "missing_email") {
+    if (linkedinRegister === "conflict" && typeof router.query.linkToken === "string") {
+      setErrors({});
+      setLinkedinLinkToken(router.query.linkToken);
+    } else if (linkedinRegister === "missing_email" || linkedinRegister === "failed") {
       setErrors({
-        general: "LinkedIn did not return an email address. Please create an account another way.",
-      });
-    } else if (linkedinRegister === "failed") {
-      setErrors({
-        general: "LinkedIn registration failed. Please try again or create an account another way.",
+        general: "LinkedIn sign-up failed. Please try again or register with email.",
       });
     }
-  }, [router.isReady, router.query.linkedinRegister]);
+  }, [router.isReady, router.query.linkedinRegister, router.query.linkToken]);
 
   const passwordChecks = {
     length: hasMinLength(password),
@@ -145,6 +147,44 @@ export const Register = () => {
 
   const handleLinkedInRegister = () => {
     window.location.href = AuthService.getLinkedInRegisterUrl();
+  };
+
+  const handleConfirmLinkedInLink = async () => {
+    if (!linkedinLinkToken) return;
+
+    setIsLinkingLinkedIn(true);
+    setErrors({});
+
+    try {
+      const data = await AuthService.linkExistingLinkedInAccount(linkedinLinkToken);
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("email", data.email);
+      ensureAccountCreatedAt(data.email);
+
+      if (data.linkedin_profile) {
+        saveLinkedInAccountMetadata(data.linkedin_profile, data.email);
+      }
+
+      window.dispatchEvent(new Event("auth-change"));
+      setLinkedinLinkToken("");
+      await router.push("/job-search-with-ai");
+    } catch {
+      setErrors({
+        general: "LinkedIn sign-up failed. Please try again or register with email.",
+      });
+    } finally {
+      setIsLinkingLinkedIn(false);
+    }
+  };
+
+  const handleDeclineLinkedInLink = async () => {
+    setLinkedinLinkToken("");
+    await router.replace("/login");
+  };
+
+  const handleCancelLinkedInLink = async () => {
+    setLinkedinLinkToken("");
+    await router.replace("/register");
   };
 
   return (
@@ -274,6 +314,42 @@ export const Register = () => {
       </Text>
           <Modal opened={showLogin} onClose={() => setShowLogin(false)}>
       <Login onClose={() => setShowLogin(false)} />
+    </Modal>
+    <Modal
+      opened={Boolean(linkedinLinkToken)}
+      onClose={handleCancelLinkedInLink}
+      centered
+      title="Link LinkedIn account"
+    >
+      <Stack gap="md">
+        <Text>
+          An account with this email already exists. Do you want to link your HRNext account to your LinkedIn account?
+        </Text>
+        <Group justify="flex-end" gap="sm">
+          <Button
+            variant="default"
+            onClick={handleCancelLinkedInLink}
+            disabled={isLinkingLinkedIn}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="outline"
+            color={BROWN}
+            onClick={handleDeclineLinkedInLink}
+            disabled={isLinkingLinkedIn}
+          >
+            No
+          </Button>
+          <Button
+            color={BROWN}
+            loading={isLinkingLinkedIn}
+            onClick={handleConfirmLinkedInLink}
+          >
+            Yes
+          </Button>
+        </Group>
+      </Stack>
     </Modal>
     </Stack>
 
