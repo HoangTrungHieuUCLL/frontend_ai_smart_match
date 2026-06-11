@@ -19,7 +19,8 @@ import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
 import { CvConfirmReturn } from "../services/CvService";
-import { getSavedJobs } from "../utils/savedJobs";
+import { getGuestSavedJobs } from "../utils/savedJobs";
+import ProfileService from "../services/ProfileService";
 import AddJobModal from "../components/AddJobModal";
 import JobListingSkeleton from "../components/skeleton/JobListingSkeleton";
 import { isAdminToken } from "../utils/auth";
@@ -132,6 +133,7 @@ export default function JobSearchWithAIPage() {
   }, [router.isReady, router.query.linkedinImport]);
 
   const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const [savedJobIds, setSavedJobIds] = useState<number[]>([]);
   const [shareOpened, setShareOpened] = useState(false);
   const isAdmin = isAdminToken(adminToken);
   // const [copiedUrl, setCopiedUrl] = useState("");
@@ -175,6 +177,17 @@ export default function JobSearchWithAIPage() {
   }, [search, showSavedOnly, sortOption]);
 
   useEffect(() => {
+    if (!showSavedOnly) return;
+
+    const profileId = localStorage.getItem("profile_id");
+    if (profileId) {
+      ProfileService.getSavedJobs(Number(profileId)).then(setSavedJobIds).catch(() => setSavedJobIds([]));
+    } else {
+      setSavedJobIds(getGuestSavedJobs());
+    }
+  }, [showSavedOnly, authVersion]);
+
+  useEffect(() => {
     if (isAdmin) {
       setShowSavedOnly(false);
     }
@@ -210,11 +223,8 @@ export default function JobSearchWithAIPage() {
     });
   }, [scoredJobs, sortOption]);
 
-  const pageCount = Math.max(1, Math.ceil(sortedJobs.length / JOBS_PER_PAGE));
-
   const filteredJobs = useMemo(() => {
     const q = search.toLowerCase();
-    const savedIds = getSavedJobs();
 
     return sortedJobs.filter((job) => {
       const matchesSearch =
@@ -223,11 +233,13 @@ export default function JobSearchWithAIPage() {
         job.location?.toLowerCase().includes(q) ||
         job.requirements?.toLowerCase().includes(q);
 
-      const matchesSaved = showSavedOnly ? savedIds.includes(job.id) : true;
+      const matchesSaved = showSavedOnly ? savedJobIds.includes(job.id) : true;
 
       return matchesSearch && matchesSaved;
     });
-  }, [sortedJobs, search, showSavedOnly, authVersion]);
+  }, [sortedJobs, search, showSavedOnly, savedJobIds]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
 
   const hasSearch = search.trim().length > 0;
   const noJobsInDatabase = jobs.length === 0;
