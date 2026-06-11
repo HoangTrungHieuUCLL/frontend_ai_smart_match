@@ -11,7 +11,6 @@ import {
   Stack,
   Text,
   TextInput,
-  Tooltip,
 } from "@mantine/core";
 import JobListing from "../components/JobListing";
 import { Job } from "../types";
@@ -22,8 +21,6 @@ import { useTranslation } from "../contexts/I18nContext";
 import { CvConfirmReturn } from "../services/CvService";
 import { getSavedJobs } from "../utils/savedJobs";
 import AddJobModal from "../components/AddJobModal";
-import ProfileService from "../services/ProfileService";
-import { getGuestSavedJobs } from "../utils/savedJobs";
 import JobListingSkeleton from "../components/skeleton/JobListingSkeleton";
 import { isAdminToken } from "../utils/auth";
 
@@ -85,7 +82,6 @@ export default function JobSearchWithAIPage() {
   const [linkedinImportError, setLinkedinImportError] = useState<string | undefined>();
   const [sortOption, setSortOption] = useState<SortOption>("newest_first");
 
-  const [savedIds, setSavedIds] = useState<number[]>([]);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
 
@@ -297,24 +293,6 @@ export default function JobSearchWithAIPage() {
     // setCopiedUrl(url);
     setShareOpened(true);
   };
-
-    useEffect(() => {
-        const loadSaved = async () => {
-            const profileId = localStorage.getItem("profile_id");
-
-            if (profileId) {
-                const data = await ProfileService.getSavedJobs(
-                    Number(profileId)
-                );
-
-                setSavedIds(data);
-            } else {
-                setSavedIds(getGuestSavedJobs());
-            }
-        };
-
-        loadSaved();
-    }, []);
 
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>

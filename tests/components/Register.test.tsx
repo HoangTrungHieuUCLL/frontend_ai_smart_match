@@ -12,6 +12,8 @@ jest.mock("next/router", () => ({
     useRouter: () => ({
         push: mockPush,
         replace: mockReplace,
+        isReady: true,
+        query: {},
     }),
 }));
 

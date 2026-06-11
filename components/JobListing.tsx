@@ -1,5 +1,4 @@
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Job } from "../types";
 import {
@@ -16,13 +15,12 @@ import {
 import { useMediaQuery } from "@mantine/hooks";
 import { useTranslation } from "../contexts/I18nContext";
 import { notifications } from "@mantine/notifications";
-// import { isJobSaved, saveJob, removeJob } from "../utils/savedJobs";
 import ProfileService from "../services/ProfileService";
 import {
     addGuestSavedJob,
+    getGuestSavedJobs,
     removeGuestSavedJob,
 } from "../utils/savedJobs";
-import { getGuestSavedJobs } from "../utils/savedJobs";
 interface Props {
     job: Job;
     onShare?: (jobId: number) => void;
@@ -60,28 +58,29 @@ const JobListing: React.FC<Props> = ({
     const [hovered, setHovered] = useState(false);
     const isMobile = useMediaQuery("(max-width: 768px)");
 
-    const profileId =
-        typeof window !== "undefined"
-            ? Number(localStorage.getItem("profile_id"))
-            : null;
-
     useEffect(() => {
         const fetchSaved = async () => {
             const profileId = localStorage.getItem("profile_id");
 
-            // GUEST
             if (!profileId) {
                 const guestSaved = getGuestSavedJobs();
                 setSaved(guestSaved.map(Number).includes(job.id));
                 return;
             }
 
-            // LOGGED IN
             const savedJobs = await ProfileService.getSavedJobs(Number(profileId));
             setSaved(savedJobs.includes(job.id));
         };
 
         fetchSaved();
+
+        window.addEventListener("storage", fetchSaved);
+        window.addEventListener("auth-change", fetchSaved);
+
+        return () => {
+            window.removeEventListener("storage", fetchSaved);
+            window.removeEventListener("auth-change", fetchSaved);
+        };
     }, [job.id]);
     const handleLearnMore = async (jobId: number) => {
         try {
