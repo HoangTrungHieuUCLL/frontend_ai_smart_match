@@ -327,19 +327,12 @@ export const Register = () => {
         </Text>
         <Group justify="flex-end" gap="sm">
           <Button
-            variant="default"
-            onClick={handleCancelLinkedInLink}
-            disabled={isLinkingLinkedIn}
-          >
-            Cancel
-          </Button>
-          <Button
             variant="outline"
             color={BROWN}
             onClick={handleDeclineLinkedInLink}
             disabled={isLinkingLinkedIn}
           >
-            No
+            No, I want to log in with HRNext
           </Button>
           <Button
             color={BROWN}
