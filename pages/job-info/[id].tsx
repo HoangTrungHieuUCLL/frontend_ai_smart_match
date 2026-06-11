@@ -391,7 +391,11 @@ export default function JobInfoDetailPage() {
                                                 sections={[
                                                     {
                                                         value: compatibilityScore,
-                                                        color: compatibilityScore >= 70 ? '#34C759' : '#FF383C',
+                                                        color: compatibilityScore >= 70
+                                                            ? '#34C759'
+                                                            : compatibilityScore >= 50
+                                                            ? '#FAB005'
+                                                            : '#FF383C',
                                                     },
                                                 ]}
                                             />

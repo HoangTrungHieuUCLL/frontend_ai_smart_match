@@ -234,6 +234,8 @@ const JobListing: React.FC<Props> = ({
                                         color:
                                             job.compatibility_score >= 70
                                                 ? "#34C759"
+                                                : job.compatibility_score >= 50
+                                                ? "#FAB005"
                                                 : "#FF383C",
                                     },
                                 ]}
