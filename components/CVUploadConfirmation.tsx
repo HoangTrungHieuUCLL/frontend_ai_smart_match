@@ -31,6 +31,7 @@ interface CVSummaryDetailsProps {
     profile?: Profile | null;
     footer?: ReactNode;
     isEditing?: boolean;
+    hideCollections?: boolean;
     onProfileFieldChange?: (field: keyof Profile, value: string) => void;
     onCollectionItemChange?: (
         collection: "work_experiences" | "educations" | "projects" | "languages" | "certifications",
@@ -61,6 +62,7 @@ export function CVSummaryDetails({
                                      profile: profileOverride,
                                      footer,
                                      isEditing = false,
+                                     hideCollections = false,
                                      onProfileFieldChange,
                                      onCollectionItemChange,
                                      onCollectionAdd,
@@ -492,7 +494,7 @@ export function CVSummaryDetails({
                 </Stack>
             </Paper>
 
-            {collectionConfigs.map(renderCollectionSection)}
+            {!hideCollections && collectionConfigs.map(renderCollectionSection)}
 
             {footer && <Group justify="flex-end">{footer}</Group>}
         </Stack>
@@ -674,6 +676,7 @@ export default function CVUploadConfirmation({
             cv={cv}
             profile={profile}
             isEditing={isEditing}
+            hideCollections
             onProfileFieldChange={updateProfileField}
             onCollectionItemChange={updateCollectionItem}
             onCollectionAdd={addCollectionItem}

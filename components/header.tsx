@@ -176,19 +176,6 @@ export const Header = () => {
                                 >
                                     My profile
                                 </Button>
-                                <Button
-                                    radius="xl"
-                                    size="sm"
-                                    w={MENU_BUTTON_WIDTH}
-                                    variant="outline"
-                                    color={BROWN}
-                                    onClick={() => {
-                                        setLogoutOpened(false);
-                                        router.push("/job-search-with-ai");
-                                    }}
-                                >
-                                    Edit job list
-                                </Button>
                                 {loggedInRole === "admin" && (
                                     <Button
                                         radius="xl"
