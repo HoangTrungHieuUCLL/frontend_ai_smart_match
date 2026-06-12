@@ -1,24 +1,45 @@
 {
-  "name": "client",
+  "name": "mantine-minimal-next-template",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "jest",
+    "lint": "oxlint .",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "dependencies": {
-    "next": "16.2.6",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mantine/core": "^9.2.0",
+    "@mantine/dropzone": "^9.2.1",
+    "@mantine/hooks": "^9.2.0",
+    "@mantine/notifications": "^9.2.1",
+    "@tabler/icons-react": "^3.44.0",
+    "lucide-react": "^1.17.0",
+    "next": "16.2.2",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "babel-plugin-react-compiler": "1.0.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "24.3.3",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "^19.2.1",
+    "cypress": "^15.16.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "oxlint": "^1.58.0",
+    "postcss": "^8.5.6",
+    "postcss-preset-mantine": "1.18.0",
+    "postcss-simple-vars": "^7.0.1",
+    "typescript": "6.0.2"
+  },
+  "packageManager": "yarn@4.14.1"
 }
