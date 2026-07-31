@@ -1,10 +1,9 @@
-import type { TranslationDictionary } from "../I18nContext";
+import type { PartialTranslationDictionary } from "../I18nContext";
 
-export const vn: TranslationDictionary = {
+export const vn: PartialTranslationDictionary = {
   "nav.homepage": "Trang chủ",
   "nav.services": "Dịch vụ",
   "nav.team": "Đội ngũ",
-  "nav.clients": "Khách hàng",
   "nav.consultation": "Tư vấn",
   "nav.jobSearch": "Tìm việc với AI",
   "nav.login": "Đăng nhập",

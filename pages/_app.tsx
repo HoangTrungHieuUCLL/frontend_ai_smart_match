@@ -4,6 +4,7 @@ import { MantineProvider, Box } from "@mantine/core";
 import { theme } from "../theme";
 import { Header } from "../components/header";
 import { Footer } from "../components/footer";
+import CookieConsent from "../components/CookieConsent";
 import { I18nProvider } from "../contexts/I18nContext";
 import { Notifications } from "@mantine/notifications";
 import "@mantine/notifications/styles.css";
@@ -31,6 +32,7 @@ export default function App({ Component, pageProps }: any) {
           </Box>
           <Footer />
         </Box>
+        <CookieConsent />
       </I18nProvider>
     </MantineProvider>
   );

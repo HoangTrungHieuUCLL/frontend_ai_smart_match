@@ -1,4 +1,4 @@
-import {Avatar, Button, Group, Image, Text, Select, Modal, Popover, Stack} from "@mantine/core";
+import {Avatar, Button, Group, Image, Menu, Text, Select, Modal, Popover, Stack} from "@mantine/core";
 import { useRouter } from "next/router";
 import { Language, useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/header.module.css";
@@ -16,12 +16,17 @@ export const Header = () => {
     const [loggedInRole, setLoggedInRole] = useState<string>("");
     const [logoutOpened, setLogoutOpened] = useState(false);
 
+    const servicesMenuItems = [
+        { label: t("nav.servicesHr"), href: "/core-services/hr-consulting" },
+        { label: t("nav.servicesLegal"), href: "/core-services/business-legal-consulting" },
+        { label: t("nav.servicesFinance"), href: "/core-services/finance-accounting" },
+    ];
+
     const navItems = [
         { label: t("nav.homepage"), href: "/" },
-        { label: t("nav.services"), href: "#" },
-        { label: t("nav.team"), href: "#" },
-        { label: t("nav.clients"), href: "#" },
-        { label: t("nav.consultation"), href: "#" }
+        { label: t("nav.team"), href: "/team" },
+        { label: t("nav.library"), href: "/library" },
+        { label: t("nav.consultation"), href: "/contact" }
     ];
     const syncAuth = () => {
         const email = localStorage.getItem("email");
@@ -86,13 +91,45 @@ export const Header = () => {
 
             {/* Navigation Items */}
             <Group gap="lg" justify="center" style={{ flex: 1, minWidth: 0 }}>
-                {navItems.map((item) => (
-                    <Text 
+                <Text
+                    fw={400}
+                    c="gray.8"
+                    size="sm"
+                    style={{ cursor: "pointer", whiteSpace: "nowrap", transition: "color 0.2s" }}
+                    onClick={() => handleNavClick(navItems[0].href)}
+                    className="nav-item"
+                >
+                    {navItems[0].label}
+                </Text>
+
+                <Menu trigger="hover" openDelay={80} closeDelay={150} position="bottom-start" shadow="md">
+                    <Menu.Target>
+                        <Text
+                            fw={400}
+                            c="gray.8"
+                            size="sm"
+                            style={{ cursor: "pointer", whiteSpace: "nowrap", transition: "color 0.2s" }}
+                            className="nav-item"
+                        >
+                            {t("nav.services")}
+                        </Text>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                        {servicesMenuItems.map((item) => (
+                            <Menu.Item key={item.label} onClick={() => handleNavClick(item.href)}>
+                                {item.label}
+                            </Menu.Item>
+                        ))}
+                    </Menu.Dropdown>
+                </Menu>
+
+                {navItems.slice(1).map((item) => (
+                    <Text
                         key={item.label}
-                        fw={400} 
+                        fw={400}
                         c="gray.8"
                         size="sm"
-                        style={{ 
+                        style={{
                             cursor: "pointer",
                             whiteSpace: "nowrap",
                             transition: "color 0.2s"
