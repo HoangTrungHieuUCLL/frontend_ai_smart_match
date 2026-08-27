@@ -79,7 +79,13 @@ export type TranslationKey =
   | "home.chatStrength2"
   | "home.chatGapIntro"
   | "home.chatGap1"
-  | "home.chatGap2";
+  | "home.chatGap2"
+  | "home.stepsTitle1"
+  | "home.stepsTitle2Prefix"
+  | "home.stepsTitle2Highlight"
+  | "home.step1"
+  | "home.step2"
+  | "home.step3";
 
 export type TranslationDictionary = Record<TranslationKey, string>;
 

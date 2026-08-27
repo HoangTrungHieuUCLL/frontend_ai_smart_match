@@ -75,5 +75,11 @@ export const en: TranslationDictionary = {
   "home.chatStrength2": "You have solid experience in this field ...",
   "home.chatGapIntro": "However, this role also calls for a few skills worth considering:",
   "home.chatGap1": "Python programming skills",
-  "home.chatGap2": "..."
+  "home.chatGap2": "...",
+  "home.stepsTitle1": "Find a job in just 3 steps",
+  "home.stepsTitle2Prefix": "with ",
+  "home.stepsTitle2Highlight": "AI Career Assistant",
+  "home.step1": "Upload your profile",
+  "home.step2": "The system automatically filters matching jobs",
+  "home.step3": "Apply!"
 };

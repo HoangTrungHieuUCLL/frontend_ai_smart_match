@@ -75,5 +75,11 @@ export const vn: TranslationDictionary = {
   "home.chatStrength2": "Bạn có nhiều kinh nghiệm trong lĩnh vực ...",
   "home.chatGapIntro": "Tuy nhiên, công việc này cũng đòi hỏi một vài kỹ năng mà bạn có thể cân nhắc:",
   "home.chatGap1": "Kỹ năng lập trình bằng Python",
-  "home.chatGap2": "..."
+  "home.chatGap2": "...",
+  "home.stepsTitle1": "Tìm việc chỉ trong 3 bước",
+  "home.stepsTitle2Prefix": "với ",
+  "home.stepsTitle2Highlight": "AI Career Assistant",
+  "home.step1": "Tải lên hồ sơ công việc",
+  "home.step2": "Hệ thống tự động lọc ra những công việc phù hợp",
+  "home.step3": "Ứng tuyển!"
 };
