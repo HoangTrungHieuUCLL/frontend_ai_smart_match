@@ -90,7 +90,7 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 const isLanguage = (value: string | null): value is Language => value === "EN" || value === "VN";
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("EN");
+  const [language, setLanguageState] = useState<Language>("VN");
 
   useEffect(() => {
     const storedLanguage = window.sessionStorage.getItem("language");
