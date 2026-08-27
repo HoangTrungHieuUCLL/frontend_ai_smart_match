@@ -9,6 +9,7 @@ export const HomeHero = () => {
   const { t } = useTranslation();
 
   return (
+    <>
     <Box className={styles.hero}>
       <video
         className={styles.video}
@@ -76,6 +77,18 @@ export const HomeHero = () => {
         </Box>
       </Box>
     </Box>
+
+    <Box className={styles.introSection}>
+      <video
+        className={styles.introVideo}
+        src="/homepage_intro_video.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+    </Box>
+    </>
   );
 };
 
