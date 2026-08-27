@@ -77,7 +77,7 @@ export const Header = () => {
         >
             {/* Logo */}
             <Image 
-                src={"/logo.png"} 
+                src={"/logo-hr-nextvn.svg"}
                 alt={"HRNEXT logo"} 
                 h={70} 
                 w="auto"
