@@ -75,17 +75,18 @@ export const HomeHero = () => {
             </Box>
           </Box>
         </Box>
-        <Box className={styles.introSection}>
-          <video
-            className={styles.introVideo}
-            src="/homepage_intro_video.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-          />
-        </Box>
       </Box>
+    </Box>
+
+    <Box className={styles.introSection}>
+      <video
+        className={styles.introVideo}
+        src="/homepage_intro_video.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
     </Box>
     </>
   );
