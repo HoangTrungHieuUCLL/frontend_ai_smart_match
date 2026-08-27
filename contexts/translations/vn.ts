@@ -64,5 +64,16 @@ export const vn: TranslationDictionary = {
   "jobInfo.match": "phù hợp",
   "jobInfo.loading": "Đang tải chi tiết công việc...",
   "jobInfo.notFound": "Không tìm thấy công việc.",
-  "jobInfo.cardCvReuploadDescription": "Bạn đã tải lên một CV. Bạn có thể thay thế nó nếu cần."
+  "jobInfo.cardCvReuploadDescription": "Bạn đã tải lên một CV. Bạn có thể thay thế nó nếu cần.",
+  "home.heroLine1": "Tìm việc thông minh",
+  "home.heroLine2": "Định hướng chính xác",
+  "home.heroLine3": "Với trí tuệ nhân tạo.",
+  "home.heroCta": "Tìm hiểu thêm về AI Career Assistant",
+  "home.chatQuestion": "Công việc này có phù hợp với tôi không?",
+  "home.chatGreeting": "Chào bạn,\ncông việc này khá phù hợp với bạn, vì những lý do sau:",
+  "home.chatStrength1": "Bạn là một team-player",
+  "home.chatStrength2": "Bạn có nhiều kinh nghiệm trong lĩnh vực ...",
+  "home.chatGapIntro": "Tuy nhiên, công việc này cũng đòi hỏi một vài kỹ năng mà bạn có thể cân nhắc:",
+  "home.chatGap1": "Kỹ năng lập trình bằng Python",
+  "home.chatGap2": "..."
 };

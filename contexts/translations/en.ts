@@ -64,5 +64,16 @@ export const en: TranslationDictionary = {
   "jobInfo.match": "match",
   "jobInfo.loading": "Loading job details...",
   "jobInfo.notFound": "Job not found.",
-  "jobInfo.cardCvReuploadDescription": "You have already uploaded a CV. You can replace it if needed."
+  "jobInfo.cardCvReuploadDescription": "You have already uploaded a CV. You can replace it if needed.",
+  "home.heroLine1": "Smart job search",
+  "home.heroLine2": "Precise guidance",
+  "home.heroLine3": "Powered by artificial intelligence.",
+  "home.heroCta": "Learn more about the AI Career Assistant",
+  "home.chatQuestion": "Is this job a good fit for me?",
+  "home.chatGreeting": "Hi there,\nthis job is a good match for you, for these reasons:",
+  "home.chatStrength1": "You're a strong team player",
+  "home.chatStrength2": "You have solid experience in this field ...",
+  "home.chatGapIntro": "However, this role also calls for a few skills worth considering:",
+  "home.chatGap1": "Python programming skills",
+  "home.chatGap2": "..."
 };

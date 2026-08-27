@@ -68,7 +68,18 @@ export type TranslationKey =
   | "jobInfo.match"
   | "jobInfo.loading"
   | "jobInfo.notFound"
-  | "jobInfo.cardCvReuploadDescription";
+  | "jobInfo.cardCvReuploadDescription"
+  | "home.heroLine1"
+  | "home.heroLine2"
+  | "home.heroLine3"
+  | "home.heroCta"
+  | "home.chatQuestion"
+  | "home.chatGreeting"
+  | "home.chatStrength1"
+  | "home.chatStrength2"
+  | "home.chatGapIntro"
+  | "home.chatGap1"
+  | "home.chatGap2";
 
 export type TranslationDictionary = Record<TranslationKey, string>;
 

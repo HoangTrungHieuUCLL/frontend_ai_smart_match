@@ -1,12 +1,5 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { HomeHero } from "../components/HomeHero";
 
-export default function HomeRedirect() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/job-search-with-ai");
-  }, [router]);
-
-  return null;
+export default function Home() {
+  return <HomeHero />;
 }
