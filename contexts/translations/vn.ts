@@ -14,6 +14,7 @@ export const vn: TranslationDictionary = {
   "nav.contactCta": "Liên hệ tư vấn",
   "services.heroLine1": "Chúng tôi giúp doanh nghiệp",
   "services.heroLine2": "tìm đường tới thành công.",
+  "services.sectionTitle": "Các dịch vụ của chúng tôi",
   "services.card1Title": "Tư vấn Quản trị",
   "services.card1Desc": "Chúng tôi cung cấp nhiều gói khác nhau cho các dịch vụ tư vấn quản trị, dịch vụ tư vấn M&A và tư vấn IPO",
   "services.card2Title": "Tư vấn Tài chính – Kế toán",

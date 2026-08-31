@@ -13,16 +13,22 @@ export const ServicesCards = () => {
 
   return (
     <Box className={styles.section}>
-      <Box className={styles.grid}>
+      <Text component="h2" className={styles.heading}>
+        {t("services.sectionTitle")}
+      </Text>
+      <hr className={styles.headingDivider} />
+      <Box className={styles.list}>
         {cards.map((card) => (
-          <Box className={styles.card} key={card.title}>
+          <Box className={styles.row} key={card.title}>
             <Text component="h3" className={styles.title}>
               {card.title}
             </Text>
-            <Text className={styles.desc}>{card.desc}</Text>
-            <Button variant="outline" radius="xl" size="sm" className={styles.button}>
-              {t("services.learnMore")}
-            </Button>
+            <Box>
+              <Text className={styles.desc}>{card.desc}</Text>
+              <Button radius="md" size="md" className={styles.button}>
+                {t("services.learnMore")}
+              </Button>
+            </Box>
           </Box>
         ))}
       </Box>

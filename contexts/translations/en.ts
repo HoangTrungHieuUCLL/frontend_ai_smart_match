@@ -14,6 +14,7 @@ export const en: TranslationDictionary = {
   "nav.contactCta": "Contact for consultation",
   "services.heroLine1": "We help businesses",
   "services.heroLine2": "find their way to success.",
+  "services.sectionTitle": "Our services",
   "services.card1Title": "Management Consulting",
   "services.card1Desc": "We offer a range of packages for management consulting, M&A advisory, and IPO advisory services",
   "services.card2Title": "Finance & Accounting Consulting",

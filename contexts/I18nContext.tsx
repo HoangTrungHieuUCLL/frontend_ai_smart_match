@@ -18,6 +18,7 @@ export type TranslationKey =
   | "nav.contactCta"
   | "services.heroLine1"
   | "services.heroLine2"
+  | "services.sectionTitle"
   | "services.card1Title"
   | "services.card1Desc"
   | "services.card2Title"
