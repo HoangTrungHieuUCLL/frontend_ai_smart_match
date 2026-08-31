@@ -7,7 +7,7 @@ export default function QuanTriDetail() {
   return (
     <ServiceDetail
       title={t("services.card1Title")}
-      buttonLabel={t("servicesQuanTri.bookButton")}
+      buttonLabel={t("services.bookButton")}
       items={[
         { title: t("servicesQuanTri.item1Title"), description: t("servicesQuanTri.item1Desc") },
         { title: t("servicesQuanTri.item2Title"), description: t("servicesQuanTri.item2Desc") },
