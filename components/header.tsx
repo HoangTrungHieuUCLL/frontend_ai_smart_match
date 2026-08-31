@@ -1,7 +1,7 @@
-import {Avatar, Button, Group, Image, Text, Select, Modal, Popover, Stack, Menu} from "@mantine/core";
+import {Avatar, Button, Group, Image, Text, Modal, Popover, Stack, Menu} from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useRouter } from "next/router";
-import { Language, useTranslation } from "../contexts/I18nContext";
+import { useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/header.module.css";
 import {useEffect, useState} from "react";
 import Login from "./Login";
@@ -22,8 +22,7 @@ export const Header = () => {
     ];
     const rightNavItems = [
         { label: t("nav.team"), href: "#" },
-        { label: t("nav.clients"), href: "#" },
-        { label: t("nav.consultation"), href: "#" }
+        { label: t("nav.library"), href: "#" }
     ];
     const serviceItems = [
         t("nav.servicesHr"),
@@ -96,9 +95,9 @@ export const Header = () => {
                 {leftNavItems.map((item) => (
                     <Text
                         key={item.label}
-                        fw={400}
-                        c="gray.8"
-                        size="sm"
+                        fw={router.pathname === item.href ? 700 : 400}
+                        c={router.pathname === item.href ? "#1a1a1a" : BROWN}
+                        size="md"
                         style={{
                             cursor: "pointer",
                             whiteSpace: "nowrap",
@@ -114,10 +113,10 @@ export const Header = () => {
                 <Menu shadow="md" width={240} position="bottom-start" withinPortal={false}>
                     <Menu.Target>
                         <Group gap={4} wrap="nowrap" style={{ cursor: "pointer" }} className="nav-item">
-                            <Text fw={400} c="gray.8" size="sm" style={{ whiteSpace: "nowrap" }}>
+                            <Text fw={400} c={BROWN} size="md" style={{ whiteSpace: "nowrap" }}>
                                 {t("nav.services")}
                             </Text>
-                            <IconChevronDown size={14} color="#495057" />
+                            <IconChevronDown size={14} color={BROWN} />
                         </Group>
                     </Menu.Target>
                     <Menu.Dropdown>
@@ -130,9 +129,9 @@ export const Header = () => {
                 {rightNavItems.map((item) => (
                     <Text
                         key={item.label}
-                        fw={400}
-                        c="gray.8"
-                        size="sm"
+                        fw={router.pathname === item.href ? 700 : 400}
+                        c={router.pathname === item.href ? "#1a1a1a" : BROWN}
+                        size="md"
                         style={{
                             cursor: "pointer",
                             whiteSpace: "nowrap",
@@ -148,18 +147,18 @@ export const Header = () => {
 
             {/* Right Section: Button, User, Language */}
             <Group gap="md" align="center" style={{ flexShrink: 0 }}>
-                <Button 
-                    fw={500}
-                    size="sm"
-                    px="md"
+                <Button
+                    fw={600}
+                    size="md"
+                    px="lg"
                     radius="xl"
-                    style={{ 
-                        backgroundColor: "#774326", 
+                    style={{
+                        backgroundColor: "#774326",
                         whiteSpace: "nowrap"
                     }}
                     onClick={handleJobSearchClick}
                 >
-                    {t("nav.jobSearch")}
+                    {t("nav.contactCta")}
                 </Button>
 
                 {loggedInEmail ? (
@@ -258,23 +257,27 @@ export const Header = () => {
                 )}
 
                 {/* Language Selector */}
-                <Select
-                    value={language}
-                    onChange={(value) => {
-                        if (value === "EN" || value === "VN") {
-                            setLanguage(value as Language);
-                        }
-                    }}
-                    data={[
-                        { value: "EN", label: "EN" },
-                        { value: "VN", label: "VN" }
-                    ]}
-                    w={70}
-                    size="sm"
-                    clearable={false}
-                    searchable={false}
-                    style={{ flexShrink: 0 }}
-                />
+                <Group gap={6} wrap="nowrap" style={{ flexShrink: 0 }}>
+                    <Text
+                        size="md"
+                        fw={language === "VN" ? 700 : 400}
+                        c={language === "VN" ? "#1a1a1a" : BROWN}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setLanguage("VN")}
+                    >
+                        VI
+                    </Text>
+                    <Text size="md" c={BROWN}>|</Text>
+                    <Text
+                        size="md"
+                        fw={language === "EN" ? 700 : 400}
+                        c={language === "EN" ? "#1a1a1a" : BROWN}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setLanguage("EN")}
+                    >
+                        EN
+                    </Text>
+                </Group>
             </Group>
 
             <Modal

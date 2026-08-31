@@ -10,6 +10,8 @@ export const en: TranslationDictionary = {
   "nav.clients": "Our clients",
   "nav.consultation": "Consultation",
   "nav.jobSearch": "Job search with AI",
+  "nav.library": "HR Next.vn Library",
+  "nav.contactCta": "Contact for consultation",
   "nav.login": "Log in",
   "footer.contact": "Contact",
   "footer.director": "Director",
