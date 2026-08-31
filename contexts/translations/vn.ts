@@ -12,6 +12,8 @@ export const vn: TranslationDictionary = {
   "nav.jobSearch": "Tìm việc với AI",
   "nav.library": "Thư viện HR Next.vn",
   "nav.contactCta": "Liên hệ tư vấn",
+  "services.heroLine1": "Chúng tôi giúp doanh nghiệp",
+  "services.heroLine2": "tìm đường tới thành công.",
   "nav.login": "Đăng nhập",
   "footer.contact": "Liên hệ",
   "footer.director": "Giám đốc",

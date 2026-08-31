@@ -16,6 +16,8 @@ export type TranslationKey =
   | "nav.jobSearch"
   | "nav.library"
   | "nav.contactCta"
+  | "services.heroLine1"
+  | "services.heroLine2"
   | "nav.login"
   | "footer.contact"
   | "footer.director"

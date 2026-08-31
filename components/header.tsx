@@ -110,21 +110,27 @@ export const Header = () => {
                     </Text>
                 ))}
 
-                <Menu shadow="md" width={240} position="bottom-start" withinPortal={false}>
-                    <Menu.Target>
-                        <Group gap={4} wrap="nowrap" style={{ cursor: "pointer" }} className="nav-item">
-                            <Text fw={400} c={BROWN} size="md" style={{ whiteSpace: "nowrap" }}>
-                                {t("nav.services")}
-                            </Text>
-                            <IconChevronDown size={14} color={BROWN} />
-                        </Group>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                        {serviceItems.map((label) => (
-                            <Menu.Item key={label}>{label}</Menu.Item>
-                        ))}
-                    </Menu.Dropdown>
-                </Menu>
+                <Group gap={4} wrap="nowrap" className="nav-item">
+                    <Text
+                        fw={router.pathname === "/services" ? 700 : 400}
+                        c={router.pathname === "/services" ? "#1a1a1a" : BROWN}
+                        size="md"
+                        style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+                        onClick={() => router.push("/services")}
+                    >
+                        {t("nav.services")}
+                    </Text>
+                    <Menu shadow="md" width={240} position="bottom-start" withinPortal={false}>
+                        <Menu.Target>
+                            <IconChevronDown size={14} color={BROWN} style={{ cursor: "pointer" }} />
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                            {serviceItems.map((label) => (
+                                <Menu.Item key={label}>{label}</Menu.Item>
+                            ))}
+                        </Menu.Dropdown>
+                    </Menu>
+                </Group>
 
                 {rightNavItems.map((item) => (
                     <Text
