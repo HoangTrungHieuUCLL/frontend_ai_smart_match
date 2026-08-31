@@ -1,14 +1,16 @@
 import { Box, Button, Text } from "@mantine/core";
+import { useRouter } from "next/router";
 import { useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/servicesCards.module.css";
 
 export const ServicesCards = () => {
   const { t } = useTranslation();
+  const router = useRouter();
 
   const cards = [
-    { title: t("services.card1Title"), desc: t("services.card1Desc") },
-    { title: t("services.card2Title"), desc: t("services.card2Desc") },
-    { title: t("services.card3Title"), desc: t("services.card3Desc") },
+    { title: t("services.card1Title"), desc: t("services.card1Desc"), href: "/services/quan-tri" },
+    { title: t("services.card2Title"), desc: t("services.card2Desc"), href: null },
+    { title: t("services.card3Title"), desc: t("services.card3Desc"), href: null },
   ];
 
   return (
@@ -25,7 +27,12 @@ export const ServicesCards = () => {
             </Text>
             <Box>
               <Text className={styles.desc}>{card.desc}</Text>
-              <Button radius="md" size="md" className={styles.button}>
+              <Button
+                radius="md"
+                size="md"
+                className={styles.button}
+                onClick={card.href ? () => router.push(card.href!) : undefined}
+              >
                 {t("services.learnMore")}
               </Button>
             </Box>
