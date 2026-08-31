@@ -4,6 +4,12 @@
     padding: 48px 5vw 56px;
 }
 
+.topBar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+}
+
 .title {
     text-align: center;
     color: #774326;
@@ -28,20 +34,11 @@
     padding: 28px 32px;
 }
 
-.itemHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-}
-
 .itemTitle {
     color: #774326;
     font-size: clamp(18px, 1.8vw, 22px);
     font-weight: 700;
-    margin: 0;
+    margin: 0 0 16px;
 }
 
 .itemDesc {

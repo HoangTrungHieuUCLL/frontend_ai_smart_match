@@ -15,20 +15,20 @@ type ServiceDetailProps = {
 export const ServiceDetail = ({ title, buttonLabel, items }: ServiceDetailProps) => {
   return (
     <Box className={styles.page}>
+      <Box className={styles.topBar}>
+        <Button radius="xl" size="sm" className={styles.button}>
+          {buttonLabel}
+        </Button>
+      </Box>
       <Text component="h1" className={styles.title}>
         {title}
       </Text>
       <Box className={styles.list}>
         {items.map((item, index) => (
           <Box className={styles.item} key={item.title}>
-            <Box className={styles.itemHeader}>
-              <Text component="h2" className={styles.itemTitle}>
-                {index + 1}. {item.title}
-              </Text>
-              <Button radius="xl" size="sm" className={styles.button}>
-                {buttonLabel}
-              </Button>
-            </Box>
+            <Text component="h2" className={styles.itemTitle}>
+              {index + 1}. {item.title}
+            </Text>
             <Text className={styles.itemDesc}>. {item.description}</Text>
           </Box>
         ))}
