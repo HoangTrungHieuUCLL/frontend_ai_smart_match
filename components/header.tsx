@@ -1,4 +1,5 @@
-import {Avatar, Button, Group, Image, Text, Select, Modal, Popover, Stack} from "@mantine/core";
+import {Avatar, Button, Group, Image, Text, Select, Modal, Popover, Stack, Menu} from "@mantine/core";
+import { IconChevronDown } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { Language, useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/header.module.css";
@@ -16,12 +17,18 @@ export const Header = () => {
     const [loggedInRole, setLoggedInRole] = useState<string>("");
     const [logoutOpened, setLogoutOpened] = useState(false);
 
-    const navItems = [
+    const leftNavItems = [
         { label: t("nav.homepage"), href: "/" },
-        { label: t("nav.services"), href: "#" },
+    ];
+    const rightNavItems = [
         { label: t("nav.team"), href: "#" },
         { label: t("nav.clients"), href: "#" },
         { label: t("nav.consultation"), href: "#" }
+    ];
+    const serviceItems = [
+        t("nav.servicesHr"),
+        t("nav.servicesManagement"),
+        t("nav.servicesFinance"),
     ];
     const syncAuth = () => {
         const email = localStorage.getItem("email");
@@ -86,13 +93,47 @@ export const Header = () => {
 
             {/* Navigation Items */}
             <Group gap="lg" justify="center" style={{ flex: 1, minWidth: 0 }}>
-                {navItems.map((item) => (
-                    <Text 
+                {leftNavItems.map((item) => (
+                    <Text
                         key={item.label}
-                        fw={400} 
+                        fw={400}
                         c="gray.8"
                         size="sm"
-                        style={{ 
+                        style={{
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                            transition: "color 0.2s"
+                        }}
+                        onClick={() => handleNavClick(item.href)}
+                        className="nav-item"
+                    >
+                        {item.label}
+                    </Text>
+                ))}
+
+                <Menu shadow="md" width={240} position="bottom-start" withinPortal={false}>
+                    <Menu.Target>
+                        <Group gap={4} wrap="nowrap" style={{ cursor: "pointer" }} className="nav-item">
+                            <Text fw={400} c="gray.8" size="sm" style={{ whiteSpace: "nowrap" }}>
+                                {t("nav.services")}
+                            </Text>
+                            <IconChevronDown size={14} color="#495057" />
+                        </Group>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                        {serviceItems.map((label) => (
+                            <Menu.Item key={label}>{label}</Menu.Item>
+                        ))}
+                    </Menu.Dropdown>
+                </Menu>
+
+                {rightNavItems.map((item) => (
+                    <Text
+                        key={item.label}
+                        fw={400}
+                        c="gray.8"
+                        size="sm"
+                        style={{
                             cursor: "pointer",
                             whiteSpace: "nowrap",
                             transition: "color 0.2s"

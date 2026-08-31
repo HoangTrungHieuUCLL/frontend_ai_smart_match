@@ -2,7 +2,10 @@ import type { TranslationDictionary } from "../I18nContext";
 
 export const vn: TranslationDictionary = {
   "nav.homepage": "Trang chủ",
-  "nav.services": "Dịch vụ",
+  "nav.services": "Dịch vụ cốt lõi",
+  "nav.servicesHr": "Tư vấn Nhân sự",
+  "nav.servicesManagement": "Tư vấn Quản trị",
+  "nav.servicesFinance": "Tư vấn Tài chính – Kế toán",
   "nav.team": "Đội ngũ",
   "nav.clients": "Khách hàng",
   "nav.consultation": "Tư vấn",

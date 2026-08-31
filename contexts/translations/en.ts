@@ -2,7 +2,10 @@ import type { TranslationDictionary } from "../I18nContext";
 
 export const en: TranslationDictionary = {
   "nav.homepage": "Homepage",
-  "nav.services": "Our services",
+  "nav.services": "Core services",
+  "nav.servicesHr": "HR Consulting",
+  "nav.servicesManagement": "Management Consulting",
+  "nav.servicesFinance": "Finance & Accounting Consulting",
   "nav.team": "Our team",
   "nav.clients": "Our clients",
   "nav.consultation": "Consultation",

@@ -7,6 +7,9 @@ export type Language = "EN" | "VN";
 export type TranslationKey =
   | "nav.homepage"
   | "nav.services"
+  | "nav.servicesHr"
+  | "nav.servicesManagement"
+  | "nav.servicesFinance"
   | "nav.team"
   | "nav.clients"
   | "nav.consultation"
