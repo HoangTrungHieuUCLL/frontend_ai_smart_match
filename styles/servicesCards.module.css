@@ -1,0 +1,56 @@
+.section {
+    background: #faf7f3;
+    padding: 72px 6vw;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid rgba(119, 67, 38, 0.14);
+    border-radius: 20px;
+    padding: 36px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.title {
+    color: #774326;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+
+.desc {
+    color: #4a4a4a;
+    font-size: 15px;
+    line-height: 1.6;
+    flex: 1;
+}
+
+.button {
+    align-self: flex-start;
+    border-color: #774326 !important;
+    color: #774326 !important;
+}
+
+.button:hover {
+    background: #774326 !important;
+    color: #fff !important;
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
