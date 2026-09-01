@@ -30,7 +30,7 @@ export default function LinkedInCvCallbackPage() {
     const { t } = useTranslation();
     const [cv, setCv] = useState<CV | null>(null);
     const [profileId, setProfileId] = useState<number | null>(null);
-    const [cvName, setCvName] = useState("LinkedIn import");
+    const [cvName, setCvName] = useState(t("upload.importFromLinkedin"));
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -48,7 +48,7 @@ export default function LinkedInCvCallbackPage() {
 
         CvService.getExtractedData(parsedProfileId)
             .then((response) => {
-                const filename = response.cv_file_name ?? "LinkedIn import";
+                const filename = response.cv_file_name ?? t("upload.importFromLinkedin");
 
                 setCvName(filename);
                 setProfileId(response.profile_id);
