@@ -34,6 +34,7 @@ import {
     type LinkedInAccountMetadata,
     saveStoredProfileCv,
 } from "../utils/profileStorage";
+import { useTranslation } from "../contexts/I18nContext";
 
 const BROWN = "#774326";
 const SCORE_STORAGE_KEY = "jobScores";
@@ -77,13 +78,13 @@ const parseSkills = (value?: string | null) =>
 const serializeSkills = (skills: string[]) =>
     skills.map((skill) => skill.trim()).filter(Boolean).join(", ");
 
-const formatDate = (value: string | null) => {
-    if (!value) return "Not available";
+const formatDate = (value: string | null, locale: string, notAvailableLabel: string) => {
+    if (!value) return notAvailableLabel;
 
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Not available";
+    if (Number.isNaN(date.getTime())) return notAvailableLabel;
 
-    return new Intl.DateTimeFormat("en", {
+    return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -105,6 +106,7 @@ const saveScoresToStorage = (results: CvConfirmReturn[]) => {
 
 export default function ProfilePage() {
     const router = useRouter();
+    const { t, language } = useTranslation();
     const [email, setEmail] = useState("");
     const [accountCreatedAt, setAccountCreatedAt] = useState<string | null>(null);
     const [linkedInMetadata, setLinkedInMetadata] = useState<LinkedInAccountMetadata | null>(null);
@@ -159,8 +161,8 @@ export default function ProfilePage() {
             profile?.family_name,
         ].filter(Boolean);
 
-        return parts.length ? parts.join(" ") : linkedInMetadata?.fullName || email || "My profile";
-    }, [email, linkedInMetadata?.fullName, profile]);
+        return parts.length ? parts.join(" ") : linkedInMetadata?.fullName || email || t("profile.title");
+    }, [email, linkedInMetadata?.fullName, profile, t]);
 
     const updateProfile = (updater: (profile: Profile) => Profile) => {
         setDraftCv((current) => {
@@ -254,13 +256,13 @@ export default function ProfilePage() {
             setIsEditing(false);
             notifications.show({
                 color: "green",
-                message: "Profile updated.",
+                message: t("profile.profileUpdated"),
             });
         } catch (error) {
             console.error("Profile save error:", error);
             notifications.show({
                 color: "red",
-                message: "Profile could not be updated.",
+                message: t("profile.profileUpdateFailed"),
             });
         } finally {
             setIsSaving(false);
@@ -285,12 +287,12 @@ export default function ProfilePage() {
         setPasswordError("");
 
         if (!passwordMeetsRequirements(newPassword)) {
-            setPasswordError("New password must be at least 8 characters and include one uppercase letter and one number.");
+            setPasswordError(t("profile.passwordRequirementsError"));
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            setPasswordError("New passwords do not match.");
+            setPasswordError(t("profile.newPasswordsDoNotMatch"));
             return;
         }
 
@@ -302,13 +304,13 @@ export default function ProfilePage() {
             });
             notifications.show({
                 color: "green",
-                message: "Password changed.",
+                message: t("profile.passwordChanged"),
             });
             setChangePasswordOpen(false);
             resetPasswordForm();
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Current password is incorrect.";
-            setPasswordError(message === "INVALID_CURRENT_PASSWORD" ? "Current password is incorrect." : message);
+            const message = error instanceof Error ? error.message : t("profile.currentPasswordIncorrect");
+            setPasswordError(message === "INVALID_CURRENT_PASSWORD" ? t("profile.currentPasswordIncorrect") : message);
         } finally {
             setIsChangingPassword(false);
         }
@@ -325,7 +327,7 @@ export default function ProfilePage() {
         setSkillInput("");
     };
 
-    const cvLabel = draftCv?.filename || "click here to upload your CV";
+    const cvLabel = draftCv?.filename || t("profile.clickToUpload");
 
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "32px 0" }}>
@@ -343,7 +345,7 @@ export default function ProfilePage() {
                             <ActionIcon
                                 component="button"
                                 type="button"
-                                aria-label="Profile photo"
+                                aria-label={t("profile.photoAlt")}
                                 variant="filled"
                                 radius="50%"
                                 size={220}
@@ -376,7 +378,7 @@ export default function ProfilePage() {
                                     variant="filled"
                                     radius="sm"
                                 >
-                                    LinkedIn linked
+                                    {t("profile.linkedinLinked")}
                                 </Badge>
                             )}
                         </Stack>
@@ -384,10 +386,10 @@ export default function ProfilePage() {
                         <Group justify="space-between" align="center">
                             <Stack gap={0}>
                                 <Text size="xl" fw={800} c={BROWN}>
-                                    My profile
+                                    {t("profile.title")}
                                 </Text>
                                 <Text size="sm" c="dimmed">
-                                    Manage your name, email, bio, and skills.
+                                    {t("profile.subtitle")}
                                 </Text>
                             </Stack>
 
@@ -401,14 +403,14 @@ export default function ProfilePage() {
                                             onClick={handleCancel}
                                             disabled={isSaving}
                                         >
-                                            Cancel
+                                            {t("common.cancel")}
                                         </Button>
                                         <Button
                                             color={BROWN}
                                             loading={isSaving}
                                             onClick={handleSave}
                                         >
-                                            Save changes
+                                            {t("addJob.saveChanges")}
                                         </Button>
                                     </>
                                 ) : (
@@ -417,7 +419,7 @@ export default function ProfilePage() {
                                         color={BROWN}
                                         onClick={handleEdit}
                                     >
-                                        Edit
+                                        {t("common.edit")}
                                     </Button>
                                 )}
                             </Group>
@@ -427,19 +429,19 @@ export default function ProfilePage() {
                             <Stack gap="lg">
                                 <SimpleGrid cols={{ base: 1, sm: 3 }}>
                                     <TextInput
-                                        label="Family name"
+                                        label={t("profile.familyName")}
                                         value={profile?.family_name ?? ""}
                                         readOnly={!isEditing}
                                         onChange={(event) => updateProfileField("family_name", event.currentTarget.value)}
                                     />
                                     <TextInput
-                                        label="Middle name"
+                                        label={t("profile.middleName")}
                                         value={profile?.middle_name ?? ""}
                                         readOnly={!isEditing}
                                         onChange={(event) => updateProfileField("middle_name", event.currentTarget.value)}
                                     />
                                     <TextInput
-                                        label="Given name"
+                                        label={t("profile.givenName")}
                                         value={profile?.given_name ?? ""}
                                         readOnly={!isEditing}
                                         onChange={(event) => updateProfileField("given_name", event.currentTarget.value)}
@@ -447,14 +449,14 @@ export default function ProfilePage() {
                                 </SimpleGrid>
 
                                 <TextInput
-                                    label="Email address"
+                                    label={t("profile.emailAddress")}
                                     value={profile?.email ?? email}
                                     readOnly={!isEditing}
                                     onChange={(event) => updateProfileField("email", event.currentTarget.value)}
                                 />
 
                                 <Textarea
-                                    label="Bio"
+                                    label={t("profile.bio")}
                                     value={profile?.bio ?? ""}
                                     readOnly={!isEditing}
                                     autosize
@@ -465,12 +467,12 @@ export default function ProfilePage() {
                                 <Stack gap={8}>
                                     <Group gap="sm" align="center">
                                         <Text size="lg" fw={800} c={BROWN}>
-                                            My CV
+                                            {t("profile.myCv")}
                                         </Text>
                                         <ActionIcon
                                             radius="xl"
                                             size="lg"
-                                            aria-label="Upload CV"
+                                            aria-label={t("profile.uploadCv")}
                                             style={{ backgroundColor: BROWN, color: "#ffffff" }}
                                             onClick={() => setCvUploadOpen(true)}
                                         >
@@ -509,20 +511,20 @@ export default function ProfilePage() {
                                         onClick={() => setCvUploadOpen(true)}
                                     >
                                         <Text c={draftCv?.filename ? BROWN : "dimmed"} fs={draftCv?.filename ? "normal" : "italic"}>
-                                            {draftCv?.filename || "No CV uploaded yet"}
+                                            {draftCv?.filename || t("profile.noCvUploaded")}
                                         </Text>
                                     </Paper>
                                 </Stack>
 
                                 <PillsInput
-                                    label="My skills"
-                                    description={isEditing ? "Type a skill and press Enter or Tab." : undefined}
+                                    label={t("profile.mySkills")}
+                                    description={isEditing ? t("profile.skillsHint") : undefined}
                                 >
                                     <Pill.Group>
                                         {skills.length === 0 && (
                                             <PillsInput.Field
                                                 value=""
-                                                placeholder="This field will be autofilled once you have uploaded your CV"
+                                                placeholder={t("profile.skillsAutofillHint")}
                                                 readOnly
                                             />
                                         )}
@@ -540,7 +542,7 @@ export default function ProfilePage() {
                                         {isEditing && (
                                             <PillsInput.Field
                                                 value={skillInput}
-                                                placeholder="Add a skill..."
+                                                placeholder={t("profile.addSkillPlaceholder")}
                                                 onChange={(event) => setSkillInput(event.currentTarget.value)}
                                                 onKeyDown={handleSkillKeyDown}
                                                 onBlur={addSkill}
@@ -561,36 +563,38 @@ export default function ProfilePage() {
                         >
                             <Stack gap="md">
                                 <Text size="lg" fw={800} c={BROWN}>
-                                    Account
+                                    {t("profile.account")}
                                 </Text>
 
                                 <SimpleGrid cols={{ base: 1, sm: 2 }}>
                                     <Paper p="md" radius="sm" style={{ backgroundColor: "#fdf7ef" }}>
                                         <Text size="xs" c="dimmed">
-                                            LinkedIn
+                                            {t("profile.linkedinLabel")}
                                         </Text>
                                         <Group gap="xs">
                                             {linkedInMetadata?.linked ? (
                                                 <>
                                                     <IconCheck size={16} color="#0A66C2" />
-                                                    <Text fw={700}>Account linked</Text>
+                                                    <Text fw={700}>{t("profile.accountLinked")}</Text>
                                                 </>
                                             ) : (
-                                                <Text fw={700}>Not linked</Text>
+                                                <Text fw={700}>{t("profile.notLinked")}</Text>
                                             )}
                                         </Group>
                                     </Paper>
                                     <Paper p="md" radius="sm" style={{ backgroundColor: "#fdf7ef" }}>
                                         <Text size="xs" c="dimmed">
-                                            Registered email
+                                            {t("profile.registeredEmail")}
                                         </Text>
-                                        <Text fw={700}>{email || "Not available"}</Text>
+                                        <Text fw={700}>{email || t("profile.notAvailable")}</Text>
                                     </Paper>
                                     <Paper p="md" radius="sm" style={{ backgroundColor: "#fdf7ef" }}>
                                         <Text size="xs" c="dimmed">
-                                            Account creation date
+                                            {t("profile.accountCreationDate")}
                                         </Text>
-                                        <Text fw={700}>{formatDate(accountCreatedAt)}</Text>
+                                        <Text fw={700}>
+                                            {formatDate(accountCreatedAt, language === "VN" ? "vi" : "en", t("profile.notAvailable"))}
+                                        </Text>
                                     </Paper>
                                 </SimpleGrid>
 
@@ -600,14 +604,14 @@ export default function ProfilePage() {
                                         color={BROWN}
                                         onClick={() => setChangePasswordOpen(true)}
                                     >
-                                        Change password
+                                        {t("profile.changePassword")}
                                     </Button>
                                     <Button
                                         leftSection={<IconLogout size={16} />}
                                         color={BROWN}
                                         onClick={handleLogout}
                                     >
-                                        Log out
+                                        {t("profile.logOut")}
                                     </Button>
                                 </Group>
                             </Stack>
@@ -622,22 +626,22 @@ export default function ProfilePage() {
                     setChangePasswordOpen(false);
                     resetPasswordForm();
                 }}
-                title="Change password"
+                title={t("profile.changePassword")}
                 centered
             >
                 <Stack gap="md">
                     <PasswordInput
-                        label="Current password"
+                        label={t("profile.currentPassword")}
                         value={currentPassword}
                         onChange={(event) => setCurrentPassword(event.currentTarget.value)}
                     />
                     <PasswordInput
-                        label="New password"
+                        label={t("profile.newPassword")}
                         value={newPassword}
                         onChange={(event) => setNewPassword(event.currentTarget.value)}
                     />
                     <PasswordInput
-                        label="Confirm new password"
+                        label={t("profile.confirmNewPassword")}
                         value={confirmPassword}
                         onChange={(event) => setConfirmPassword(event.currentTarget.value)}
                     />
@@ -653,7 +657,7 @@ export default function ProfilePage() {
                         loading={isChangingPassword}
                         onClick={handleChangePassword}
                     >
-                        Save password
+                        {t("profile.savePassword")}
                     </Button>
                 </Stack>
             </Modal>
