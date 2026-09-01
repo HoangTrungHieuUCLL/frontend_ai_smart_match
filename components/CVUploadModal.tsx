@@ -142,7 +142,7 @@ export default function CVUploadModal({opened, onClose, initialUploadError}: Pro
             setLoadingState({
                 open: true,
                 status: "loading",
-                message: "Sending your CV to our server",
+                message: t("upload.sendingCv"),
             });
 
             const response = await CvService.uploadCv({
@@ -155,12 +155,12 @@ export default function CVUploadModal({opened, onClose, initialUploadError}: Pro
 
             setLoadingState((prev) => ({
                 ...prev,
-                message: "Extracting data from your CV",
+                message: t("upload.extractingData"),
             }));
 
             setLoadingState((prev) => ({
                 ...prev,
-                message: "Calculating Compatibility Score",
+                message: t("upload.calculatingScore"),
             }));
 
             const confirmationCv = toConfirmationCv(response, response.cv_file_name ?? uploadedFile.name, formData);
@@ -181,7 +181,7 @@ export default function CVUploadModal({opened, onClose, initialUploadError}: Pro
             setLoadingState({
                 open: true,
                 status: "error",
-                message: error instanceof Error ? error.message : "Failed to upload your CV. Please try again.",
+                message: error instanceof Error ? error.message : t("upload.uploadFailed"),
             });
         }
     };
@@ -191,7 +191,7 @@ export default function CVUploadModal({opened, onClose, initialUploadError}: Pro
 
         if (
             hasExistingCv &&
-            !window.confirm("This will replace your current CV data with data from LinkedIn. Continue?")
+            !window.confirm(t("upload.linkedinReplaceConfirm"))
         ) {
             return;
         }

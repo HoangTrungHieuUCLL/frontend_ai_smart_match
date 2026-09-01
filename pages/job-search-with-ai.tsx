@@ -126,10 +126,9 @@ export default function JobSearchWithAIPage() {
   useEffect(() => {
     if (!router.isReady || router.query.linkedinImport !== "failed") return;
 
-    setLinkedinImportError(
-      "LinkedIn import failed. You can upload a PDF instead.",
-    );
+    setLinkedinImportError(t("linkedinImport.failed"));
     setModalOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query.linkedinImport]);
 
   const [showSavedOnly, setShowSavedOnly] = useState(false);
@@ -248,44 +247,42 @@ export default function JobSearchWithAIPage() {
   const emptyStateContent = useMemo(() => {
     if (noJobsInDatabase) {
       return {
-        title: "No jobs are available at the moment.",
-        description: "Check back soon.",
+        title: t("jobSearch.noJobsAvailable"),
+        description: t("jobSearch.checkBackSoon"),
         showClearFilters: false,
       };
     }
 
     if (hasSearch && showSavedOnly) {
       return {
-        title: "No jobs found",
-        description:
-          "No saved jobs match your search. Try clearing the search or the saved filter.",
+        title: t("jobSearch.noJobsFound"),
+        description: t("jobSearch.noSavedJobsMatch"),
         showClearFilters: true,
       };
     }
 
     if (showSavedOnly) {
       return {
-        title: "No jobs found",
-        description:
-          "You haven't saved any jobs yet. Browse the full list to save jobs you like.",
+        title: t("jobSearch.noJobsFound"),
+        description: t("jobSearch.noSavedJobsYet"),
         showClearFilters: true,
       };
     }
 
     if (hasSearch) {
       return {
-        title: "No jobs found",
-        description: "Try a different search term or clear the search.",
+        title: t("jobSearch.noJobsFound"),
+        description: t("jobSearch.tryDifferentSearch"),
         showClearFilters: true,
       };
     }
 
     return {
-      title: "No jobs found",
+      title: t("jobSearch.noJobsFound"),
       description: "",
       showClearFilters: true,
     };
-  }, [noJobsInDatabase, hasSearch, showSavedOnly]);
+  }, [noJobsInDatabase, hasSearch, showSavedOnly, t]);
 
   const clearFilters = () => {
     setSearch("");
@@ -317,7 +314,7 @@ export default function JobSearchWithAIPage() {
                     )}
 
                     <TextInput
-                        placeholder="Search jobs..."
+                        placeholder={t("jobSearch.searchPlaceholder")}
                         value={search}
                         onChange={(e) => setSearch(e.currentTarget.value)}
                         radius="xl"
@@ -347,7 +344,7 @@ export default function JobSearchWithAIPage() {
                                 }}
                                 onClick={() => setShowSavedOnly((prev) => !prev)}
                             >
-                                Saved jobs
+                                {t("jobSearch.savedJobsButton")}
                             </Button>
 
                             <Button
@@ -363,7 +360,7 @@ export default function JobSearchWithAIPage() {
                                 }}
                                 onClick={handleToggleCompareMode}
                             >
-                                Compare jobs
+                                {t("jobSearch.compareJobsButton")}
                             </Button>
                         </>
                     )}
@@ -391,7 +388,7 @@ export default function JobSearchWithAIPage() {
                             <Group gap={10} align="center" wrap="nowrap">
                                 <Image src="/add.png" alt="" w={24} h={24} fit="cover" />
                                 <Text component="span" size="sm" fw={700} c="#ffffff">
-                                    Add new job
+                                    {t("jobSearch.addNewJob")}
                                 </Text>
                             </Group>
                         </Button>
@@ -405,11 +402,11 @@ export default function JobSearchWithAIPage() {
                         data={[
                             {
                                 value: "best_match",
-                                label: "Best Match",
+                                label: t("jobSearch.bestMatch"),
                                 disabled: !jobs.some(j => j.compatibility_score),
                             },
-                            { value: "newest_first", label: "Newest First" },
-                            { value: "company_az", label: "Company A–Z" },
+                            { value: "newest_first", label: t("jobSearch.newestFirst") },
+                            { value: "company_az", label: t("jobSearch.companyAZ") },
                         ]}
                         radius="xl"
                         w={180}
@@ -461,7 +458,7 @@ export default function JobSearchWithAIPage() {
                                     }}
                                     onClick={clearFilters}
                                 >
-                                    Clear filters
+                                    {t("jobSearch.clearFilters")}
                                 </Button>
                             )}
                         </Stack>
@@ -547,17 +544,17 @@ export default function JobSearchWithAIPage() {
         opened={shareOpened}
         onClose={() => setShareOpened(false)}
         centered
-        title="Share Job"
+        title={t("jobSearch.shareJobTitle")}
       >
         <Stack>
-          <Text>Link to this job is saved in your clipboard</Text>
+          <Text>{t("jobSearch.linkCopied")}</Text>
 
           <Button
             radius="xl"
             color={BROWN}
             onClick={() => setShareOpened(false)}
           >
-            OK
+            {t("common.ok")}
           </Button>
         </Stack>
       </Modal>
@@ -597,7 +594,7 @@ export default function JobSearchWithAIPage() {
               style={{ backgroundColor: BROWN, minWidth: 160 }}
               onClick={handleCompare}
             >
-              Compare ({selectedJobs.size})
+              {t("jobSearch.compareCount", { count: selectedJobs.size })}
             </Button>
             <Button
               radius="xl"
@@ -606,7 +603,7 @@ export default function JobSearchWithAIPage() {
               style={{ color: BROWN }}
               onClick={() => setSelectedJobs(new Set())}
             >
-              Clear
+              {t("jobSearch.clear")}
             </Button>
           </Group>
         </Box>

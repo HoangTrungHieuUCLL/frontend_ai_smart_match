@@ -198,7 +198,7 @@ export default function JobInfoDetailPage() {
 
         notifications.show({
             color: "red",
-            message: "Something went wrong while saving job",
+            message: t("jobSearch.saveJobFailed"),
         });
     }
 };
@@ -248,7 +248,7 @@ export default function JobInfoDetailPage() {
             description: cvUploaded
                 ? t("jobInfo.cardCvReuploadDescription")
                 : t("jobInfo.cardCvDescription"),
-            button: cvUploaded ? "Re-upload CV" : t("jobInfo.askAi"),
+            button: cvUploaded ? t("jobInfo.reuploadCv") : t("jobInfo.askAi"),
             onClick: handleCvUpload,
         },
         {
@@ -256,7 +256,7 @@ export default function JobInfoDetailPage() {
             title: t("jobInfo.cardMatchScore"),
             description:
                 compatibilityScore !== null
-                    ? `${compatibilityScore}% Match`
+                    ? t("jobInfo.matchPercent", { score: compatibilityScore })
                     : t("jobInfo.cardMatchDescription"),
             button: t("jobInfo.compatible"),
             onClick: handleMatchClick,
@@ -413,7 +413,7 @@ export default function JobInfoDetailPage() {
                                                         color={BROWN}
                                                         onClick={handleSave}
                                                     >
-                                                        {Saved ? "Saved" : t("jobInfo.save")}
+                                                        {Saved ? t("jobInfo.savedLabel") : t("jobInfo.save")}
                                                     </Button>
                                                 )}
                                                 <Button
@@ -517,11 +517,11 @@ export default function JobInfoDetailPage() {
                 opened={shareOpened}
                 onClose={() => setShareOpened(false)}
                 centered
-                title="Share Job"
+                title={t("jobSearch.shareJobTitle")}
             >
                 <Stack>
                     <Text>
-                        Link to this job is saved in your clipboard
+                        {t("jobSearch.linkCopied")}
                     </Text>
 
                     <Button
@@ -529,7 +529,7 @@ export default function JobInfoDetailPage() {
                         color={BROWN}
                         onClick={() => setShareOpened(false)}
                     >
-                        OK
+                        {t("common.ok")}
                     </Button>
                 </Stack>
             </Modal>

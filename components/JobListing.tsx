@@ -158,7 +158,7 @@ const JobListing: React.FC<Props> = ({
 
             notifications.show({
                 color: "red",
-                message: "Something went wrong while saving job",
+                message: t("jobSearch.saveJobFailed"),
             });
         }
     };
