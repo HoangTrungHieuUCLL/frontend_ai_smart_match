@@ -30,6 +30,7 @@ interface CVSummaryDetailsProps {
     cv: CV;
     profile?: Profile | null;
     footer?: ReactNode;
+    headerAction?: ReactNode;
     isEditing?: boolean;
     hideCollections?: boolean;
     onProfileFieldChange?: (field: keyof Profile, value: string) => void;
@@ -61,6 +62,7 @@ export function CVSummaryDetails({
                                      cv,
                                      profile: profileOverride,
                                      footer,
+                                     headerAction,
                                      isEditing = false,
                                      hideCollections = false,
                                      onProfileFieldChange,
@@ -314,6 +316,12 @@ export function CVSummaryDetails({
 
     return (
         <Stack gap="lg">
+            {headerAction && (
+                <Group justify="flex-end">
+                    {headerAction}
+                </Group>
+            )}
+
             <Paper p="md" radius="md" style={sectionStyle}>
                 <Stack gap="md">
                     <Text fw={700} c={BROWN}>
@@ -496,7 +504,7 @@ export function CVSummaryDetails({
 
             {!hideCollections && collectionConfigs.map(renderCollectionSection)}
 
-            {footer && <Group justify="flex-end">{footer}</Group>}
+            {footer}
         </Stack>
     );
 }
@@ -681,28 +689,28 @@ export default function CVUploadConfirmation({
             onCollectionItemChange={updateCollectionItem}
             onCollectionAdd={addCollectionItem}
             onCollectionDelete={deleteCollectionItem}
-            footer={
-                <>
-                    {!isEditing && (
-                        <Button
-                            variant="outline"
-                            color={BROWN}
-                            onClick={() => setIsEditing(true)}
-                            disabled={isSubmitting}
-                        >
-                            Edit
-                        </Button>
-                    )}
-
+            headerAction={
+                !isEditing && (
                     <Button
+                        variant="outline"
                         color={BROWN}
-                        loading={isSaving || isSubmitting}
-                        disabled={isSaving || isSubmitting}
-                        onClick={isEditing ? onSaveChanges : onSubmit}
+                        onClick={() => setIsEditing(true)}
+                        disabled={isSubmitting}
                     >
-                        {isEditing ? "Save changes" : "Everything looks good!"}
+                        Edit
                     </Button>
-                </>
+                )
+            }
+            footer={
+                <Button
+                    color={BROWN}
+                    fullWidth
+                    loading={isSaving || isSubmitting}
+                    disabled={isSaving || isSubmitting}
+                    onClick={isEditing ? onSaveChanges : onSubmit}
+                >
+                    {isEditing ? "Save changes" : "Everything looks good!"}
+                </Button>
             }
         />
     );
