@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {Badge, Box, Divider, Group, Loader, Progress, ScrollArea, Stack, Table, Text} from "@mantine/core";
 import {Job} from "../types";
 import JobService from "../services/JobService";
+import { useTranslation } from "../contexts/I18nContext";
 import {
     IconBriefcase,
     IconBuilding,
@@ -14,6 +15,7 @@ import {
 const BROWN = "#774326";
 
 export default function Compare() {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(true);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [jobScoresMap, setJobScoresMap] = useState<Map<number, number>>(new Map());
@@ -75,7 +77,7 @@ export default function Compare() {
     return (
         <Stack align="center">
             {jobs.length === 0 ? (
-                <p>No jobs selected. Choose some from the listings.</p>
+                <p>{t("compare.noJobsSelected")}</p>
             ) : (
                 <Table style={{ tableLayout: "fixed", width: "80%" }} withRowBorders={false} mt={12} mb={12}>
                     <Table.Thead>

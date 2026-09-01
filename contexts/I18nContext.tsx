@@ -210,7 +210,15 @@ export type TranslationKey =
   | "login.or"
   | "login.continueWithLinkedin"
   | "login.noAccount"
-  | "login.createOne";
+  | "login.createOne"
+  | "upload.importFromLinkedin"
+  | "compare.noJobsSelected"
+  | "linkedinImport.failed"
+  | "linkedinImport.preparing"
+  | "linkedinImport.backToUpload"
+  | "linkedinImport.sourceBanner"
+  | "linkedinLoginCallback.alertTitle"
+  | "linkedinLoginCallback.signingIn";
 
 export type TranslationDictionary = Record<TranslationKey, string>;
 

@@ -206,5 +206,13 @@ export const vn: TranslationDictionary = {
   "login.or": "hoặc",
   "login.continueWithLinkedin": "Tiếp tục với LinkedIn",
   "login.noAccount": "Bạn chưa có tài khoản?",
-  "login.createOne": "Tạo tài khoản"
+  "login.createOne": "Tạo tài khoản",
+  "upload.importFromLinkedin": "Nhập từ LinkedIn",
+  "compare.noJobsSelected": "Chưa chọn công việc nào. Hãy chọn một vài công việc từ danh sách.",
+  "linkedinImport.failed": "Nhập từ LinkedIn thất bại. Bạn có thể tải lên PDF thay thế.",
+  "linkedinImport.preparing": "Đang chuẩn bị nhập dữ liệu từ LinkedIn...",
+  "linkedinImport.backToUpload": "Quay lại tải lên",
+  "linkedinImport.sourceBanner": "Dữ liệu được nhập từ LinkedIn. Vui lòng kiểm tra và sửa các trường còn thiếu hoặc không chính xác trước khi xác nhận.",
+  "linkedinLoginCallback.alertTitle": "Đăng nhập LinkedIn thất bại",
+  "linkedinLoginCallback.signingIn": "Đang đăng nhập bằng LinkedIn..."
 };

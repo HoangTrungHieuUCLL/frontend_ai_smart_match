@@ -206,5 +206,13 @@ export const en: TranslationDictionary = {
   "login.or": "or",
   "login.continueWithLinkedin": "Continue with LinkedIn",
   "login.noAccount": "Don't have an account?",
-  "login.createOne": "Create one"
+  "login.createOne": "Create one",
+  "upload.importFromLinkedin": "Import from LinkedIn",
+  "compare.noJobsSelected": "No jobs selected. Choose some from the listings.",
+  "linkedinImport.failed": "LinkedIn import failed. You can upload a PDF instead.",
+  "linkedinImport.preparing": "Preparing your LinkedIn import...",
+  "linkedinImport.backToUpload": "Back to upload",
+  "linkedinImport.sourceBanner": "Data imported from LinkedIn. Please review and correct any missing or inaccurate fields before confirming.",
+  "linkedinLoginCallback.alertTitle": "LinkedIn login failed",
+  "linkedinLoginCallback.signingIn": "Signing you in with LinkedIn..."
 };

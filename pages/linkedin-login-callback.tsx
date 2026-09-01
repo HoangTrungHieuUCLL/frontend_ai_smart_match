@@ -2,9 +2,11 @@ import { Alert, Center, Loader, Stack, Text } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ensureAccountCreatedAt, saveLinkedInAccountMetadata } from "../utils/profileStorage";
+import { useTranslation } from "../contexts/I18nContext";
 
 export default function LinkedInLoginCallbackPage() {
     const router = useRouter();
+    const { t } = useTranslation();
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -15,7 +17,7 @@ export default function LinkedInLoginCallbackPage() {
         const linkedinLinked = params.get("linkedinLinked") === "true";
 
         if (!token || !email) {
-            setError("LinkedIn login failed. Please try again or sign in another way.");
+            setError(t("login.linkedinFailed"));
             return;
         }
 
@@ -45,19 +47,20 @@ export default function LinkedInLoginCallbackPage() {
         } else {
             router.replace("/job-search-with-ai");
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [router]);
 
     return (
         <Center mih="60vh">
             <Stack align="center" gap="md">
                 {error ? (
-                    <Alert color="red" title="LinkedIn login failed">
+                    <Alert color="red" title={t("linkedinLoginCallback.alertTitle")}>
                         {error}
                     </Alert>
                 ) : (
                     <>
                         <Loader color="#774326" />
-                        <Text fw={600}>Signing you in with LinkedIn...</Text>
+                        <Text fw={600}>{t("linkedinLoginCallback.signingIn")}</Text>
                     </>
                 )}
             </Stack>

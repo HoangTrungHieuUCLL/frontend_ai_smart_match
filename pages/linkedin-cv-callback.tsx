@@ -5,6 +5,7 @@ import CVUploadConfirmation from "../components/CVUploadConfirmation";
 import { toConfirmationCv } from "../components/CVUploadModal";
 import CvService, { CvConfirmReturn } from "../services/CvService";
 import { CV } from "../types";
+import { useTranslation } from "../contexts/I18nContext";
 
 const SCORE_STORAGE_KEY = "jobScores";
 const CV_NAME_STORAGE_KEY = "cvName";
@@ -26,6 +27,7 @@ const saveScoresToStorage = (results: CvConfirmReturn[]) => {
 
 export default function LinkedInCvCallbackPage() {
     const router = useRouter();
+    const { t } = useTranslation();
     const [cv, setCv] = useState<CV | null>(null);
     const [profileId, setProfileId] = useState<number | null>(null);
     const [cvName, setCvName] = useState("LinkedIn import");
@@ -40,7 +42,7 @@ export default function LinkedInCvCallbackPage() {
         const parsedProfileId = Number(rawProfileId);
 
         if (!parsedProfileId) {
-            setError("LinkedIn import failed. You can upload a PDF instead.");
+            setError(t("linkedinImport.failed"));
             return;
         }
 
@@ -60,8 +62,9 @@ export default function LinkedInCvCallbackPage() {
                 );
             })
             .catch(() => {
-                setError("LinkedIn import failed. You can upload a PDF instead.");
+                setError(t("linkedinImport.failed"));
             });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [router.isReady, router.query.profileId]);
 
     const finish = async (results: CvConfirmReturn[]) => {
@@ -76,7 +79,7 @@ export default function LinkedInCvCallbackPage() {
                 {!cv && !error && (
                     <Stack align="center" gap="md" mt={80}>
                         <Loader color="#774326" size="xl" />
-                        <Text fw={600}>Preparing your LinkedIn import...</Text>
+                        <Text fw={600}>{t("linkedinImport.preparing")}</Text>
                     </Stack>
                 )}
 
@@ -86,7 +89,7 @@ export default function LinkedInCvCallbackPage() {
                             {error}
                         </Text>
                         <Button color="#774326" onClick={() => router.replace("/job-search-with-ai?linkedinImport=failed")}>
-                            Back to upload
+                            {t("linkedinImport.backToUpload")}
                         </Button>
                     </Stack>
                 )}
@@ -95,7 +98,7 @@ export default function LinkedInCvCallbackPage() {
             <Modal
                 opened={cv != null}
                 onClose={() => router.replace("/job-search-with-ai")}
-                title={<Text fw={700} size="lg">CV Summary</Text>}
+                title={<Text fw={700} size="lg">{t("executiveView.cvSummaryTitle")}</Text>}
                 size="xl"
                 centered
             >
@@ -104,7 +107,7 @@ export default function LinkedInCvCallbackPage() {
                         cv={cv}
                         onClose={finish}
                         profileId={profileId}
-                        sourceBanner="Data imported from LinkedIn. Please review and correct any missing or inaccurate fields before confirming."
+                        sourceBanner={t("linkedinImport.sourceBanner")}
                     />
                 )}
             </Modal>
