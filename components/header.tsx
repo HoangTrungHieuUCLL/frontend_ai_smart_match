@@ -21,7 +21,7 @@ export const Header = () => {
         { label: t("nav.homepage"), href: "/" },
     ];
     const rightNavItems = [
-        { label: t("nav.team"), href: "#" },
+        { label: t("nav.team"), href: "/team" },
         { label: t("nav.library"), href: "#" }
     ];
     const serviceItems = [
