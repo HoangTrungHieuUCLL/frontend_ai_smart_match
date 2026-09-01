@@ -218,7 +218,29 @@ export type TranslationKey =
   | "linkedinImport.backToUpload"
   | "linkedinImport.sourceBanner"
   | "linkedinLoginCallback.alertTitle"
-  | "linkedinLoginCallback.signingIn";
+  | "linkedinLoginCallback.signingIn"
+  | "register.linkedinSignupFailed"
+  | "register.passwordRequirementsNotMet"
+  | "register.passwordsDoNotMatch"
+  | "register.emailExists"
+  | "register.genericError"
+  | "register.emailLabel"
+  | "register.emailPlaceholder"
+  | "register.passwordLabel"
+  | "register.passwordPlaceholder"
+  | "register.passwordMustInclude"
+  | "register.minLength"
+  | "register.oneUppercase"
+  | "register.oneNumber"
+  | "register.confirmPasswordLabel"
+  | "register.confirmPasswordPlaceholder"
+  | "register.submit"
+  | "register.createWithLinkedin"
+  | "register.alreadyHaveAccount"
+  | "register.linkLinkedinTitle"
+  | "register.linkLinkedinBody"
+  | "register.declineLink"
+  | "register.confirmLink";
 
 export type TranslationDictionary = Record<TranslationKey, string>;
 

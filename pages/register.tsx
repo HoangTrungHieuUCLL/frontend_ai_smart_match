@@ -18,6 +18,7 @@ import {
   ensureAccountCreatedAt,
   saveLinkedInAccountMetadata,
 } from "../utils/profileStorage";
+import { useTranslation } from "../contexts/I18nContext";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LINKEDIN_BLUE = "#0A66C2";
 const BROWN = "#774326";
@@ -28,6 +29,7 @@ const hasNumber = (pw: string) => /\d/.test(pw);
 
 export const Register = () => {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -74,10 +76,10 @@ export const Register = () => {
       linkedinRegister === "failed"
     ) {
       setErrors({
-        general:
-          "LinkedIn sign-up failed. Please try again or register with email.",
+        general: t("register.linkedinSignupFailed"),
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query.linkedinRegister, router.query.linkToken]);
 
   const passwordChecks = {
@@ -93,15 +95,15 @@ export const Register = () => {
     const newErrors: typeof errors = {};
 
     if (!emailRegex.test(email)) {
-      newErrors.email = "Enter a valid email address";
+      newErrors.email = t("validation.emailInvalid");
     }
 
     if (!isPasswordValid) {
-      newErrors.password = "Password does not meet requirements";
+      newErrors.password = t("register.passwordRequirementsNotMet");
     }
 
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = t("register.passwordsDoNotMatch");
     }
 
     setErrors(newErrors);
@@ -139,11 +141,11 @@ export const Register = () => {
 
       if (message === "EMAIL_EXISTS") {
         setErrors({
-          email: "An account with this email already exists. Log in instead?",
+          email: t("register.emailExists"),
         });
       } else {
         setErrors({
-          general: message || "Something went wrong. Please try again.",
+          general: message || t("register.genericError"),
         });
       }
     } finally {
@@ -177,8 +179,7 @@ export const Register = () => {
       await router.push("/job-search-with-ai");
     } catch {
       setErrors({
-        general:
-          "LinkedIn sign-up failed. Please try again or register with email.",
+        general: t("register.linkedinSignupFailed"),
       });
     } finally {
       setIsLinkingLinkedIn(false);
@@ -198,8 +199,8 @@ export const Register = () => {
   return (
     <Stack gap="md" style={{ maxWidth: 420, margin: "0 auto" }}>
       <TextInput
-        label="Email"
-        placeholder="you@example.com"
+        label={t("register.emailLabel")}
+        placeholder={t("register.emailPlaceholder")}
         value={email}
         onChange={(e) => setEmail(e.currentTarget.value)}
         onBlur={() => setTouched((t) => ({ ...t, email: true }))}
@@ -212,8 +213,8 @@ export const Register = () => {
       />
 
       <PasswordInput
-        label="Password"
-        placeholder="Enter password"
+        label={t("register.passwordLabel")}
+        placeholder={t("register.passwordPlaceholder")}
         value={password}
         onChange={(e) => setPassword(e.currentTarget.value)}
         onBlur={() => setTouched((t) => ({ ...t, password: true }))}
@@ -228,25 +229,25 @@ export const Register = () => {
       {/* Password checklist */}
       <Stack gap={2}>
         <Text size="sm" fw={500}>
-          Password must include:
+          {t("register.passwordMustInclude")}
         </Text>
 
         <Text size="sm" c={passwordChecks.length ? "green" : "red"}>
-          {passwordChecks.length ? "✓" : "✗"} At least 8 characters
+          {passwordChecks.length ? "✓" : "✗"} {t("register.minLength")}
         </Text>
 
         <Text size="sm" c={passwordChecks.uppercase ? "green" : "red"}>
-          {passwordChecks.uppercase ? "✓" : "✗"} One uppercase letter
+          {passwordChecks.uppercase ? "✓" : "✗"} {t("register.oneUppercase")}
         </Text>
 
         <Text size="sm" c={passwordChecks.number ? "green" : "red"}>
-          {passwordChecks.number ? "✓" : "✗"} One number
+          {passwordChecks.number ? "✓" : "✗"} {t("register.oneNumber")}
         </Text>
       </Stack>
 
       <PasswordInput
-        label="Confirm Password"
-        placeholder="Repeat password"
+        label={t("register.confirmPasswordLabel")}
+        placeholder={t("register.confirmPasswordPlaceholder")}
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.currentTarget.value)}
         onBlur={() => setTouched((t) => ({ ...t, confirmPassword: true }))}
@@ -277,10 +278,10 @@ export const Register = () => {
           },
         }}
       >
-        Confirm and Create Account
+        {t("register.submit")}
       </Button>
 
-      <Divider label="or" labelPosition="center" />
+      <Divider label={t("login.or")} labelPosition="center" />
 
       <Button
         radius="xl"
@@ -296,15 +297,15 @@ export const Register = () => {
         <Group justify="center" gap="xs" wrap="nowrap">
           <IconBrandLinkedin size={22} aria-hidden="true" />
           <Text component="span" fw={700} size="sm" c="#ffffff">
-            Create account with LinkedIn
+            {t("register.createWithLinkedin")}
           </Text>
         </Group>
       </Button>
 
       {/* Login link */}
       <Text size="sm" ta="center">
-        Already have an account?{" "}
-        <Anchor onClick={() => setShowLogin(true)}>Log in</Anchor>
+        {t("register.alreadyHaveAccount")}{" "}
+        <Anchor onClick={() => setShowLogin(true)}>{t("nav.login")}</Anchor>
       </Text>
       <Modal opened={showLogin} onClose={() => setShowLogin(false)}>
         <Login onClose={() => setShowLogin(false)} />
@@ -313,12 +314,11 @@ export const Register = () => {
         opened={Boolean(linkedinLinkToken)}
         onClose={handleCancelLinkedInLink}
         centered
-        title={<Text fw={700}>Link LinkedIn account</Text>}
+        title={<Text fw={700}>{t("register.linkLinkedinTitle")}</Text>}
       >
         <Stack gap="md">
           <Text>
-            An account with this email already exists. Do you want to link your
-            HRNext account to your LinkedIn account?
+            {t("register.linkLinkedinBody")}
           </Text>
           <Group justify="flex-end" gap="sm">
             <Button
@@ -327,14 +327,14 @@ export const Register = () => {
               onClick={handleDeclineLinkedInLink}
               disabled={isLinkingLinkedIn}
             >
-              No, I want to log in with HRNext
+              {t("register.declineLink")}
             </Button>
             <Button
               color={BROWN}
               loading={isLinkingLinkedIn}
               onClick={handleConfirmLinkedInLink}
             >
-              Yes
+              {t("register.confirmLink")}
             </Button>
           </Group>
         </Stack>
