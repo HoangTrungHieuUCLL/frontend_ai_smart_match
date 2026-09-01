@@ -33,6 +33,7 @@ import {
     IconTrash,
 } from "@tabler/icons-react";
 import { CV, Job } from "../types";
+import { useTranslation } from "../contexts/I18nContext";
 import ExecutiveViewService, {
     CvSortBy,
     ExecutiveViewDashboard,
@@ -56,11 +57,11 @@ type SortableHeaderProps = {
     onSort: (sortKey: CvSortBy) => void;
 };
 
-function getCandidateName(cv: CV) {
+function getCandidateName(cv: CV, unknownLabel: string) {
     const profile = cv.candidate_profile;
 
     if (!profile) {
-        return "Unknown candidate";
+        return unknownLabel;
     }
 
     return [profile.given_name, profile.middle_name, profile.family_name]
@@ -123,13 +124,13 @@ function SortableHeader({
     );
 }
 
-function SkillsBarChart({skills}: { skills: TopSkill[] }) {
+function SkillsBarChart({skills, emptyLabel}: { skills: TopSkill[]; emptyLabel: string }) {
     const maxCount = Math.max(...skills.map((skill) => skill.count), 1);
 
     if (skills.length === 0) {
         return (
             <Paper p="lg" radius="md" style={{border: "1px solid rgba(119, 67, 38, 0.16)"}}>
-                <Text c="dimmed">No skills have been extracted from uploaded CVs yet.</Text>
+                <Text c="dimmed">{emptyLabel}</Text>
             </Paper>
         );
     }
@@ -180,6 +181,7 @@ function SkillsBarChart({skills}: { skills: TopSkill[] }) {
 
 export default function ExecutiveViewPage() {
     const router = useRouter();
+    const { t } = useTranslation();
     const [dashboard, setDashboard] = useState<ExecutiveViewDashboard | null>(null);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [selectedCv, setSelectedCv] = useState<CV | null>(null);
@@ -250,11 +252,11 @@ export default function ExecutiveViewPage() {
                         requestError instanceof ExecutiveViewRequestError &&
                         requestError.status === 403
                     ) {
-                        setError("You are not authorized to view this page.");
+                        setError(t("executiveView.unauthorized"));
                         return;
                     }
 
-                    setError("Unable to load executive dashboard data.");
+                    setError(t("executiveView.loadError"));
                 }
             } finally {
                 if (!cancelled) {
@@ -278,7 +280,7 @@ export default function ExecutiveViewPage() {
             const response = await JobService.getAllJobs();
             setJobs(response);
         } catch {
-            setJobError("Unable to load job listings.");
+            setJobError(t("executiveView.jobLoadError"));
         } finally {
             setJobsLoading(false);
         }
@@ -328,15 +330,15 @@ export default function ExecutiveViewPage() {
                 <Table.Td>
                     <Text fw={600}>{cv.filename}</Text>
                 </Table.Td>
-                <Table.Td>{getCandidateName(cv)}</Table.Td>
+                <Table.Td>{getCandidateName(cv, t("executiveView.unknownCandidate"))}</Table.Td>
                 <Table.Td>
                     <Text lineClamp={2}>
-                        {cv.candidate_profile?.skills || "No skills extracted"}
+                        {cv.candidate_profile?.skills || t("executiveView.noSkillsShort")}
                     </Text>
                 </Table.Td>
                 <Table.Td>
                     <Group justify="flex-end">
-                        <Tooltip label="Delete CV">
+                        <Tooltip label={t("executiveView.deleteCvTooltip")}>
                             <ActionIcon
                                 variant="light"
                                 color="red"
@@ -358,7 +360,7 @@ export default function ExecutiveViewPage() {
                 </Table.Td>
             </Table.Tr>
         ));
-    }, [adminToken, cvs, deletingCvId]);
+    }, [adminToken, cvs, deletingCvId, t]);
 
     const jobRows = useMemo(() => {
         return jobs.map((job) => (
@@ -367,15 +369,15 @@ export default function ExecutiveViewPage() {
                     <Text fw={700}>{job.position}</Text>
                 </Table.Td>
                 <Table.Td>{job.company_name}</Table.Td>
-                <Table.Td>{job.location || "Not specified"}</Table.Td>
-                <Table.Td>{job.type || "Not specified"}</Table.Td>
+                <Table.Td>{job.location || t("common.notSpecified")}</Table.Td>
+                <Table.Td>{job.type || t("common.notSpecified")}</Table.Td>
                 <Table.Td>
-                    <Text lineClamp={2}>{job.requirements || "No requirements listed"}</Text>
+                    <Text lineClamp={2}>{job.requirements || t("executiveView.noRequirementsListed")}</Text>
                 </Table.Td>
-                <Table.Td>{job.salary || "Not specified"}</Table.Td>
+                <Table.Td>{job.salary || t("common.notSpecified")}</Table.Td>
                 <Table.Td>
                     <Group gap="xs" justify="flex-end" wrap="nowrap">
-                        <Tooltip label="Edit job">
+                        <Tooltip label={t("executiveView.editJobTooltip")}>
                             <ActionIcon
                                 variant="light"
                                 color="brown"
@@ -389,7 +391,7 @@ export default function ExecutiveViewPage() {
                                 <IconEdit size={18} />
                             </ActionIcon>
                         </Tooltip>
-                        <Tooltip label="Delete job">
+                        <Tooltip label={t("executiveView.deleteJobTooltip")}>
                             <ActionIcon
                                 variant="light"
                                 color="red"
@@ -404,7 +406,7 @@ export default function ExecutiveViewPage() {
                 </Table.Td>
             </Table.Tr>
         ));
-    }, [adminToken, jobs]);
+    }, [adminToken, jobs, t]);
 
     const handleAddJob = () => {
         setSelectedJob(null);
@@ -426,14 +428,14 @@ export default function ExecutiveViewPage() {
             await JobService.deleteJob(jobToDelete.id, adminToken);
             await fetchJobs();
             notifications.show({
-                message: "Job deleted successfully.",
+                message: t("executiveView.jobDeletedSuccess"),
                 autoClose: 3000,
             });
             setJobToDelete(null);
         } catch (error) {
             notifications.show({
                 color: "red",
-                message: error instanceof Error ? error.message : "Failed to delete job.",
+                message: error instanceof Error ? error.message : t("executiveView.jobDeleteFailed"),
                 autoClose: 3000,
             });
         } finally {
@@ -471,14 +473,14 @@ export default function ExecutiveViewPage() {
             }
 
             notifications.show({
-                message: "CV deleted successfully",
+                message: t("executiveView.cvDeletedSuccess"),
                 autoClose: 3000,
             });
             setCvToDelete(null);
         } catch (error) {
             notifications.show({
                 color: "red",
-                message: error instanceof Error ? error.message : "Failed to delete CV.",
+                message: error instanceof Error ? error.message : t("executiveView.cvDeleteFailed"),
                 autoClose: 3000,
             });
         } finally {
@@ -492,21 +494,21 @@ export default function ExecutiveViewPage() {
                 <Group justify="space-between" align="flex-start" mb="xl">
                     <Stack gap={4}>
                         <Title order={2} style={{color: "#623a26", fontWeight: 800}}>
-                            Executive View
+                            {t("executiveView.title")}
                         </Title>
                         <Text size="sm" c="dimmed">
-                            Dashboard overview of jobs, uploaded CVs, and extracted candidate skills.
+                            {t("executiveView.subtitle")}
                         </Text>
                     </Stack>
                     <Badge color="brown" variant="light" size="lg">
-                        Admin dashboard
+                        {t("executiveView.adminBadge")}
                     </Badge>
                 </Group>
 
                 {loading ? (
                     <Stack align="center" py={80}>
                         <Loader color={BROWN} size="lg" />
-                        <Text c="dimmed">Loading dashboard data...</Text>
+                        <Text c="dimmed">{t("executiveView.loadingDashboard")}</Text>
                     </Stack>
                 ) : error ? (
                     <Paper p="lg" radius="md" style={{border: "1px solid rgba(119, 67, 38, 0.16)"}}>
@@ -521,25 +523,25 @@ export default function ExecutiveViewPage() {
                                 gap: 16,
                             }}
                         >
-                            <KpiCard label="Total number of jobs" value={dashboard.total_jobs} />
-                            <KpiCard label="Total number of uploaded CVs" value={dashboard.total_cvs} />
+                            <KpiCard label={t("executiveView.totalJobs")} value={dashboard.total_jobs} />
+                            <KpiCard label={t("executiveView.totalCvs")} value={dashboard.total_cvs} />
                         </Box>
 
                         <Stack gap="sm">
                             <Title order={3} style={{color: "#623a26"}}>
-                                Top 15 Skills
+                                {t("executiveView.topSkills")}
                             </Title>
-                            <SkillsBarChart skills={dashboard.top_skills} />
+                            <SkillsBarChart skills={dashboard.top_skills} emptyLabel={t("executiveView.noSkillsExtracted")} />
                         </Stack>
 
                         <Stack gap="sm">
                             <Group justify="space-between" align="center">
                                 <Stack gap={2}>
                                     <Title order={3} style={{color: "#623a26"}}>
-                                        Job Management
+                                        {t("executiveView.jobManagement")}
                                     </Title>
                                     <Text size="sm" c="dimmed">
-                                        Create, edit, and remove listings shown to candidates.
+                                        {t("executiveView.jobManagementDesc")}
                                     </Text>
                                 </Stack>
                                 <Button
@@ -548,14 +550,14 @@ export default function ExecutiveViewPage() {
                                     disabled={!adminToken}
                                     onClick={handleAddJob}
                                 >
-                                    Add job
+                                    {t("executiveView.addJob")}
                                 </Button>
                             </Group>
 
                             {!adminToken && (
                                 <Paper p="md" radius="md" style={{border: "1px solid rgba(119, 67, 38, 0.16)"}}>
                                     <Text c="red" fw={600}>
-                                        Admin login is required to manage jobs.
+                                        {t("executiveView.adminLoginRequired")}
                                     </Text>
                                 </Paper>
                             )}
@@ -572,13 +574,13 @@ export default function ExecutiveViewPage() {
                                     <Table highlightOnHover verticalSpacing="md" miw={980}>
                                         <Table.Thead>
                                             <Table.Tr>
-                                                <Table.Th>Position</Table.Th>
-                                                <Table.Th>Company</Table.Th>
-                                                <Table.Th>Location</Table.Th>
-                                                <Table.Th>Type</Table.Th>
-                                                <Table.Th>Requirements</Table.Th>
-                                                <Table.Th>Salary</Table.Th>
-                                                <Table.Th style={{textAlign: "right"}}>Actions</Table.Th>
+                                                <Table.Th>{t("executiveView.colPosition")}</Table.Th>
+                                                <Table.Th>{t("executiveView.colCompany")}</Table.Th>
+                                                <Table.Th>{t("executiveView.colLocation")}</Table.Th>
+                                                <Table.Th>{t("executiveView.colType")}</Table.Th>
+                                                <Table.Th>{t("executiveView.colRequirements")}</Table.Th>
+                                                <Table.Th>{t("executiveView.colSalary")}</Table.Th>
+                                                <Table.Th style={{textAlign: "right"}}>{t("executiveView.colActions")}</Table.Th>
                                             </Table.Tr>
                                         </Table.Thead>
                                         <Table.Tbody>
@@ -587,7 +589,7 @@ export default function ExecutiveViewPage() {
                                                     <Table.Td colSpan={7}>
                                                         <Group justify="center" py="lg">
                                                             <Loader color={BROWN} size="sm" />
-                                                            <Text c="dimmed">Loading jobs...</Text>
+                                                            <Text c="dimmed">{t("executiveView.loadingJobs")}</Text>
                                                         </Group>
                                                     </Table.Td>
                                                 </Table.Tr>
@@ -603,7 +605,7 @@ export default function ExecutiveViewPage() {
                                                 <Table.Tr>
                                                     <Table.Td colSpan={7}>
                                                         <Text c="dimmed" ta="center" py="lg">
-                                                            No jobs found.
+                                                            {t("executiveView.noJobsFound")}
                                                         </Text>
                                                     </Table.Td>
                                                 </Table.Tr>
@@ -617,10 +619,10 @@ export default function ExecutiveViewPage() {
                         <Stack gap="sm">
                             <Group justify="space-between" align="flex-end">
                                 <Title order={3} style={{color: "#623a26"}}>
-                                    CV Extracted Data
+                                    {t("executiveView.cvExtractedData")}
                                 </Title>
                                 <Text size="sm" c="dimmed">
-                                    Click a row to view the full CV summary.
+                                    {t("executiveView.cvExtractedDataDesc")}
                                 </Text>
                             </Group>
 
@@ -628,8 +630,8 @@ export default function ExecutiveViewPage() {
                                 value={searchInput}
                                 onChange={(event) => setSearchInput(event.currentTarget.value)}
                                 leftSection={<IconSearch size={18} />}
-                                placeholder="Search by candidate name or skills"
-                                aria-label="Search candidates by name or skills"
+                                placeholder={t("executiveView.searchPlaceholder")}
+                                aria-label={t("executiveView.searchPlaceholder")}
                             />
 
                             <Paper
@@ -645,34 +647,34 @@ export default function ExecutiveViewPage() {
                                         <Table.Thead>
                                             <Table.Tr>
                                                 <SortableHeader
-                                                    label="ID"
+                                                    label={t("executiveView.colId")}
                                                     sortKey="id"
                                                     activeSortBy={sortBy}
                                                     sortDirection={sortDirection}
                                                     onSort={handleSort}
                                                 />
                                                 <SortableHeader
-                                                    label="CV file name"
+                                                    label={t("executiveView.colFilename")}
                                                     sortKey="filename"
                                                     activeSortBy={sortBy}
                                                     sortDirection={sortDirection}
                                                     onSort={handleSort}
                                                 />
                                                 <SortableHeader
-                                                    label="Candidate full name"
+                                                    label={t("executiveView.colCandidateName")}
                                                     sortKey="candidate_name"
                                                     activeSortBy={sortBy}
                                                     sortDirection={sortDirection}
                                                     onSort={handleSort}
                                                 />
                                                 <SortableHeader
-                                                    label="Skills"
+                                                    label={t("executiveView.colSkills")}
                                                     sortKey="skills"
                                                     activeSortBy={sortBy}
                                                     sortDirection={sortDirection}
                                                     onSort={handleSort}
                                                 />
-                                                <Table.Th style={{textAlign: "right"}}>Actions</Table.Th>
+                                                <Table.Th style={{textAlign: "right"}}>{t("executiveView.colActions")}</Table.Th>
                                             </Table.Tr>
                                         </Table.Thead>
                                         <Table.Tbody>
@@ -681,7 +683,7 @@ export default function ExecutiveViewPage() {
                                                     <Table.Td colSpan={5}>
                                                         <Group justify="center" py="lg">
                                                             <Loader color={BROWN} size="sm" />
-                                                            <Text c="dimmed">Loading candidates...</Text>
+                                                            <Text c="dimmed">{t("executiveView.loadingCandidates")}</Text>
                                                         </Group>
                                                     </Table.Td>
                                                 </Table.Tr>
@@ -690,8 +692,8 @@ export default function ExecutiveViewPage() {
                                                     <Table.Td colSpan={5}>
                                                         <Text c="dimmed" ta="center" py="lg">
                                                             {debouncedSearch.trim()
-                                                                ? "No candidates found"
-                                                                : "No uploaded CVs found."}
+                                                                ? t("executiveView.noCandidatesFound")
+                                                                : t("executiveView.noCvsFound")}
                                                         </Text>
                                                     </Table.Td>
                                                 </Table.Tr>
@@ -706,7 +708,11 @@ export default function ExecutiveViewPage() {
                                     style={{borderTop: "1px solid rgba(119, 67, 38, 0.12)"}}
                                 >
                                     <Text size="sm" c="dimmed">
-                                        Showing {firstShownCv}-{lastShownCv} of {totalMatchingCvs} candidates
+                                        {t("executiveView.showingRange", {
+                                            first: firstShownCv,
+                                            last: lastShownCv,
+                                            total: totalMatchingCvs,
+                                        })}
                                     </Text>
                                     <Group gap="sm">
                                         <Select
@@ -724,10 +730,10 @@ export default function ExecutiveViewPage() {
                                             disabled={page <= 1 || cvTableLoading}
                                             onClick={() => setPage((current) => Math.max(1, current - 1))}
                                         >
-                                            Previous
+                                            {t("common.previous")}
                                         </Button>
                                         <Text size="sm" fw={600} style={{minWidth: 84, textAlign: "center"}}>
-                                            Page {page} of {totalPages}
+                                            {t("executiveView.pageOf", { page, total: totalPages })}
                                         </Text>
                                         <Button
                                             variant="light"
@@ -736,7 +742,7 @@ export default function ExecutiveViewPage() {
                                             disabled={page >= totalPages || cvTableLoading}
                                             onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                                         >
-                                            Next
+                                            {t("common.next")}
                                         </Button>
                                     </Group>
                                 </Group>
@@ -749,7 +755,7 @@ export default function ExecutiveViewPage() {
             <Modal
                 opened={selectedCv !== null}
                 onClose={() => setSelectedCv(null)}
-                title={<Text fw={700} size="lg">CV Summary</Text>}
+                title={<Text fw={700} size="lg">{t("executiveView.cvSummaryTitle")}</Text>}
                 size="xl"
             >
                 {selectedCv && (
@@ -764,10 +770,10 @@ export default function ExecutiveViewPage() {
                                     disabled={!adminToken || deletingCvId !== null}
                                     onClick={() => setCvToDelete(selectedCv)}
                                 >
-                                    Delete
+                                    {t("common.delete")}
                                 </Button>
                                 <Button color={BROWN} onClick={() => setSelectedCv(null)}>
-                                    Close
+                                    {t("common.close")}
                                 </Button>
                             </Group>
                         }
@@ -789,12 +795,15 @@ export default function ExecutiveViewPage() {
                 opened={jobToDelete !== null}
                 onClose={() => setJobToDelete(null)}
                 centered
-                title={<Text fw={700} size="lg">Delete job</Text>}
+                title={<Text fw={700} size="lg">{t("executiveView.deleteJobTitle")}</Text>}
             >
                 <Stack>
                     <Text>
                         {jobToDelete
-                            ? `Are you sure you want to delete ${jobToDelete.position} at ${jobToDelete.company_name}? This action cannot be undone.`
+                            ? t("executiveView.confirmDeleteJob", {
+                                position: jobToDelete.position,
+                                company: jobToDelete.company_name,
+                            })
                             : ""}
                     </Text>
                     <Group justify="flex-end">
@@ -804,14 +813,14 @@ export default function ExecutiveViewPage() {
                             onClick={() => setJobToDelete(null)}
                             disabled={isDeleting}
                         >
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             color="red"
                             loading={isDeleting}
                             onClick={handleDeleteJob}
                         >
-                            Delete
+                            {t("common.delete")}
                         </Button>
                     </Group>
                 </Stack>
@@ -825,12 +834,15 @@ export default function ExecutiveViewPage() {
                     }
                 }}
                 centered
-                title={<Text fw={700} size="lg">Delete CV</Text>}
+                title={<Text fw={700} size="lg">{t("executiveView.deleteCvTitle")}</Text>}
             >
                 <Stack>
                     <Text>
                         {cvToDelete
-                            ? `Delete CV '${cvToDelete.filename}' and all associated data for ${getCandidateName(cvToDelete)}? This cannot be undone.`
+                            ? t("executiveView.confirmDeleteCv", {
+                                filename: cvToDelete.filename,
+                                name: getCandidateName(cvToDelete, t("executiveView.unknownCandidate")),
+                            })
                             : ""}
                     </Text>
                     <Group justify="flex-end">
@@ -840,14 +852,14 @@ export default function ExecutiveViewPage() {
                             onClick={() => setCvToDelete(null)}
                             disabled={deletingCvId !== null}
                         >
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             color="red"
                             loading={deletingCvId !== null}
                             onClick={handleDeleteCv}
                         >
-                            Delete
+                            {t("common.delete")}
                         </Button>
                     </Group>
                 </Stack>
