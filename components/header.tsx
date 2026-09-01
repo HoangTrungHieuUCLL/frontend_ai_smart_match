@@ -164,7 +164,7 @@ export const Header = () => {
                     }}
                     onClick={handleJobSearchClick}
                 >
-                    {t("nav.contactCta")}
+                    {t("nav.jobSearch")}
                 </Button>
 
                 {loggedInEmail ? (
