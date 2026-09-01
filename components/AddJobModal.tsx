@@ -4,6 +4,7 @@ import { notifications } from "@mantine/notifications";
 
 import JobService from "../services/JobService";
 import { Job, JobCreatePayload } from "../types";
+import { useTranslation } from "../contexts/I18nContext";
 
 const BROWN = "#774326";
 
@@ -81,6 +82,7 @@ export default function AddJobModal({
     onJobSaved,
     job,
 }: AddJobModalProps) {
+    const { t } = useTranslation();
     const [jobForm, setJobForm] = useState<JobFormState>(() => getJobForm(job));
     const [errors, setErrors] = useState<JobFormErrors>({});
     const [isSaving, setIsSaving] = useState(false);
@@ -111,11 +113,11 @@ export default function AddJobModal({
         const nextErrors: JobFormErrors = {};
 
         if (!jobForm.company_name.trim()) {
-            nextErrors.company_name = "Company name is required.";
+            nextErrors.company_name = t("addJob.companyNameRequired");
         }
 
         if (!jobForm.position.trim()) {
-            nextErrors.position = "Position is required.";
+            nextErrors.position = t("addJob.positionRequired");
         }
 
         setErrors(nextErrors);
@@ -156,7 +158,7 @@ export default function AddJobModal({
             await onJobSaved();
 
             notifications.show({
-                message: isEditing ? "Job updated successfully." : "Job created successfully.",
+                message: isEditing ? t("addJob.jobUpdatedSuccess") : t("addJob.jobCreatedSuccess"),
                 autoClose: 3000,
             });
 
@@ -168,8 +170,8 @@ export default function AddJobModal({
                     error instanceof Error
                         ? error.message
                         : isEditing
-                            ? "Failed to update job."
-                            : "Failed to create job.",
+                            ? t("addJob.jobUpdateFailed")
+                            : t("addJob.jobCreateFailed"),
                 autoClose: 3000,
             });
         } finally {
@@ -183,20 +185,20 @@ export default function AddJobModal({
             onClose={onClose}
             centered
             size="lg"
-            title={isEditing ? "Edit job" : "Add job"}
+            title={isEditing ? t("addJob.editTitle") : t("addJob.addTitle")}
         >
             <form onSubmit={handleSaveJob}>
                 <Stack gap="sm">
                     <Group grow align="flex-start">
                         <TextInput
-                            label="Position"
+                            label={t("addJob.position")}
                             value={jobForm.position}
                             onChange={(e) => updateJobForm("position", e.currentTarget.value)}
                             error={errors.position}
                             required
                         />
                         <TextInput
-                            label="Company name"
+                            label={t("addJob.companyName")}
                             value={jobForm.company_name}
                             onChange={(e) => updateJobForm("company_name", e.currentTarget.value)}
                             error={errors.company_name}
@@ -206,69 +208,69 @@ export default function AddJobModal({
 
                     <Group grow align="flex-start">
                         <TextInput
-                            label="Location"
+                            label={t("addJob.location")}
                             value={jobForm.location}
                             onChange={(e) => updateJobForm("location", e.currentTarget.value)}
-                            placeholder="Optional"
+                            placeholder={t("addJob.optional")}
                         />
                         <TextInput
-                            label="Job type"
+                            label={t("addJob.jobType")}
                             value={jobForm.type}
                             onChange={(e) => updateJobForm("type", e.currentTarget.value)}
-                            placeholder="Optional"
+                            placeholder={t("addJob.optional")}
                         />
                     </Group>
 
                     <TextInput
-                        label="Salary"
+                        label={t("addJob.salary")}
                         value={jobForm.salary}
                         onChange={(e) => updateJobForm("salary", e.currentTarget.value)}
-                        placeholder="Optional"
+                        placeholder={t("addJob.optional")}
                     />
 
                     <Textarea
-                        label="Overview"
+                        label={t("addJob.overview")}
                         value={jobForm.overview}
                         onChange={(e) => updateJobForm("overview", e.currentTarget.value)}
                         minRows={3}
                         autosize
-                        placeholder="Optional"
+                        placeholder={t("addJob.optional")}
                     />
 
                     <Textarea
-                        label="Responsibilities"
+                        label={t("addJob.responsibilities")}
                         value={jobForm.responsibilities}
                         onChange={(e) => updateJobForm("responsibilities", e.currentTarget.value)}
                         minRows={3}
                         autosize
-                        placeholder="Optional"
+                        placeholder={t("addJob.optional")}
                     />
 
                     <Textarea
-                        label="Requirements"
+                        label={t("addJob.requirements")}
                         value={jobForm.requirements}
                         onChange={(e) => updateJobForm("requirements", e.currentTarget.value)}
                         minRows={3}
                         autosize
-                        placeholder="Optional"
+                        placeholder={t("addJob.optional")}
                     />
 
                     <Textarea
-                        label="Benefits/offers"
+                        label={t("addJob.benefits")}
                         value={jobForm.offers}
                         onChange={(e) => updateJobForm("offers", e.currentTarget.value)}
                         minRows={3}
                         autosize
-                        placeholder="Optional"
+                        placeholder={t("addJob.optional")}
                     />
 
                     <Textarea
-                        label="Notes"
+                        label={t("addJob.notes")}
                         value={jobForm.notes}
                         onChange={(e) => updateJobForm("notes", e.currentTarget.value)}
                         minRows={2}
                         autosize
-                        placeholder="Optional"
+                        placeholder={t("addJob.optional")}
                     />
 
                     <Group justify="flex-end" mt="sm">
@@ -278,7 +280,7 @@ export default function AddJobModal({
                             color={BROWN}
                             onClick={onClose}
                         >
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
 
                         <Button
@@ -286,7 +288,7 @@ export default function AddJobModal({
                             style={{ backgroundColor: BROWN }}
                             loading={isSaving}
                         >
-                            {isEditing ? "Save changes" : "Create job"}
+                            {isEditing ? t("addJob.saveChanges") : t("addJob.createJob")}
                         </Button>
                     </Group>
                 </Stack>

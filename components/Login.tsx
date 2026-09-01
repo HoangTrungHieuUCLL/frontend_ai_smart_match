@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AuthService from "../services/AuthService";
 import { ensureAccountCreatedAt } from "../utils/profileStorage";
+import { useTranslation } from "../contexts/I18nContext";
 
 const LINKEDIN_BLUE = "#0A66C2";
 
@@ -24,6 +25,7 @@ export const Login = ({
   onClose?: () => void;
 }) => {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,18 +39,13 @@ export const Login = ({
     const linkedinLogin = params.get("linkedinLogin");
 
     if (linkedinLogin === "not_found") {
-      setError(
-        "No account is linked to this LinkedIn profile. Please create an account first, or sign in another way.",
-      );
+      setError(t("login.linkedinNotFound"));
     } else if (linkedinLogin === "missing_email") {
-      setError(
-        "LinkedIn did not return an email address. Please sign in another way.",
-      );
+      setError(t("login.linkedinMissingEmail"));
     } else if (linkedinLogin === "failed") {
-      setError(
-        "LinkedIn login failed. Please try again or sign in another way.",
-      );
+      setError(t("login.linkedinFailed"));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getRoleFromToken = (token: string) => {
@@ -81,7 +78,7 @@ export const Login = ({
       );
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Invalid email or password",
+        err instanceof Error ? err.message : t("login.invalidCredentials"),
       );
     } finally {
       setIsLoading(false);
@@ -95,7 +92,7 @@ export const Login = ({
   return (
     <Stack gap="md">
       <TextInput
-        placeholder="email"
+        placeholder={t("login.emailPlaceholder")}
         value={email}
         onChange={(e) => setEmail(e.currentTarget.value)}
         radius="xl"
@@ -108,7 +105,7 @@ export const Login = ({
       />
 
       <PasswordInput
-        placeholder="password"
+        placeholder={t("login.passwordPlaceholder")}
         value={password}
         onChange={(e) => setPassword(e.currentTarget.value)}
         radius="xl"
@@ -139,9 +136,9 @@ export const Login = ({
           },
         }}
       >
-        Log in
+        {t("login.submit")}
       </Button>
-      <Divider label="or" labelPosition="center" />
+      <Divider label={t("login.or")} labelPosition="center" />
       <Button
         radius="xl"
         type="button"
@@ -157,12 +154,12 @@ export const Login = ({
         <Group justify="center" gap="xs" wrap="nowrap">
           <IconBrandLinkedin size={22} aria-hidden="true" />
           <Text component="span" fw={700} size="sm" c="#ffffff">
-            Continue with LinkedIn
+            {t("login.continueWithLinkedin")}
           </Text>
         </Group>
       </Button>
       <Text size="sm" ta="center" mt="md" c="black">
-        Don't have an account?{" "}
+        {t("login.noAccount")}{" "}
         <Anchor
           component="button"
           onClick={() => {
@@ -175,7 +172,7 @@ export const Login = ({
             cursor: "pointer",
           }}
         >
-          Create one
+          {t("login.createOne")}
         </Anchor>
       </Text>
     </Stack>
