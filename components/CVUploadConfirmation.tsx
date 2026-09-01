@@ -16,6 +16,7 @@ import { IconPlus, IconTrash } from "@tabler/icons-react";
 import CvService, { CvConfirmReturn } from "../services/CvService";
 import { CV, Profile } from "../types";
 import { saveStoredProfileCv } from "../utils/profileStorage";
+import { useTranslation } from "../contexts/I18nContext";
 
 const BROWN = "#774326";
 
@@ -70,6 +71,7 @@ export function CVSummaryDetails({
                                      onCollectionAdd,
                                      onCollectionDelete,
                                  }: CVSummaryDetailsProps) {
+    const { t } = useTranslation();
     const profile = profileOverride ?? cv?.candidate_profile;
 
     const sectionStyle = {
@@ -146,52 +148,52 @@ export function CVSummaryDetails({
     const collectionConfigs = [
         {
             key: "work_experiences" as const,
-            title: "Work Experience",
-            empty: "No work experience extracted yet.",
+            title: t("cvSummary.workExperience"),
+            empty: t("cvSummary.noWorkExperience"),
             fields: [
-                ["job_title", "Job Title"],
-                ["company_name", "Company"],
-                ["start_date", "Start Date"],
-                ["end_date", "End Date"],
+                ["job_title", t("cvSummary.jobTitle")],
+                ["company_name", t("cvSummary.company")],
+                ["start_date", t("cvSummary.startDate")],
+                ["end_date", t("cvSummary.endDate")],
             ],
         },
         {
             key: "educations" as const,
-            title: "Education",
-            empty: "No education extracted yet.",
+            title: t("cvSummary.education"),
+            empty: t("cvSummary.noEducation"),
             fields: [
-                ["institution", "Institution"],
-                ["degree", "Degree"],
-                ["field_of_study", "Field of Study"],
-                ["start_date", "Start Date"],
-                ["end_date", "End Date"],
+                ["institution", t("cvSummary.institution")],
+                ["degree", t("cvSummary.degree")],
+                ["field_of_study", t("cvSummary.fieldOfStudy")],
+                ["start_date", t("cvSummary.startDate")],
+                ["end_date", t("cvSummary.endDate")],
             ],
         },
         {
             key: "projects" as const,
-            title: "Projects",
-            empty: "No projects extracted yet.",
+            title: t("cvSummary.projects"),
+            empty: t("cvSummary.noProjects"),
             fields: [
-                ["project_name", "Project Name"],
-                ["description", "Description"],
+                ["project_name", t("cvSummary.projectName")],
+                ["description", t("cvSummary.description")],
             ],
         },
         {
             key: "languages" as const,
-            title: "Languages",
-            empty: "No languages extracted yet.",
+            title: t("cvSummary.languages"),
+            empty: t("cvSummary.noLanguages"),
             fields: [
-                ["language_name", "Language"],
-                ["proficiency_level", "Proficiency"],
+                ["language_name", t("cvSummary.language")],
+                ["proficiency_level", t("cvSummary.proficiency")],
             ],
         },
         {
             key: "certifications" as const,
-            title: "Certifications",
-            empty: "No certifications extracted yet.",
+            title: t("cvSummary.certifications"),
+            empty: t("cvSummary.noCertifications"),
             fields: [
-                ["certification_name", "Certification"],
-                ["issue_date", "Issue Date"],
+                ["certification_name", t("cvSummary.certification")],
+                ["issue_date", t("cvSummary.issueDate")],
             ],
         },
     ];
@@ -247,7 +249,7 @@ export function CVSummaryDetails({
                                                             setPendingDelete(null);
                                                         }}
                                                     >
-                                                        Confirm delete
+                                                        {t("cvSummary.confirmDelete")}
                                                     </Button>
                                                     <Button
                                                         size="xs"
@@ -255,14 +257,14 @@ export function CVSummaryDetails({
                                                         color="gray"
                                                         onClick={() => setPendingDelete(null)}
                                                     >
-                                                        Cancel
+                                                        {t("common.cancel")}
                                                     </Button>
                                                 </Group>
                                             ) : (
                                                 <ActionIcon
                                                     variant="subtle"
                                                     color="red"
-                                                    aria-label={`Delete ${config.title} ${index + 1}`}
+                                                    aria-label={t("cvSummary.deleteItemAria", { title: config.title, index: index + 1 })}
                                                     onClick={() =>
                                                         setPendingDelete({
                                                             collection: config.key,
@@ -306,7 +308,7 @@ export function CVSummaryDetails({
                             color={BROWN}
                             onClick={() => onCollectionAdd?.(config.key)}
                         >
-                            Add {config.title}
+                            {t("cvSummary.addItem", { title: config.title })}
                         </Button>
                     )}
                 </Stack>
@@ -325,12 +327,12 @@ export function CVSummaryDetails({
             <Paper p="md" radius="md" style={sectionStyle}>
                 <Stack gap="md">
                     <Text fw={700} c={BROWN}>
-                        Basic Information
+                        {t("cvSummary.basicInformation")}
                     </Text>
 
                     <Group grow>
                         <TextInput
-                            label="Given Name"
+                            label={t("cvSummary.givenName")}
                             value={profile?.given_name ?? ""}
                             readOnly={!isEditing}
                             onChange={(event) =>
@@ -341,7 +343,7 @@ export function CVSummaryDetails({
                             }
                         />
                         <TextInput
-                            label="Middle Name"
+                            label={t("cvSummary.middleName")}
                             value={profile?.middle_name ?? ""}
                             readOnly={!isEditing}
                             onChange={(event) =>
@@ -352,7 +354,7 @@ export function CVSummaryDetails({
                             }
                         />
                         <TextInput
-                            label="Family Name"
+                            label={t("cvSummary.familyName")}
                             value={profile?.family_name ?? ""}
                             readOnly={!isEditing}
                             onChange={(event) =>
@@ -366,7 +368,7 @@ export function CVSummaryDetails({
 
                     <Group grow>
                         <TextInput
-                            label="Current Title"
+                            label={t("cvSummary.currentTitle")}
                             value={profile?.current_title ?? ""}
                             readOnly={!isEditing}
                             onChange={(event) =>
@@ -377,7 +379,7 @@ export function CVSummaryDetails({
                             }
                         />
                         <TextInput
-                            label="Email"
+                            label={t("cvSummary.email")}
                             value={profile?.email ?? ""}
                             readOnly={!isEditing}
                             onChange={(event) =>
@@ -391,7 +393,7 @@ export function CVSummaryDetails({
 
                     <Group grow>
                         <TextInput
-                            label="Phone"
+                            label={t("cvSummary.phone")}
                             value={profile?.phone ?? ""}
                             readOnly={!isEditing}
                             onChange={(event) =>
@@ -402,7 +404,7 @@ export function CVSummaryDetails({
                             }
                         />
                         <TextInput
-                            label="Location"
+                            label={t("cvSummary.location")}
                             value={profile?.location ?? ""}
                             readOnly={!isEditing}
                             onChange={(event) =>
@@ -415,7 +417,7 @@ export function CVSummaryDetails({
                     </Group>
 
                     <Textarea
-                        label="Bio"
+                        label={t("cvSummary.bio")}
                         value={profile?.bio ?? ""}
                         autosize
                         readOnly={!isEditing}
@@ -427,8 +429,8 @@ export function CVSummaryDetails({
                         }
                     />
 
-                    <PillsInput label="Skills"
-                                description="Add skills by writing them and pressing Enter or Tab in edit mode"
+                    <PillsInput label={t("cvSummary.skills")}
+                                description={t("cvSummary.skillsHint")}
                     >
                         <Pill.Group>
                             {skills.map((skill) => {
@@ -468,7 +470,7 @@ export function CVSummaryDetails({
                             {isEditing && (
                                 <PillsInput.Field
                                     value={skillInput}
-                                    placeholder="Add a skill..."
+                                    placeholder={t("profile.addSkillPlaceholder")}
                                     onChange={(event) =>
                                         setSkillInput(
                                             event.currentTarget.value,
@@ -514,6 +516,7 @@ export default function CVUploadConfirmation({
                                                  onClose,
                                                  profileId,
                                              }: Props) {
+    const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -565,7 +568,7 @@ export default function CVUploadConfirmation({
             await onSubmit();
         } catch (error) {
             console.error("Save CV changes error:", error);
-            alert("Could not save CV changes.");
+            alert(t("cvSummary.saveChangesFailed"));
         } finally {
             setIsSaving(false);
         }
@@ -697,7 +700,7 @@ export default function CVUploadConfirmation({
                         onClick={() => setIsEditing(true)}
                         disabled={isSubmitting}
                     >
-                        Edit
+                        {t("common.edit")}
                     </Button>
                 )
             }
@@ -709,7 +712,7 @@ export default function CVUploadConfirmation({
                     disabled={isSaving || isSubmitting}
                     onClick={isEditing ? onSaveChanges : onSubmit}
                 >
-                    {isEditing ? "Save changes" : "Everything looks good!"}
+                    {isEditing ? t("addJob.saveChanges") : t("cvSummary.everythingLooksGood")}
                 </Button>
             }
         />
