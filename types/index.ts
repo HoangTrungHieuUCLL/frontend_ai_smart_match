@@ -1,4 +1,22 @@
-export interface Job {
+export interface JobTaxonomyFields {
+    category_l1?: string | null;
+    category_l2?: string | null;
+    category_l3?: string | null;
+    experience_level?: string | null;
+    seniority?: string | null;
+    employment_type?: string | null;
+    work_arrangement?: string | null;
+    saturday_work?: string | null;
+    work_schedule?: string | null;
+    salary_min?: number | null;
+    salary_max?: number | null;
+    salary_unit?: string | null;
+    salary_negotiable?: boolean | null;
+    company_industry?: string | null;
+    is_featured_employer?: boolean | null;
+}
+
+export interface Job extends JobTaxonomyFields {
     id: number;
     company_name: string;
     position: string;
@@ -15,7 +33,7 @@ export interface Job {
     compatibility_score: number | null;
 }
 
-export interface JobCreatePayload {
+export interface JobCreatePayload extends JobTaxonomyFields {
     company_name: string;
     position: string;
     date?: string | null;
@@ -28,6 +46,12 @@ export interface JobCreatePayload {
     salary: string | null;
     notes: string | null;
     requirements_simplified?: string | null;
+}
+
+export interface JobFilterOptions {
+    category_l2: string[];
+    category_l3: string[];
+    location: string[];
 }
 
 export interface CV {

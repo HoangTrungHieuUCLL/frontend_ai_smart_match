@@ -13,8 +13,9 @@ import {
   TextInput,
 } from "@mantine/core";
 import JobListing from "../components/JobListing";
-import { Job } from "../types";
+import { Job, JobFilterOptions } from "../types";
 import JobService from "../services/JobService";
+import JobFilterPanel, { EMPTY_FILTERS, hasActiveFilters, JobFilters, matchesJobFilters } from "../components/JobFilterPanel";
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
@@ -79,6 +80,8 @@ export default function JobSearchWithAIPage() {
   const [authVersion, setAuthVersion] = useState(0);
 
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<JobFilters>(EMPTY_FILTERS);
+  const [filterOptions, setFilterOptions] = useState<JobFilterOptions>({ category_l2: [], category_l3: [], location: [] });
   const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
   const [linkedinImportError, setLinkedinImportError] = useState<string | undefined>();
   const [sortOption, setSortOption] = useState<SortOption>("newest_first");
@@ -150,6 +153,9 @@ export default function JobSearchWithAIPage() {
 
   useEffect(() => {
     fetchJobs();
+    JobService.getFilterOptions()
+      .then(setFilterOptions)
+      .catch((error) => console.error("Failed to fetch filter options", error));
   }, []);
 
   useEffect(() => {
@@ -173,7 +179,7 @@ export default function JobSearchWithAIPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, showSavedOnly, sortOption]);
+  }, [search, showSavedOnly, sortOption, filters]);
 
   useEffect(() => {
     if (!showSavedOnly) return;
@@ -234,13 +240,13 @@ export default function JobSearchWithAIPage() {
 
       const matchesSaved = showSavedOnly ? savedJobIds.includes(job.id) : true;
 
-      return matchesSearch && matchesSaved;
+      return matchesSearch && matchesSaved && matchesJobFilters(job, filters);
     });
-  }, [sortedJobs, search, showSavedOnly, savedJobIds]);
+  }, [sortedJobs, search, showSavedOnly, savedJobIds, filters]);
 
   const pageCount = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
 
-  const hasSearch = search.trim().length > 0;
+  const hasSearch = search.trim().length > 0 || hasActiveFilters(filters);
   const noJobsInDatabase = jobs.length === 0;
   const showEmptyState = !isLoading && filteredJobs.length === 0;
 
@@ -282,11 +288,12 @@ export default function JobSearchWithAIPage() {
       description: "",
       showClearFilters: true,
     };
-  }, [noJobsInDatabase, hasSearch, showSavedOnly, t]);
+  }, [noJobsInDatabase, hasSearch, showSavedOnly, filters, t]);
 
   const clearFilters = () => {
     setSearch("");
     setShowSavedOnly(false);
+    setFilters(EMPTY_FILTERS);
     setPage(1);
   };
 
@@ -305,7 +312,7 @@ export default function JobSearchWithAIPage() {
 
     return (
         <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
-            <Container size="1100px">
+            <Container size="1360px">
                 <Group justify="flex-end" gap="xs" align="center" style={{ marginBottom: 24 }}>
                     {!isAdmin && (
                         <CVUploadButton
@@ -426,88 +433,105 @@ export default function JobSearchWithAIPage() {
                     />
                 </Group>
 
-                {showEmptyState ? (
+                <Box style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
                     <Box
                         style={{
-                            minHeight: 200,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            width: 280,
+                            flexShrink: 0,
+                            backgroundColor: "#fff",
+                            borderRadius: 16,
+                            padding: 16,
+                            border: `1px solid rgba(119, 67, 38, 0.18)`,
                         }}
                     >
-                        <Stack align="center" gap="sm">
-                            <Text fw={700} size="lg">
-                                {emptyStateContent.title}
-                            </Text>
-
-                            <Text
-                                c="dimmed"
-                                ta="center"
-                                maw={420}
-                            >
-                                {emptyStateContent.description}
-                            </Text>
-
-                            {emptyStateContent.showClearFilters && (
-                                <Button
-                                    radius="xl"
-                                    variant="outline"
-                                    style={{
-                                        borderColor: BROWN,
-                                        color: BROWN,
-                                    }}
-                                    onClick={clearFilters}
-                                >
-                                    {t("jobSearch.clearFilters")}
-                                </Button>
-                            )}
-                        </Stack>
+                        <JobFilterPanel filters={filters} onChange={setFilters} filterOptions={filterOptions} />
                     </Box>
-                ) : (
-                    <Stack gap="md">
-                        {isLoading ? (
-                            Array.from({ length: 5 }).map((_, i) => (
-                                <JobListingSkeleton key={i} />
-                            ))
+
+                    <Box style={{ flex: 1, minWidth: 0 }}>
+                        {showEmptyState ? (
+                            <Box
+                                style={{
+                                    minHeight: 200,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                }}
+                            >
+                                <Stack align="center" gap="sm">
+                                    <Text fw={700} size="lg">
+                                        {emptyStateContent.title}
+                                    </Text>
+
+                                    <Text
+                                        c="dimmed"
+                                        ta="center"
+                                        maw={420}
+                                    >
+                                        {emptyStateContent.description}
+                                    </Text>
+
+                                    {emptyStateContent.showClearFilters && (
+                                        <Button
+                                            radius="xl"
+                                            variant="outline"
+                                            style={{
+                                                borderColor: BROWN,
+                                                color: BROWN,
+                                            }}
+                                            onClick={clearFilters}
+                                        >
+                                            {t("jobSearch.clearFilters")}
+                                        </Button>
+                                    )}
+                                </Stack>
+                            </Box>
                         ) : (
-                            currentJobs.map((job) => (
-                                <JobListing
-                                    key={job.id}
-                                    job={job}
-                                    onShare={handleShare}
-                                    isSelected={selectedJobs.has(job.id)}
-                                    onToggleSelect={compareMode ? () => handleToggleSelect(job.id) : undefined}
-                                    selectDisabled={selectedJobs.size >= MAX_COMPARE}
-                                    showSelectControl={compareMode}
-                                    hideSaveAction={isAdmin}
-                                />
-                            ))
+                            <Stack gap="md">
+                                {isLoading ? (
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <JobListingSkeleton key={i} />
+                                    ))
+                                ) : (
+                                    currentJobs.map((job) => (
+                                        <JobListing
+                                            key={job.id}
+                                            job={job}
+                                            onShare={handleShare}
+                                            isSelected={selectedJobs.has(job.id)}
+                                            onToggleSelect={compareMode ? () => handleToggleSelect(job.id) : undefined}
+                                            selectDisabled={selectedJobs.size >= MAX_COMPARE}
+                                            showSelectControl={compareMode}
+                                            hideSaveAction={isAdmin}
+                                        />
+                                    ))
+                                )}
+                            </Stack>
                         )}
-                    </Stack>
-                )}
 
-                <Group justify="center" gap="xs" mt={24}>
-                    {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
-                        <Button
-                            key={pageNumber}
-                            radius="xl"
-                            size="sm"
-                            variant={page === pageNumber ? "filled" : "outline"}
-                            style={
-                                page === pageNumber
-                                    ? { backgroundColor: BROWN, borderColor: BROWN }
-                                    : { borderColor: BROWN, color: BROWN }
-                            }
-                            onClick={() => setPage(pageNumber)}
-                        >
-                            {pageNumber}
-                        </Button>
-                    ))}
-                </Group>
+                        <Group justify="center" gap="xs" mt={24}>
+                            {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
+                                <Button
+                                    key={pageNumber}
+                                    radius="xl"
+                                    size="sm"
+                                    variant={page === pageNumber ? "filled" : "outline"}
+                                    style={
+                                        page === pageNumber
+                                            ? { backgroundColor: BROWN, borderColor: BROWN }
+                                            : { borderColor: BROWN, color: BROWN }
+                                    }
+                                    onClick={() => setPage(pageNumber)}
+                                >
+                                    {pageNumber}
+                                </Button>
+                            ))}
+                        </Group>
 
-                <Text size="xs" c="dimmed" mt={12}>
-                    {t("jobSearch.pageStatus", { page, pageCount, jobsPerPage: JOBS_PER_PAGE })}
-                </Text>
+                        <Text size="xs" c="dimmed" mt={12}>
+                            {t("jobSearch.pageStatus", { page, pageCount, jobsPerPage: JOBS_PER_PAGE })}
+                        </Text>
+                    </Box>
+                </Box>
             </Container>
 
 

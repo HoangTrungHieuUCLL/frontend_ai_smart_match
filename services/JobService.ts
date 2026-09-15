@@ -1,9 +1,20 @@
-import {Job, JobCreatePayload} from "../types";
+import {Job, JobCreatePayload, JobFilterOptions} from "../types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const getAllJobs = async (): Promise<Job[]> => {
   const response = await fetch(`${API_URL}/jobs`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return await response.json();
+};
+
+const getFilterOptions = async (): Promise<JobFilterOptions> => {
+  const response = await fetch(`${API_URL}/jobs/filter-options`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -79,6 +90,7 @@ const deleteJob = async (id: number, token: string): Promise<Job> => {
 
 const JobService = {
   getAllJobs,
+  getFilterOptions,
   getJobById,
   createJob,
   updateJob,
