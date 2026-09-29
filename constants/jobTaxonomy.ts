@@ -143,6 +143,3 @@ export const COMPANY_INDUSTRY = toEntries([
     ["energy_environment", "Năng lượng/Môi trường", "Energy/Environment"],
     ["other", "Khác", "Other"],
 ]);
-
-export const labelFor = (entries: TaxonomyEntry[], value: string | null | undefined, lang: "VN" | "EN"): string | undefined =>
-    entries.find((e) => e.value === value)?.[lang === "VN" ? "label_vn" : "label_en"];

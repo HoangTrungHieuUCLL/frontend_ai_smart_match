@@ -25,18 +25,7 @@ jest.mock("../../utils/savedJobs", () => {
     const readSavedJobs = () => JSON.parse(localStorage.getItem("savedJobs") || "[]");
 
     return {
-        getSavedJobs: jest.fn(readSavedJobs),
         getGuestSavedJobs: jest.fn(readSavedJobs),
-        saveJob: jest.fn((jobId: number) => {
-            const saved = readSavedJobs();
-            if (!saved.includes(jobId)) {
-                localStorage.setItem("savedJobs", JSON.stringify([...saved, jobId]));
-            }
-        }),
-        removeJob: jest.fn((jobId: number) => {
-            const saved = readSavedJobs();
-            localStorage.setItem("savedJobs", JSON.stringify(saved.filter((id: number) => id !== jobId)));
-        }),
         addGuestSavedJob: jest.fn((jobId: number) => {
             const saved = readSavedJobs();
             if (!saved.includes(jobId)) {
@@ -47,7 +36,6 @@ jest.mock("../../utils/savedJobs", () => {
             const saved = readSavedJobs();
             localStorage.setItem("savedJobs", JSON.stringify(saved.filter((id: number) => id !== jobId)));
         }),
-        isJobSaved: jest.fn((jobId: number) => readSavedJobs().includes(jobId)),
     };
 });
 

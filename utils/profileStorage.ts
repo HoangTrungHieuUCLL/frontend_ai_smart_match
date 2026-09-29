@@ -60,12 +60,6 @@ export const saveStoredProfileCv = (cv: CV, email?: string | null) => {
     sessionStorage.setItem(getProfileCvKey(email || getCvEmail(cv)), JSON.stringify(cv));
 };
 
-export const clearStoredProfileCv = (email?: string | null) => {
-    if (typeof window === "undefined") return;
-
-    sessionStorage.removeItem(getProfileCvKey(email));
-};
-
 export const getAccountCreatedAt = (email?: string | null) => {
     if (typeof window === "undefined") return null;
 
