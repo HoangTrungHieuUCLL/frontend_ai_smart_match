@@ -6,6 +6,7 @@ import { MantineProvider } from "@mantine/core";
 import CVUploadConfirmation from "../../components/CVUploadConfirmation";
 import CvService from "../../services/CvService";
 import type { CV } from "../../types";
+import { I18nProvider } from "../../contexts/I18nContext";
 
 jest.mock("../../services/CvService", () => ({
     __esModule: true,
@@ -70,7 +71,9 @@ const cv: CV = {
 function renderConfirmation(onClose = jest.fn()) {
     render(
         <MantineProvider>
-            <CVUploadConfirmation cv={cv} onClose={onClose} profileId={202} />
+            <I18nProvider>
+                <CVUploadConfirmation cv={cv} onClose={onClose} profileId={202} />
+            </I18nProvider>
         </MantineProvider>,
     );
 
@@ -101,7 +104,8 @@ describe("CVUploadConfirmation", () => {
         expect(screen.getByDisplayValue("Frontend Engineer")).toBeInTheDocument();
         expect(screen.getByDisplayValue("alex@example.com")).toBeInTheDocument();
         expect(screen.getByText("React")).toBeInTheDocument();
-        expect(screen.getByDisplayValue("Frontend Developer")).toBeInTheDocument();
+        // Collections (work experience etc.) are hidden in the upload confirmation.
+        expect(screen.queryByDisplayValue("Frontend Developer")).not.toBeInTheDocument();
     });
 
     it("enables input fields after clicking Edit", async () => {

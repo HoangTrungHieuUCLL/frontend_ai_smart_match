@@ -5,6 +5,7 @@ import { MantineProvider } from "@mantine/core";
 
 import Login from "../../components/Login";
 import AuthService from "../../services/AuthService";
+import { I18nProvider } from "../../contexts/I18nContext";
 
 const mockPush = jest.fn();
 
@@ -26,7 +27,9 @@ const userToken = `${Buffer.from(JSON.stringify({ role: "user" })).toString("bas
 function renderLogin(props = {}) {
     render(
         <MantineProvider>
-            <Login {...props} />
+            <I18nProvider>
+                <Login {...props} />
+            </I18nProvider>
         </MantineProvider>,
     );
 }

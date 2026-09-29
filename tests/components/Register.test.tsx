@@ -4,6 +4,7 @@ import { MantineProvider } from "@mantine/core";
 
 import Register from "../../pages/register";
 import AuthService from "../../services/AuthService";
+import { I18nProvider } from "../../contexts/I18nContext";
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
@@ -34,7 +35,9 @@ jest.mock("../../services/AuthService", () => ({
 function renderRegister() {
     render(
         <MantineProvider>
-            <Register />
+            <I18nProvider>
+                <Register />
+            </I18nProvider>
         </MantineProvider>,
     );
 }
