@@ -18,7 +18,7 @@ export type ParsedCvResponse = {
     cv_id: number;
     profile_id: number;
     cv_file_name?: string;
-    top_10_compatibility_scores?: CvConfirmReturn[];
+    compatibility_scores?: CvConfirmReturn[];
     ai_result: {
         candidate_profile?: {
             given_name?: string | null;

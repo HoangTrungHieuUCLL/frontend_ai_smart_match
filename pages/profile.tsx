@@ -245,8 +245,8 @@ export default function ProfilePage() {
                 }
 
                 const body = await response.json();
-                if (Array.isArray(body?.top_10_compatibility_scores)) {
-                    saveScoresToStorage(body.top_10_compatibility_scores);
+                if (Array.isArray(body?.compatibility_scores)) {
+                    saveScoresToStorage(body.compatibility_scores);
                 }
             }
 
