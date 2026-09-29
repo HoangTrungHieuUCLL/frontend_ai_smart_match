@@ -1,4 +1,4 @@
-// Mirrors backend_ai_smart_match_team19/app/constants/job_taxonomy.py — keep
+// Mirrors backend_ai_smart_match/app/constants/job_taxonomy.py — keep
 // slugs identical, this is the single source of truth for filter labels.
 // Each entry: [slug, Vietnamese label, English label].
 
