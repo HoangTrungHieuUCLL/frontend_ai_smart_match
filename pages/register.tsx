@@ -1,27 +1,19 @@
 import {
   Anchor,
   Button,
-  Divider,
-  Group,
   Modal,
   PasswordInput,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
-import { IconBrandLinkedin } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import AuthService from "../services/AuthService";
 import Login from "../components/Login";
-import {
-  ensureAccountCreatedAt,
-  saveLinkedInAccountMetadata,
-} from "../utils/profileStorage";
+import { ensureAccountCreatedAt } from "../utils/profileStorage";
 import { useTranslation } from "../contexts/I18nContext";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const LINKEDIN_BLUE = "#0A66C2";
-const BROWN = "#774326";
 
 const hasMinLength = (pw: string) => pw.length >= 8;
 const hasUppercase = (pw: string) => /[A-Z]/.test(pw);
@@ -35,8 +27,6 @@ export const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showLogin, setShowLogin] = useState(false);
-  const [linkedinLinkToken, setLinkedinLinkToken] = useState("");
-  const [isLinkingLinkedIn, setIsLinkingLinkedIn] = useState(false);
 
   const [errors, setErrors] = useState<{
     email?: string;
@@ -59,28 +49,6 @@ export const Register = () => {
       router.replace("/job-search-with-ai");
     }
   }, [router]);
-
-  useEffect(() => {
-    if (!router.isReady) return;
-
-    const linkedinRegister = router.query.linkedinRegister;
-
-    if (
-      linkedinRegister === "conflict" &&
-      typeof router.query.linkToken === "string"
-    ) {
-      setErrors({});
-      setLinkedinLinkToken(router.query.linkToken);
-    } else if (
-      linkedinRegister === "missing_email" ||
-      linkedinRegister === "failed"
-    ) {
-      setErrors({
-        general: t("register.linkedinSignupFailed"),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router.isReady, router.query.linkedinRegister, router.query.linkToken]);
 
   const passwordChecks = {
     length: hasMinLength(password),
@@ -151,49 +119,6 @@ export const Register = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLinkedInRegister = () => {
-    window.location.href = AuthService.getLinkedInRegisterUrl();
-  };
-
-  const handleConfirmLinkedInLink = async () => {
-    if (!linkedinLinkToken) return;
-
-    setIsLinkingLinkedIn(true);
-    setErrors({});
-
-    try {
-      const data =
-        await AuthService.linkExistingLinkedInAccount(linkedinLinkToken);
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("email", data.email);
-      ensureAccountCreatedAt(data.email);
-
-      if (data.linkedin_profile) {
-        saveLinkedInAccountMetadata(data.linkedin_profile, data.email);
-      }
-
-      window.dispatchEvent(new Event("auth-change"));
-      setLinkedinLinkToken("");
-      await router.push("/job-search-with-ai");
-    } catch {
-      setErrors({
-        general: t("register.linkedinSignupFailed"),
-      });
-    } finally {
-      setIsLinkingLinkedIn(false);
-    }
-  };
-
-  const handleDeclineLinkedInLink = async () => {
-    setLinkedinLinkToken("");
-    await router.replace("/login");
-  };
-
-  const handleCancelLinkedInLink = async () => {
-    setLinkedinLinkToken("");
-    await router.replace("/register");
   };
 
   return (
@@ -281,27 +206,6 @@ export const Register = () => {
         {t("register.submit")}
       </Button>
 
-      <Divider label={t("login.or")} labelPosition="center" />
-
-      <Button
-        radius="xl"
-        size="lg"
-        fullWidth
-        onClick={handleLinkedInRegister}
-        styles={{
-          root: {
-            backgroundColor: LINKEDIN_BLUE,
-          },
-        }}
-      >
-        <Group justify="center" gap="xs" wrap="nowrap">
-          <IconBrandLinkedin size={22} aria-hidden="true" />
-          <Text component="span" fw={700} size="sm" c="#ffffff">
-            {t("register.createWithLinkedin")}
-          </Text>
-        </Group>
-      </Button>
-
       {/* Login link */}
       <Text size="sm" ta="center">
         {t("register.alreadyHaveAccount")}{" "}
@@ -309,35 +213,6 @@ export const Register = () => {
       </Text>
       <Modal opened={showLogin} onClose={() => setShowLogin(false)}>
         <Login onClose={() => setShowLogin(false)} />
-      </Modal>
-      <Modal
-        opened={Boolean(linkedinLinkToken)}
-        onClose={handleCancelLinkedInLink}
-        centered
-        title={<Text fw={700}>{t("register.linkLinkedinTitle")}</Text>}
-      >
-        <Stack gap="md">
-          <Text>
-            {t("register.linkLinkedinBody")}
-          </Text>
-          <Group justify="flex-end" gap="sm">
-            <Button
-              variant="outline"
-              color={BROWN}
-              onClick={handleDeclineLinkedInLink}
-              disabled={isLinkingLinkedIn}
-            >
-              {t("register.declineLink")}
-            </Button>
-            <Button
-              color={BROWN}
-              loading={isLinkingLinkedIn}
-              onClick={handleConfirmLinkedInLink}
-            >
-              {t("register.confirmLink")}
-            </Button>
-          </Group>
-        </Stack>
       </Modal>
     </Stack>
   );

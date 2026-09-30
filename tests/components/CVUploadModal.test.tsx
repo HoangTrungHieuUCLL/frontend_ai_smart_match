@@ -13,7 +13,6 @@ jest.mock("../../services/CvService", () => ({
         uploadCv: jest.fn(),
         confirmCv: jest.fn(),
         updateExtractedData: jest.fn(),
-        getLinkedInImportUrl: jest.fn(() => "http://localhost:8000/auth/linkedin/cv-start"),
     },
 }));
 

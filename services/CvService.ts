@@ -165,7 +165,6 @@ const CvService = {
     confirmCv,
     updateExtractedData,
     deleteCv,
-    getLinkedInImportUrl: () => `${API_URL}/auth/linkedin/cv-start`,
 };
 
 export default CvService;

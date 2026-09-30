@@ -1,9 +1,8 @@
-import {useEffect, useMemo, useState} from "react";
+import {useMemo, useState} from "react";
 import {
     ActionIcon,
     Box,
     Button,
-    Divider,
     Group,
     Loader,
     Modal,
@@ -18,7 +17,6 @@ import {CV, Certification, Education, Experience, Language, Project} from "../ty
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import { saveStoredProfileCv } from "../utils/profileStorage";
 import CVUploadConfirmation from "./CVUploadConfirmation";
-import LinkedInImportButton from "./LinkedInImportButton";
 
 const BROWN = "#774326";
 
@@ -36,10 +34,9 @@ export type CvFormData = {
 type Props = {
     opened: boolean;
     onClose: (results: CvConfirmReturn[] | undefined, cvName?: string) => void;
-    initialUploadError?: string;
 };
 
-export default function CVUploadModal({opened, onClose, initialUploadError}: Props) {
+export default function CVUploadModal({opened, onClose}: Props) {
     const {t} = useTranslation();
     const [step, setStep] = useState<"form" | "upload">("form");
     const [formData, setFormData] = useState<CvFormData>({
@@ -77,13 +74,6 @@ export default function CVUploadModal({opened, onClose, initialUploadError}: Pro
     );
     const formErrors = getCvFormErrors(formData, validationMessages);
     const canContinue = isCvFormValid(formData, validationMessages);
-
-    useEffect(() => {
-        if (!opened || !initialUploadError) return;
-
-        setStep("upload");
-        setFileError(initialUploadError);
-    }, [initialUploadError, opened]);
 
     const reset = () => {
         setStep("form");
@@ -186,19 +176,6 @@ export default function CVUploadModal({opened, onClose, initialUploadError}: Pro
         }
     };
 
-    const handleLinkedInImport = () => {
-        const hasExistingCv = Boolean(localStorage.getItem("cvName"));
-
-        if (
-            hasExistingCv &&
-            !window.confirm(t("upload.linkedinReplaceConfirm"))
-        ) {
-            return;
-        }
-
-        window.location.href = CvService.getLinkedInImportUrl();
-    };
-
     return (
         <Modal
             opened={opened}
@@ -256,13 +233,9 @@ export default function CVUploadModal({opened, onClose, initialUploadError}: Pro
                     >
                         {t("upload.continue")}
                     </Button>
-                    <Divider label="or" labelPosition="center" />
-                    <LinkedInImportButton onClick={handleLinkedInImport} />
                 </Stack>
             ) : (
                 <Stack gap="md">
-                    <LinkedInImportButton onClick={handleLinkedInImport} />
-                    <Divider label="or upload a PDF" labelPosition="center" />
                     <Dropzone
                         onDrop={handleFileDrop}
                         onReject={handleFileReject}

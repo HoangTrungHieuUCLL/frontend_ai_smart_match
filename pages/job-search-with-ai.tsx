@@ -83,7 +83,6 @@ export default function JobSearchWithAIPage() {
   const [filters, setFilters] = useState<JobFilters>(EMPTY_FILTERS);
   const [filterOptions, setFilterOptions] = useState<JobFilterOptions>({ category_l2: [], category_l3: [], location: [] });
   const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
-  const [linkedinImportError, setLinkedinImportError] = useState<string | undefined>();
   const [sortOption, setSortOption] = useState<SortOption>("newest_first");
 
   const [compareMode, setCompareMode] = useState(false);
@@ -125,14 +124,6 @@ export default function JobSearchWithAIPage() {
     setUploadedCvName(stored);
     if (stored) setSortOption("best_match");
   }, []);
-
-  useEffect(() => {
-    if (!router.isReady || router.query.linkedinImport !== "failed") return;
-
-    setLinkedinImportError(t("linkedinImport.failed"));
-    setModalOpen(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router.isReady, router.query.linkedinImport]);
 
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [savedJobIds, setSavedJobIds] = useState<number[]>([]);
@@ -537,10 +528,8 @@ export default function JobSearchWithAIPage() {
 
       <CVUploadModal
         opened={modalOpen}
-        initialUploadError={linkedinImportError}
         onClose={(results, cvName) => {
           setModalOpen(false);
-          setLinkedinImportError(undefined);
 
           if (!results) return;
           if (cvName) {
