@@ -300,7 +300,10 @@ export default function JobSearchWithAIPage() {
 
   const handleDeleteCv = async () => {
     const storedCv = getStoredProfileCv(localStorage.getItem("email"));
-    if (!storedCv?.id) return;
+    if (!storedCv?.id) {
+      notifications.show({ color: "red", message: t("profile.cvDeleteFailed") });
+      return;
+    }
 
     setIsDeletingCv(true);
     try {

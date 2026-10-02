@@ -2,6 +2,9 @@ import type { CV } from "../types";
 
 export const PROFILE_CV_STORAGE_KEY = "profileCv";
 export const ACCOUNT_CREATED_AT_STORAGE_KEY = "accountCreatedAt";
+// Guests' CVs are saved under the email typed into the upload form, which
+// the guest pages don't know, so remember which key was written last.
+const LAST_PROFILE_CV_KEY = "profileCvLastKey";
 
 const normalizeEmail = (email?: string | null) => (email ?? "").trim().toLowerCase();
 
@@ -13,7 +16,9 @@ const getCurrentEmail = () => {
 
 const getProfileCvKey = (email?: string | null) => {
     const normalizedEmail = normalizeEmail(email) || getCurrentEmail();
-    return normalizedEmail ? `${PROFILE_CV_STORAGE_KEY}:${normalizedEmail}` : PROFILE_CV_STORAGE_KEY;
+    if (normalizedEmail) return `${PROFILE_CV_STORAGE_KEY}:${normalizedEmail}`;
+
+    return sessionStorage.getItem(LAST_PROFILE_CV_KEY) ?? PROFILE_CV_STORAGE_KEY;
 };
 
 const getAccountCreatedAtKey = (email?: string | null) => {
@@ -41,18 +46,24 @@ export const getStoredProfileCv = (email?: string | null): CV | null => {
 export const saveStoredProfileCv = (cv: CV, email?: string | null) => {
     if (typeof window === "undefined") return;
 
-    sessionStorage.setItem(getProfileCvKey(email || getCvEmail(cv)), JSON.stringify(cv));
+    const key = getProfileCvKey(email || getCvEmail(cv));
+    sessionStorage.setItem(key, JSON.stringify(cv));
+    sessionStorage.setItem(LAST_PROFILE_CV_KEY, key);
 };
 
 export const clearStoredProfileCv = (email?: string | null) => {
     if (typeof window === "undefined") return;
 
-    sessionStorage.removeItem(getProfileCvKey(email));
+    const key = getProfileCvKey(email);
+    sessionStorage.removeItem(key);
     // getStoredProfileCv falls back to the unscoped key, so clear it too.
     sessionStorage.removeItem(PROFILE_CV_STORAGE_KEY);
+    if (sessionStorage.getItem(LAST_PROFILE_CV_KEY) === key) {
+        sessionStorage.removeItem(LAST_PROFILE_CV_KEY);
+    }
 };
 
-export const getAccountCreatedAt =(email?: string | null) => {
+export const getAccountCreatedAt = (email?: string | null) => {
     if (typeof window === "undefined") return null;
 
     return sessionStorage.getItem(getAccountCreatedAtKey(email)) ?? sessionStorage.getItem(ACCOUNT_CREATED_AT_STORAGE_KEY);
