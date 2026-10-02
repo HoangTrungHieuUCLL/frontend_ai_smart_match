@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 import { Checkbox } from "@mantine/core";
 import { IconArrowUpRight, IconBookmark, IconBookmarkFilled, IconLink } from "@tabler/icons-react";
@@ -7,16 +7,15 @@ import { notifications } from "@mantine/notifications";
 import { Job } from "../types";
 import { useTranslation } from "../contexts/I18nContext";
 import ProfileService from "../services/ProfileService";
-import {
-    addGuestSavedJob,
-    getGuestSavedJobs,
-    removeGuestSavedJob,
-} from "../utils/savedJobs";
+import { addGuestSavedJob, removeGuestSavedJob } from "../utils/savedJobs";
 import styles from "../styles/editorial.module.css";
 
 interface Props {
     job: Job;
     index?: number;
+    // The page loads saved jobs once and passes the result down; rows don't fetch.
+    saved?: boolean;
+    onSavedChange?: (jobId: number, saved: boolean) => void;
     onShare?: (jobId: number) => void;
     isSelected?: boolean;
     onToggleSelect?: () => void;
@@ -49,6 +48,8 @@ export const extractTags = (requirements?: string | null): string[] => {
 const JobListing: React.FC<Props> = ({
     job,
     index,
+    saved = false,
+    onSavedChange,
     onShare,
     isSelected = false,
     onToggleSelect,
@@ -58,32 +59,6 @@ const JobListing: React.FC<Props> = ({
 }) => {
     const router = useRouter();
     const { t } = useTranslation();
-    const [saved, setSaved] = useState(false);
-
-    useEffect(() => {
-        const fetchSaved = async () => {
-            const profileId = localStorage.getItem("profile_id");
-
-            if (!profileId) {
-                setSaved(getGuestSavedJobs().map(Number).includes(job.id));
-                return;
-            }
-
-            const savedJobs = await ProfileService.getSavedJobs(Number(profileId));
-            setSaved(savedJobs.includes(job.id));
-        };
-
-        fetchSaved();
-
-        window.addEventListener("storage", fetchSaved);
-        window.addEventListener("auth-change", fetchSaved);
-
-        return () => {
-            window.removeEventListener("storage", fetchSaved);
-            window.removeEventListener("auth-change", fetchSaved);
-        };
-    }, [job.id]);
-
     const handleLearnMore = async () => {
         try {
             await router.push({ pathname: `/job-info/[id]`, query: { id: job.id } });
@@ -102,11 +77,11 @@ const JobListing: React.FC<Props> = ({
         if (!profileId) {
             if (saved) {
                 removeGuestSavedJob(job.id);
-                setSaved(false);
+                onSavedChange?.(job.id, false);
                 notify("jobListing.removedToast");
             } else {
                 addGuestSavedJob(job.id);
-                setSaved(true);
+                onSavedChange?.(job.id, true);
                 notify("jobListing.savedGuestToast");
             }
             return;
@@ -115,11 +90,11 @@ const JobListing: React.FC<Props> = ({
         try {
             if (saved) {
                 await ProfileService.removeJob(Number(profileId), job.id);
-                setSaved(false);
+                onSavedChange?.(job.id, false);
                 notify("jobListing.removedToast");
             } else {
                 await ProfileService.saveJob(Number(profileId), job.id);
-                setSaved(true);
+                onSavedChange?.(job.id, true);
                 notify("jobListing.savedToast");
             }
         } catch (err) {

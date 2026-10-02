@@ -1,13 +1,12 @@
-import { IconTrash } from "@tabler/icons-react";
+import { IconArrowUpRight, IconTrash } from "@tabler/icons-react";
 
 import { useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/editorial.module.css";
-import { ArrowUpRight, GradientBackdrop } from "./GrainGradient";
 
 type Props = {
-    jobCount: number;
-    companyCount: number;
-    locationCount: number;
+    jobCount: number | null;
+    companyCount: number | null;
+    locationCount: number | null;
     isAdmin: boolean;
     uploadedCvName: string | null;
     onUploadCv: () => void;
@@ -29,8 +28,6 @@ export default function JobSearchHero({
 
     return (
         <section className={styles.hero}>
-            <GradientBackdrop />
-
             <div className={styles.heroInner}>
                 <div className={styles.heroTop}>
                     <div className={styles.plusGrid} aria-hidden="true">
@@ -48,20 +45,20 @@ export default function JobSearchHero({
                 <div className={styles.columns}>
                     <div className={styles.column}>
                         <div className={styles.columnLabel}>{t("jobSearch.statJobs")}</div>
-                        <div className={styles.columnValue}>{jobCount}</div>
+                        <div className={styles.columnValue}>{jobCount ?? "—"}</div>
                     </div>
                     <div className={styles.column}>
                         <div className={styles.columnLabel}>{t("jobSearch.statCompanies")}</div>
-                        <div className={styles.columnValue}>{companyCount}</div>
+                        <div className={styles.columnValue}>{companyCount ?? "—"}</div>
                     </div>
                     <div className={styles.column}>
                         <div className={styles.columnLabel}>{t("jobSearch.statLocations")}</div>
-                        <div className={styles.columnValue}>{locationCount}</div>
+                        <div className={styles.columnValue}>{locationCount ?? "—"}</div>
                     </div>
                     <div className={styles.column}>
                         {isAdmin ? (
                             <button type="button" className={styles.cta} onClick={onAddJob}>
-                                <ArrowUpRight className={styles.ctaArrow} />
+                                <IconArrowUpRight className={styles.ctaArrow} stroke={2.25} />
                                 <span className={styles.ctaLabel}>{t("jobSearch.addNewJob")}</span>
                             </button>
                         ) : uploadedCvName ? (
@@ -86,7 +83,7 @@ export default function JobSearchHero({
                             </div>
                         ) : (
                             <button type="button" className={styles.cta} onClick={onUploadCv}>
-                                <ArrowUpRight className={styles.ctaArrow} />
+                                <IconArrowUpRight className={styles.ctaArrow} stroke={2.25} />
                                 <span className={styles.ctaLabel}>{t("upload.cvButton")}</span>
                                 <span className={styles.ctaHint}>{t("jobSearch.ctaHint")}</span>
                             </button>

@@ -55,16 +55,16 @@ const baseJob: Job = {
     compatibility_score: 75,
 };
 
-function renderJobListing(job: Job = baseJob, onShare = jest.fn()) {
+function renderJobListing(job: Job = baseJob, onShare = jest.fn(), saved = false, onSavedChange = jest.fn()) {
     render(
         <MantineProvider>
             <I18nProvider>
-                <JobListing job={job} onShare={onShare} />
+                <JobListing job={job} onShare={onShare} saved={saved} onSavedChange={onSavedChange} />
             </I18nProvider>
         </MantineProvider>
     );
 
-    return { onShare };
+    return { onShare, onSavedChange };
 }
 
 describe("JobListing", () => {
@@ -106,11 +106,12 @@ describe("JobListing", () => {
     });
 
     it("calls saveJob when saving without triggering navigation", () => {
-        renderJobListing();
+        const { onSavedChange } = renderJobListing();
 
         fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
         expect(savedJobs.addGuestSavedJob).toHaveBeenCalledWith(baseJob.id);
+        expect(onSavedChange).toHaveBeenCalledWith(baseJob.id, true);
         expect(savedJobs.removeGuestSavedJob).not.toHaveBeenCalled();
         expect(mockPush).not.toHaveBeenCalled();
     });
@@ -123,9 +124,7 @@ describe("JobListing", () => {
     });
 
     it("renders the saved visual state for an initially saved job", async () => {
-        localStorage.setItem("savedJobs", JSON.stringify([baseJob.id]));
-
-        renderJobListing();
+        renderJobListing(baseJob, jest.fn(), true);
 
         expect(await screen.findByRole("button", { name: /^saved$/i })).toBeInTheDocument();
     });
@@ -133,7 +132,7 @@ describe("JobListing", () => {
     it("calls removeJob when an initially saved job is unsaved", async () => {
         localStorage.setItem("savedJobs", JSON.stringify([baseJob.id]));
 
-        renderJobListing();
+        const { onSavedChange } = renderJobListing(baseJob, jest.fn(), true);
 
         const savedButton = await screen.findByRole("button", { name: /^saved$/i });
         fireEvent.click(savedButton);
@@ -141,6 +140,7 @@ describe("JobListing", () => {
         await waitFor(() => {
             expect(savedJobs.removeGuestSavedJob).toHaveBeenCalledWith(baseJob.id);
         });
+        expect(onSavedChange).toHaveBeenCalledWith(baseJob.id, false);
         expect(savedJobs.addGuestSavedJob).not.toHaveBeenCalled();
         expect(mockPush).not.toHaveBeenCalled();
     });

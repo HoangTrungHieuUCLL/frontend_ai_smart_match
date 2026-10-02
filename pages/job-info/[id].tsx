@@ -6,6 +6,7 @@ import { notifications } from "@mantine/notifications";
 import {
     IconArrowDown,
     IconArrowLeft,
+    IconArrowUpRight,
     IconBookmark,
     IconBookmarkFilled,
     IconLink,
@@ -14,7 +15,6 @@ import {
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
 import CVUploadModal from "../../components/CVUploadModal";
-import { ArrowUpRight, GradientBackdrop } from "../../components/GrainGradient";
 import JobInfoSkeleton from "../../components/skeleton/JobInfoSkeleton";
 import { TranslationKey, useTranslation } from "../../contexts/I18nContext";
 import ProfileService from "../../services/ProfileService";
@@ -63,10 +63,15 @@ export default function JobInfoDetailPage() {
     useEffect(() => {
         if (!id) return;
 
-        setLoading(true);
+        // Coming from the job list: show the cached job at once, then refresh it.
+        const cached = JobService.getCachedJob(Number(id));
+        setJob(cached);
+        setLoading(!cached);
         JobService.getJobById(Number(id))
             .then(setJob)
-            .catch(() => setJob(null))
+            .catch(() => {
+                if (!cached) setJob(null);
+            })
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -182,8 +187,6 @@ export default function JobInfoDetailPage() {
     return (
         <div className={styles.page}>
             <section className={styles.hero}>
-                <GradientBackdrop />
-
                 <div className={styles.heroInner}>
                     <Link href="/job-search-with-ai" className={styles.back}>
                         <IconArrowLeft size={16} />
@@ -218,7 +221,7 @@ export default function JobInfoDetailPage() {
                             ) : (
                                 !isAdmin && (
                                     <button type="button" className={styles.cta} onClick={() => setModalOpen(true)}>
-                                        <ArrowUpRight className={styles.ctaArrow} />
+                                        <IconArrowUpRight className={styles.ctaArrow} stroke={2.25} />
                                         <span className={styles.ctaLabel}>{t("upload.cvButton")}</span>
                                         <span className={styles.ctaHint}>{t("jobInfo.stepScoreText")}</span>
                                     </button>

@@ -178,16 +178,19 @@ export default function JobSearchWithAIPage() {
     setPage(1);
   }, [search, showSavedOnly, sortOption, filters]);
 
+  // One saved-jobs lookup for the whole list (rows used to fetch it each).
   useEffect(() => {
-    if (!showSavedOnly) return;
-
     const profileId = localStorage.getItem("profile_id");
     if (profileId) {
       ProfileService.getSavedJobs(Number(profileId)).then(setSavedJobIds).catch(() => setSavedJobIds([]));
     } else {
-      setSavedJobIds(getGuestSavedJobs());
+      setSavedJobIds(getGuestSavedJobs().map(Number));
     }
-  }, [showSavedOnly, authVersion]);
+  }, [authVersion]);
+
+  const handleSavedChange = (jobId: number, saved: boolean) => {
+    setSavedJobIds((prev) => (saved ? [...prev, jobId] : prev.filter((id) => id !== jobId)));
+  };
 
   useEffect(() => {
     if (isAdmin) {
@@ -345,9 +348,9 @@ export default function JobSearchWithAIPage() {
   return (
     <div className={styles.page}>
       <JobSearchHero
-        jobCount={jobs.length}
-        companyCount={companyCount}
-        locationCount={locationCount}
+        jobCount={isLoading ? null : jobs.length}
+        companyCount={isLoading ? null : companyCount}
+        locationCount={isLoading ? null : locationCount}
         isAdmin={isAdmin}
         uploadedCvName={uploadedCvName}
         onUploadCv={() => setModalOpen(true)}
@@ -445,6 +448,8 @@ export default function JobSearchWithAIPage() {
                         key={job.id}
                         job={job}
                         index={(page - 1) * JOBS_PER_PAGE + i + 1}
+                        saved={savedJobIds.includes(job.id)}
+                        onSavedChange={handleSavedChange}
                         onShare={handleShare}
                         isSelected={selectedJobs.has(job.id)}
                         onToggleSelect={compareMode ? () => handleToggleSelect(job.id) : undefined}
