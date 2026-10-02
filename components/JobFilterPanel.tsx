@@ -15,8 +15,9 @@ import {
     WORK_ARRANGEMENT,
     WORK_SCHEDULE,
 } from "../constants/jobTaxonomy";
+import styles from "../styles/editorial.module.css";
 
-const BROWN = "#774326";
+const INK = "#15110d";
 
 export type JobFilters = {
     categoryL1: string[];
@@ -132,17 +133,22 @@ export default function JobFilterPanel({ filters, onChange, filterOptions }: Job
     return (
         <Stack gap="sm">
             <Group justify="space-between" align="center">
-                <Text fw={700} c={BROWN}>
+                <Text className={styles.filterTitle}>
                     {t("jobFilter.title")}
                 </Text>
                 {hasActiveFilters(filters) && (
-                    <Button variant="subtle" size="xs" color={BROWN} onClick={() => onChange(EMPTY_FILTERS)}>
+                    <Button variant="subtle" size="xs" radius={0} color={INK} onClick={() => onChange(EMPTY_FILTERS)}>
                         {t("jobFilter.clearAll")}
                     </Button>
                 )}
             </Group>
 
-            <Accordion multiple defaultValue={["category", "location"]} chevronPosition="right">
+            <Accordion
+                multiple
+                defaultValue={["category", "location"]}
+                chevronPosition="right"
+                classNames={{ item: styles.filterItem, control: styles.filterControl, content: styles.filterContent }}
+            >
                 <Accordion.Item value="category">
                     <Accordion.Control>{t("jobFilter.category")}</Accordion.Control>
                     <Accordion.Panel>
@@ -202,13 +208,9 @@ export default function JobFilterPanel({ filters, onChange, filterOptions }: Job
                                     <Button
                                         key={band.value}
                                         size="xs"
-                                        radius="xl"
+                                        radius={0}
+                                        color={INK}
                                         variant={filters.salaryMin === band.min && filters.salaryMax === band.max ? "filled" : "outline"}
-                                        style={
-                                            filters.salaryMin === band.min && filters.salaryMax === band.max
-                                                ? { backgroundColor: BROWN, borderColor: BROWN }
-                                                : { borderColor: BROWN, color: BROWN }
-                                        }
                                         onClick={() => applySalaryBand(band)}
                                     >
                                         {language === "VN" ? band.label_vn : band.label_en}

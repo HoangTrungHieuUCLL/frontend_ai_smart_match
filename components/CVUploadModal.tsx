@@ -1,24 +1,47 @@
 import {useMemo, useState} from "react";
-import {
-    ActionIcon,
-    Box,
-    Button,
-    Group,
-    Loader,
-    Modal,
-    Stack,
-    Text,
-    TextInput,
-} from "@mantine/core";
+import {Modal, Stack, Text, TextInput} from "@mantine/core";
 import {Dropzone} from "@mantine/dropzone";
+import {IconArrowUpRight, IconFileTypePdf, IconUpload, IconX} from "@tabler/icons-react";
 import {useTranslation} from "../contexts/I18nContext";
 import CvService, {CvConfirmReturn, ParsedCvResponse} from "../services/CvService";
 import {CV, Certification, Education, Experience, Language, Project} from "../types";
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
 import { saveStoredProfileCv } from "../utils/profileStorage";
 import CVUploadConfirmation from "./CVUploadConfirmation";
+import styles from "../styles/editorial.module.css";
 
-const BROWN = "#774326";
+export const modalClassNames = {
+    content: styles.modalContent,
+    header: styles.modalHeader,
+    title: styles.modalTitle,
+    close: styles.modalClose,
+    body: styles.modalBody,
+};
+
+const formatSize = (bytes: number) =>
+    bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+export function UploadSteps({current}: {current: 1 | 2 | 3}) {
+    const {t} = useTranslation();
+    const labels = [t("upload.stepDetails"), t("upload.stepPdf"), t("upload.stepReview")];
+
+    return (
+        <ol className={styles.steps} style={{listStyle: "none", padding: 0, marginTop: 0}}>
+            {labels.map((label, index) => {
+                const number = index + 1;
+                return (
+                    <li
+                        key={label}
+                        className={`${styles.stepItem} ${number < current ? styles.stepItemDone : ""}`}
+                        aria-current={number === current ? "step" : undefined}
+                    >
+                        {String(number).padStart(2, "0")} {label}
+                    </li>
+                );
+            })}
+        </ol>
+    );
+}
 
 type FileRejection = {
     errors: readonly { code: string }[];
@@ -45,6 +68,8 @@ export default function CVUploadModal({opened, onClose}: Props) {
         givenName: "",
         email: "",
     });
+    // Errors show once a field has been left, not while the form is still blank.
+    const [touched, setTouched] = useState<Partial<Record<keyof CvFormData, boolean>>>({});
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [fileError, setFileError] = useState("");
     const [cv, setCv] = useState<CV | null>(null);
@@ -78,6 +103,7 @@ export default function CVUploadModal({opened, onClose}: Props) {
     const reset = () => {
         setStep("form");
         setFormData({familyName: "", middleName: "", givenName: "", email: ""});
+        setTouched({});
         setUploadedFile(null);
         setFileError("");
     };
@@ -143,16 +169,6 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 cv: uploadedFile,
             });
 
-            setLoadingState((prev) => ({
-                ...prev,
-                message: t("upload.extractingData"),
-            }));
-
-            setLoadingState((prev) => ({
-                ...prev,
-                message: t("upload.calculatingScore"),
-            }));
-
             const confirmationCv = toConfirmationCv(response, response.cv_file_name ?? uploadedFile.name, formData);
             setCv(confirmationCv);
             saveStoredProfileCv(confirmationCv, localStorage.getItem("email"));
@@ -182,38 +198,37 @@ export default function CVUploadModal({opened, onClose}: Props) {
             onClose={() => onClose([])}
             centered
             size="md"
-            title={
-                <Text size="xl" fw={800}>
-                    {step === "form" ? t("upload.modalCvTitle") : t("upload.modalPdfTitle")}
-                </Text>
-            }
-            closeButtonProps={{
-                size: 40,
-                radius: "xl",
-                style: {backgroundColor: BROWN, color: "#fff", border: "none"},
-            }}
+            radius={0}
+            classNames={modalClassNames}
+            closeButtonProps={{"aria-label": t("common.close")}}
+            title={step === "form" ? t("upload.modalCvTitle") : t("upload.modalPdfTitle")}
         >
+            <UploadSteps current={step === "form" ? 1 : 2} />
+
             {step === "form" ? (
                 <Stack gap="md">
                     <TextInput
                         label={t("upload.familyName")}
                         placeholder={t("upload.familyNamePlaceholder")}
                         value={formData.familyName}
-                        error={formErrors.familyName}
+                        error={touched.familyName && formErrors.familyName}
+                        onBlur={() => setTouched((prev) => ({...prev, familyName: true}))}
                         onChange={(e) => setFormData({...formData, familyName: e.currentTarget.value})}
                     />
                     <TextInput
                         label={t("upload.middleName")}
                         placeholder={t("upload.middleNamePlaceholder")}
                         value={formData.middleName}
-                        error={formErrors.middleName}
+                        error={touched.middleName && formErrors.middleName}
+                        onBlur={() => setTouched((prev) => ({...prev, middleName: true}))}
                         onChange={(e) => setFormData({...formData, middleName: e.currentTarget.value})}
                     />
                     <TextInput
                         label={t("upload.givenName")}
                         placeholder={t("upload.givenNamePlaceholder")}
                         value={formData.givenName}
-                        error={formErrors.givenName}
+                        error={touched.givenName && formErrors.givenName}
+                        onBlur={() => setTouched((prev) => ({...prev, givenName: true}))}
                         onChange={(e) => setFormData({...formData, givenName: e.currentTarget.value})}
                     />
                     <TextInput
@@ -221,106 +236,92 @@ export default function CVUploadModal({opened, onClose}: Props) {
                         placeholder={t("upload.emailPlaceholder")}
                         type="email"
                         value={formData.email}
-                        error={formErrors.email}
+                        error={touched.email && formErrors.email}
+                        onBlur={() => setTouched((prev) => ({...prev, email: true}))}
                         onChange={(e) => setFormData({...formData, email: e.currentTarget.value})}
                     />
-                    <Button
-                        fullWidth
-                        radius="md"
+                    <button
+                        type="button"
+                        className={`${styles.chip} ${styles.chipSolid} ${styles.primaryButton}`}
                         disabled={!canContinue}
-                        style={{backgroundColor: BROWN}}
                         onClick={handleFormSubmit}
                     >
                         {t("upload.continue")}
-                    </Button>
+                        <IconArrowUpRight size={16} />
+                    </button>
                 </Stack>
             ) : (
                 <Stack gap="md">
                     <Dropzone
+                        className={styles.dropzone}
                         onDrop={handleFileDrop}
                         onReject={handleFileReject}
                         accept={["application/pdf"]}
                         maxSize={5 * 1024 * 1024}
                         multiple
                     >
-                        <Group justify="center" style={{minHeight: 220}}>
-                            <Stack align="center">
-                                <Text size="md">{t("upload.dropPdf")}</Text>
-                                <Text size="xs" c="dimmed">{t("upload.browsePdf")}</Text>
-                            </Stack>
-                        </Group>
+                        <div className={styles.dropzoneInner}>
+                            <Dropzone.Reject>
+                                <IconX size={44} stroke={1.5} />
+                            </Dropzone.Reject>
+                            <Dropzone.Idle>
+                                <IconUpload size={44} stroke={1.5} />
+                            </Dropzone.Idle>
+                            <Dropzone.Accept>
+                                <IconUpload size={44} stroke={1.5} />
+                            </Dropzone.Accept>
+                            <span className={styles.dropzoneTitle}>{t("upload.dropPdf")}</span>
+                            <span className={styles.dropzoneHint}>{t("upload.browsePdf")}</span>
+                        </div>
                     </Dropzone>
 
                     {fileError && (
-                        <Group
-                            gap="sm"
-                            wrap="nowrap"
-                            style={{
-                                border: "1px solid rgba(119, 67, 38, 0.22)",
-                                borderRadius: 8,
-                                padding: "10px 12px",
-                                backgroundColor: "#fff4ed",
-                                color: BROWN,
-                            }}
-                        >
-                            <Box
-                                style={{
-                                    width: 22,
-                                    height: 22,
-                                    borderRadius: "50%",
-                                    backgroundColor: BROWN,
-                                    color: "#ffffff",
-                                    display: "grid",
-                                    placeItems: "center",
-                                    fontWeight: 800,
-                                    flexShrink: 0,
-                                }}
-                            >
-                                !
-                            </Box>
-                            <Text size="sm" fw={600}>{fileError}</Text>
-                        </Group>
+                        <div className={styles.errorRow} role="alert">
+                            <IconX size={16} />
+                            <span>{fileError}</span>
+                        </div>
                     )}
 
                     {uploadedFile && (
-                        <Group
-                            justify="space-between"
-                            gap="sm"
-                            wrap="nowrap"
-                            style={{
-                                border: "1px solid rgba(119, 67, 38, 0.18)",
-                                borderRadius: 8,
-                                padding: "10px 12px",
-                                backgroundColor: "#fdf7ef",
-                            }}
-                        >
-                            <Text size="sm" c="green" lineClamp={1}>
+                        <div className={styles.fileRow}>
+                            <IconFileTypePdf size={20} />
+                            <span className={styles.fileName}>
                                 {t("upload.fileSelected", {fileName: uploadedFile.name})}
-                            </Text>
-                            <ActionIcon
-                                variant="subtle"
-                                radius="xl"
-                                color="brown"
+                            </span>
+                            <span className={styles.fileSize}>{formatSize(uploadedFile.size)}</span>
+                            <button
+                                type="button"
+                                className={styles.iconButton}
+                                style={{width: 28, height: 28}}
                                 aria-label={t("upload.removeSelectedPdf")}
                                 onClick={() => {
                                     setUploadedFile(null);
                                     setFileError("");
                                 }}
                             >
-                                ×
-                            </ActionIcon>
-                        </Group>
+                                <IconX size={16} />
+                            </button>
+                        </div>
                     )}
 
-                    <Button
-                        fullWidth
-                        radius="md"
-                        disabled={!uploadedFile}
-                        onClick={handleUploadSubmit}
-                        style={{backgroundColor: BROWN}}
-                    >
-                        {t("upload.submit")}
-                    </Button>
+                    <div style={{display: "flex", gap: 10}}>
+                        <button
+                            type="button"
+                            className={styles.chip}
+                            style={{height: 48}}
+                            onClick={() => setStep("form")}
+                        >
+                            {t("common.previous")}
+                        </button>
+                        <button
+                            type="button"
+                            className={`${styles.chip} ${styles.chipSolid} ${styles.primaryButton}`}
+                            disabled={!uploadedFile}
+                            onClick={handleUploadSubmit}
+                        >
+                            {t("upload.submit")}
+                        </button>
+                    </div>
                 </Stack>
             )}
 
@@ -332,23 +333,30 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 closeOnEscape={false}
                 withCloseButton={false}
                 size="sm"
+                radius={0}
+                classNames={modalClassNames}
             >
-                <Stack align="center" gap="md" py="md">
+                <Stack align="center" gap="lg" py="md" aria-live="polite">
                     {loadingState.status === "loading" ? (
-                        <Loader color={BROWN} size="xl" type="oval" />
+                        <div className={styles.progressTrack} role="progressbar" aria-label={loadingState.message}>
+                            <div className={styles.progressBar} />
+                        </div>
                     ) : (
-                        <Text c="#E03131" fw={900} fz={56} lh={1}>
-                            ×
-                        </Text>
+                        <div className={styles.statusIcon}>
+                            <IconX size={30} />
+                        </div>
                     )}
 
-                    <Text ta="center" fw={600}>
-                        {loadingState.message}
-                    </Text>
+                    <Text className={styles.statusMessage}>{loadingState.message}</Text>
 
-                    {loadingState.status === "error" && (
-                        <Button
-                            style={{backgroundColor: BROWN}}
+                    {loadingState.status === "loading" ? (
+                        <Text className={styles.dropzoneHint} ta="center">
+                            {t("upload.processingHint")}
+                        </Text>
+                    ) : (
+                        <button
+                            type="button"
+                            className={`${styles.chip} ${styles.chipSolid}`}
                             onClick={() =>
                                 setLoadingState((prev) => ({
                                     ...prev,
@@ -356,8 +364,8 @@ export default function CVUploadModal({opened, onClose}: Props) {
                                 }))
                             }
                         >
-                            OK
-                        </Button>
+                            {t("common.ok")}
+                        </button>
                     )}
                 </Stack>
             </Modal>
@@ -365,9 +373,13 @@ export default function CVUploadModal({opened, onClose}: Props) {
             <Modal
                 opened={cv != null}
                 onClose={() => setCv(null)}
-                title={<Text fw={700} size="lg">CV Summary</Text>}
+                title={t("cvSummary.title")}
                 size="xl"
+                radius={0}
+                classNames={modalClassNames}
+                closeButtonProps={{"aria-label": t("common.close")}}
             >
+                <UploadSteps current={3} />
                 <CVUploadConfirmation
                     cv={cv!}
                     onClose={(scores) => {

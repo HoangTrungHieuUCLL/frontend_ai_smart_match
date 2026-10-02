@@ -1,58 +1,298 @@
-.loginButton {
-    border: 1px solid #774326;
-    color: #774326;
-    background: transparent;
-    transition: all 0.2s ease;
+.header {
+    position: relative;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-height: 76px;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
 }
 
-.loginButton:hover {
-    background: #774326;
-    color: white;
+.logo {
+    display: flex;
+    flex-shrink: 0;
 }
 
-.adminGreeting {
-    appearance: none;
-    padding: 0;
+.nav {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    min-width: 0;
+}
+
+.navGroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.navLink {
+    position: relative;
+    padding: 6px 0;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.navLink::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--ink);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 200ms ease;
+}
+
+.navLink:hover::after,
+.navLink[aria-current="page"]::after {
+    transform: scaleX(1);
+}
+
+.navLink[aria-current="page"] {
+    font-weight: 700;
+}
+
+.navDisabled {
+    color: var(--ink-soft);
+    cursor: default;
+}
+
+.navDisabled::after {
+    display: none;
+}
+
+.chevron {
+    display: inline-flex;
+    padding: 4px;
     border: 0;
-    background: transparent;
-    color: #000000;
+    background: none;
+    color: var(--ink);
     cursor: pointer;
-    font: inherit;
-    text-decoration: underline;
-    text-underline-offset: 4px;
 }
 
-.adminGreeting:hover {
-    color: #774326;
+.dropdown {
+    padding: 6px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
 }
 
-.logoutPopover {
-    padding: 8px;
-    border: 1px solid rgba(119, 67, 38, 0.18);
-    border-radius: 14px;
-    background: #fdf7ef;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+.dropdownItem {
+    border-radius: 0;
+    font-family: var(--mono);
+    font-size: 13px;
 }
 
-.logoutButton {
-    min-width: 92px;
-    height: 36px;
-    background: #884e2d;
-    color: #ffffff;
-    font-size: 14px;
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.cta,
+.login,
+.menuButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    font-family: var(--mono);
+    font-size: 12px;
     font-weight: 600;
-}
-
-.logoutButton:hover {
-    background: #774326;
-}
-
-.jobStepCardButton {
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
     cursor: pointer;
-    transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.jobStepCardButton:hover {
-    transform: translateY(-2px);
-    opacity: 0.95;
+.cta {
+    background: var(--ink);
+    color: var(--paper);
+}
+
+.cta svg {
+    transition: transform 200ms ease;
+}
+
+.cta:hover svg {
+    transform: translate(2px, -2px);
+}
+
+.login,
+.menuButton {
+    background: transparent;
+    color: var(--ink);
+}
+
+.login:hover,
+.menuButton:hover {
+    background: rgba(21, 17, 13, 0.06);
+}
+
+.menuButtonSolid {
+    background: var(--ink);
+    color: var(--paper);
+}
+
+.menuButtonSolid:hover {
+    background: #000;
+}
+
+.menuStack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+}
+
+.account {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 240px;
+    height: 40px;
+    padding: 0 10px 0 4px;
+    border: 1px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, var(--c1), var(--c2), var(--c5));
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.accountEmail {
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.language {
+    display: inline-flex;
+}
+
+.languageButton {
+    height: 40px;
+    min-width: 40px;
+    padding: 0 8px;
+    border: 1px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.languageButton + .languageButton {
+    border-left: 0;
+}
+
+.languageButton[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+}
+
+.cta:focus-visible,
+.login:focus-visible,
+.menuButton:focus-visible,
+.account:focus-visible,
+.languageButton:focus-visible,
+.navLink:focus-visible,
+.chevron:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+}
+
+.burger {
+    display: none;
+    margin-left: auto;
+}
+
+.mobileMenu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.mobileNav {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--ink-faint);
+}
+
+.mobileNav .navLink {
+    font-size: 20px;
+}
+
+@media (max-width: 75em) {
+    .nav {
+        gap: 18px;
+    }
+
+    .accountEmail {
+        display: none;
+    }
+}
+
+@media (max-width: 62em) {
+    .header {
+        min-height: 64px;
+        padding: 0 16px;
+    }
+
+    .nav,
+    .actions {
+        display: none;
+    }
+
+    .burger {
+        display: block;
+    }
+
+    .mobileMenu .accountEmail {
+        display: block;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navLink::after,
+    .cta svg {
+        transition: none;
+    }
 }

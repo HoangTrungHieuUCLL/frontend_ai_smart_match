@@ -79,7 +79,7 @@ describe("JobListing", () => {
 
         expect(screen.getByText("Frontend Developer")).toBeInTheDocument();
         expect(screen.getByText("HR Next")).toBeInTheDocument();
-        expect(screen.getByText("• Brussels")).toBeInTheDocument();
+        expect(screen.getByText("· Brussels")).toBeInTheDocument();
     });
 
     it("displays the compatibility score visually when present", () => {
@@ -143,6 +143,22 @@ describe("JobListing", () => {
         });
         expect(savedJobs.addGuestSavedJob).not.toHaveBeenCalled();
         expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("shows short requirement items as skill tags", () => {
+        renderJobListing({ ...baseJob, requirements: "React; TypeScript, Jest, a very long sentence that is clearly not a skill tag at all." });
+
+        expect(screen.getByText("React")).toBeInTheDocument();
+        expect(screen.getByText("TypeScript")).toBeInTheDocument();
+        expect(screen.queryByText(/very long sentence/)).not.toBeInTheDocument();
+    });
+
+    it("keeps prose requirements as a summary instead of tags", () => {
+        const prose = "Must-have skills Strong experience with Python, algorithms, and system design across distributed teams";
+        renderJobListing({ ...baseJob, requirements: prose });
+
+        expect(screen.getByText(prose)).toBeInTheDocument();
+        expect(screen.queryByText("algorithms")).not.toBeInTheDocument();
     });
 
     it("renders without crashing when optional salary and notes fields are null", () => {

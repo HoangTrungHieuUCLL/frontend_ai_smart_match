@@ -1,71 +1,73 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { useRef } from "react";
+import { Button, Modal, Stack, Text } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import {
-    Badge,
-    Box,
-    Button,
-    Container,
-    Divider,
-    Group,
-    Paper,
-    Stack,
-    Text,
-    RingProgress,
-    Modal,
-} from "@mantine/core";
+    IconArrowDown,
+    IconArrowLeft,
+    IconBookmark,
+    IconBookmarkFilled,
+    IconLink,
+} from "@tabler/icons-react";
+
 import { Job } from "../../types";
 import JobService from "../../services/JobService";
-import CVUploadButton from "../../components/CVUploadButton";
 import CVUploadModal from "../../components/CVUploadModal";
-import { useTranslation } from "../../contexts/I18nContext";
-import ProfileService from "../../services/ProfileService";
-import {
-  addGuestSavedJob,
-  removeGuestSavedJob,
-  getGuestSavedJobs,
-} from "../../utils/savedJobs";
-import { notifications } from "@mantine/notifications";
-import { CvConfirmReturn } from "../../services/CvService";
-import styles from "../../styles/header.module.css";
+import { ArrowUpRight, GradientBackdrop } from "../../components/GrainGradient";
 import JobInfoSkeleton from "../../components/skeleton/JobInfoSkeleton";
+import { TranslationKey, useTranslation } from "../../contexts/I18nContext";
+import ProfileService from "../../services/ProfileService";
+import { CvConfirmReturn } from "../../services/CvService";
+import {
+    addGuestSavedJob,
+    getGuestSavedJobs,
+    removeGuestSavedJob,
+} from "../../utils/savedJobs";
 import { isAdminToken } from "../../utils/auth";
-const BROWN = "#774326";
+import styles from "../../styles/editorial.module.css";
 
-const splitLines = (text?: string) => text?.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) ?? [];
+const SCORE_STORAGE_KEY = "jobScores";
+const CV_NAME_STORAGE_KEY = "cvName";
+
+// One item per line; single-line text written as "a; b; c" is split on semicolons instead.
+const splitLines = (text?: string | null) => {
+    const value = text?.trim() ?? "";
+    const separator = value.includes("\n") ? /\r?\n/ : /;\s*/;
+    return value.split(separator).map((line) => line.trim().replace(/^[-•*+]\s*/, "")).filter(Boolean);
+};
+
+const formatDate = (value: string | null | undefined, locale: string) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(date);
+};
 
 export default function JobInfoDetailPage() {
     const router = useRouter();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
     const [job, setJob] = useState<Job | null>(null);
     const [loading, setLoading] = useState(true);
-    const [modalOpen, setModalOpen] = useState<boolean>(false);
+    const [modalOpen, setModalOpen] = useState(false);
     const [compatibilityScore, setCompatibilityScore] = useState<number | null>(null);
-    const [Saved, setSaved] = useState(false);
+    const [saved, setSaved] = useState(false);
     const [shareOpened, setShareOpened] = useState(false);
     const [authToken, setAuthToken] = useState<string | null>(null);
-
-    const jobDescriptionRef = useRef<HTMLDivElement | null>(null);
-    const matchScoreRef = useRef<HTMLDivElement | null>(null);
     const [cvUploaded, setCvUploaded] = useState(false);
-    const isAdmin = isAdminToken(authToken);
 
-    const fetchJob = async () => {
-        setLoading(true);
-        try {
-            const response = await JobService.getJobById(Number(id));
-            setJob(response);
-        } catch {
-            setJob(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const descriptionRef = useRef<HTMLElement | null>(null);
+    const isAdmin = isAdminToken(authToken);
 
     useEffect(() => {
         if (!id) return;
-        fetchJob();
+
+        setLoading(true);
+        JobService.getJobById(Number(id))
+            .then(setJob)
+            .catch(() => setJob(null))
+            .finally(() => setLoading(false));
     }, [id]);
 
     useEffect(() => {
@@ -84,25 +86,16 @@ export default function JobInfoDetailPage() {
     useEffect(() => {
         if (!job) return;
 
-        const savedScores: CvConfirmReturn[] = JSON.parse(
-            sessionStorage.getItem("jobScores") ?? "[]"
-        );
-
-        const match = savedScores.find(
-            (s) => s.job_id === job.id
-        );
-
-        setCompatibilityScore(
-            match?.compatibility_score ?? null
-        );
-        setCvUploaded(!!match);
+        const savedScores: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
+        const match = savedScores.find((s) => s.job_id === job.id);
+        setCompatibilityScore(match?.compatibility_score ?? null);
+        setCvUploaded(Boolean(match) || Boolean(sessionStorage.getItem(CV_NAME_STORAGE_KEY)));
 
         const fetchSaved = async () => {
             const profileId = localStorage.getItem("profile_id");
 
             if (!profileId) {
-                const guestSaved = getGuestSavedJobs();
-                setSaved(guestSaved.includes(job.id));
+                setSaved(getGuestSavedJobs().includes(job.id));
             } else {
                 const savedJobs = await ProfileService.getSavedJobs(Number(profileId));
                 setSaved(savedJobs.includes(job.id));
@@ -113,426 +106,238 @@ export default function JobInfoDetailPage() {
     }, [job]);
 
     if (loading) {
-        return (
-            <JobInfoSkeleton />
-        );
+        return <JobInfoSkeleton />;
     }
 
     if (!job) {
         return (
-            <Container size="800px" style={{ padding: "48px 0" }}>
-                <Text>{t("jobInfo.notFound")}</Text>
-            </Container>
+            <div className={styles.page}>
+                <div className={styles.body}>
+                    <div className={styles.empty}>
+                        <div className={styles.emptyTitle}>{t("jobInfo.notFound")}</div>
+                        <p className={styles.emptyText} />
+                        <Link href="/job-search-with-ai" className={styles.back}>
+                            <IconArrowLeft size={16} />
+                            {t("jobInfo.backToJobs")}
+                        </Link>
+                    </div>
+                </div>
+            </div>
         );
     }
 
-    const responsibilities = splitLines(job.responsibilities);
-    const requirements = splitLines(job.requirements);
-    const benefits = splitLines(job.offers);
-    const notes = splitLines(job.notes);
+    const notify = (messageKey: TranslationKey) =>
+        notifications.show({ title: job.position, message: t(messageKey), autoClose: 3000 });
 
     const handleSave = async () => {
-    const profileId = localStorage.getItem("profile_id");
+        const profileId = localStorage.getItem("profile_id");
 
-    // GUEST USER (localStorage)
-    if (!profileId) {
-        if (Saved) {
-            removeGuestSavedJob(job.id);
-            setSaved(false);
-
-            notifications.show({
-                message: (
-                    <>
-                        <strong>{job.position}</strong> removed from saved jobs (guest mode).
-                    </>
-                ),
-                autoClose: 3000,
-            });
-        } else {
-            addGuestSavedJob(job.id);
-            setSaved(true);
-
-            notifications.show({
-                message: (
-                    <>
-                        <strong>{job.position}</strong> saved locally.
-                        Login to sync across devices.
-                    </>
-                ),
-                autoClose: 3000,
-            });
-        }
-
-        return;
-    }
-
-    // LOGGED IN USER (DB)
-    try {
-        if (Saved) {
-            await ProfileService.removeJob(Number(profileId), job.id);
-            setSaved(false);
-
-            notifications.show({
-                message: (
-                    <>
-                        <strong>{job.position}</strong> has been removed.
-                    </>
-                ),
-                autoClose: 3000,
-            });
-        } else {
-            await ProfileService.saveJob(Number(profileId), job.id);
-            setSaved(true);
-
-            notifications.show({
-                message: (
-                    <>
-                        <strong>{job.position}</strong> has been saved.
-                    </>
-                ),
-                autoClose: 3000,
-            });
-        }
-    } catch (err) {
-        console.error(err);
-
-        notifications.show({
-            color: "red",
-            message: t("jobSearch.saveJobFailed"),
-        });
-    }
-};
-    const handleShare = async () => {
-        const url = window.location.href;
-
-        await navigator.clipboard.writeText(url);
-
-        setShareOpened(true);
-    };
-    const handleScrollToDescription = () => {
-        jobDescriptionRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
-    };
-
-    const handleCvUpload = () => {
-        if (isAdmin) return;
-        setModalOpen(true);
-    };
-
-    const handleMatchClick = () => {
-        if (isAdmin) return;
-        if (!cvUploaded) {
-            setModalOpen(true);
+        if (!profileId) {
+            if (saved) {
+                removeGuestSavedJob(job.id);
+                setSaved(false);
+                notify("jobListing.removedToast");
+            } else {
+                addGuestSavedJob(job.id);
+                setSaved(true);
+                notify("jobListing.savedGuestToast");
+            }
             return;
         }
 
-        matchScoreRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-        });
+        try {
+            if (saved) {
+                await ProfileService.removeJob(Number(profileId), job.id);
+                setSaved(false);
+                notify("jobListing.removedToast");
+            } else {
+                await ProfileService.saveJob(Number(profileId), job.id);
+                setSaved(true);
+                notify("jobListing.savedToast");
+            }
+        } catch (err) {
+            console.error(err);
+            notifications.show({ color: "red", message: t("jobSearch.saveJobFailed") });
+        }
     };
 
-    const cardActions = [
-        {
-            number: "1",
-            title: t("jobInfo.cardJobDescription"),
-            description: job.overview,
-            button: t("jobInfo.suitMe"),
-            onClick: handleScrollToDescription,
-        },
-        {
-            number: "2",
-            title: t("jobInfo.cardCvUploaded"),
-            description: cvUploaded
-                ? t("jobInfo.cardCvReuploadDescription")
-                : t("jobInfo.cardCvDescription"),
-            button: cvUploaded ? t("jobInfo.reuploadCv") : t("jobInfo.askAi"),
-            onClick: handleCvUpload,
-        },
-        {
-            number: "3",
-            title: t("jobInfo.cardMatchScore"),
-            description:
-                compatibilityScore !== null
-                    ? t("jobInfo.matchPercent", { score: compatibilityScore })
-                    : t("jobInfo.cardMatchDescription"),
-            button: t("jobInfo.compatible"),
-            onClick: handleMatchClick,
-        },
-    ].filter((card) => !isAdmin || card.number === "1");
+    const handleShare = async () => {
+        await navigator.clipboard.writeText(window.location.href);
+        setShareOpened(true);
+    };
+
+    const scrollToDescription = () => descriptionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    const sections: { title: string; paragraph?: string; items?: string[] }[] = [
+        { title: t("jobInfo.sectionOverview"), paragraph: job.overview },
+        { title: t("jobInfo.sectionResponsibilities"), items: splitLines(job.responsibilities) },
+        { title: t("jobInfo.sectionRequirements"), items: splitLines(job.requirements) },
+        { title: t("jobInfo.sectionBenefits"), items: splitLines(job.offers) },
+        { title: t("jobInfo.sectionNotes"), items: splitLines(job.notes) },
+    ].filter((section) => section.paragraph?.trim() || section.items?.length);
+
+    const postedOn = formatDate(job.date, language === "VN" ? "vi" : "en");
+    const meta = [job.company_name, postedOn && t("jobInfo.postedOn", { date: postedOn })].filter(Boolean).join(" · ");
 
     return (
-        <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
-            <Container size="1200px">
-                <Paper style={{backgroundColor: "#f7f2ef"}}>
-                    <Stack gap="lg">
-                        <Group justify="space-between" align="stretch" wrap="wrap" style={{ gap: 16 }}>
-                            {cardActions.map((card) => (
-                                <Paper
-                                    key={card.number}
-                                    withBorder
-                                    radius="xl"
-                                    p="lg"
-                                    style={{
-                                        flex: "1 1 280px",
-                                        minWidth: 280,
-                                        backgroundColor: "#ffffff",
-                                        borderColor: "rgba(119, 67, 38, 0.16)",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "space-between",
-                                    }}
+        <div className={styles.page}>
+            <section className={styles.hero}>
+                <GradientBackdrop />
+
+                <div className={styles.heroInner}>
+                    <Link href="/job-search-with-ai" className={styles.back}>
+                        <IconArrowLeft size={16} />
+                        {t("jobInfo.backToJobs")}
+                    </Link>
+
+                    <div className={styles.jobMeta}>{meta}</div>
+                    <h1 className={styles.jobTitle}>{job.position}</h1>
+
+                    <div className={styles.columns}>
+                        <div className={styles.column}>
+                            <div className={styles.columnLabel}>{t("jobFilter.location")}</div>
+                            <div className={styles.columnText}>{job.location || t("common.notSpecified")}</div>
+                        </div>
+                        <div className={styles.column}>
+                            <div className={styles.columnLabel}>{t("jobFilter.salary")}</div>
+                            <div className={styles.columnText}>{job.salary || t("common.notSpecified")}</div>
+                        </div>
+                        <div className={styles.column}>
+                            <div className={styles.columnLabel}>{t("jobInfo.factCategory")}</div>
+                            <div className={styles.columnText}>{job.type || t("common.notSpecified")}</div>
+                        </div>
+                        <div className={styles.column}>
+                            {compatibilityScore !== null ? (
+                                <div className={styles.score}>
+                                    <div className={styles.columnLabel}>{t("jobInfo.stepScore")}</div>
+                                    <div className={styles.columnValue}>{Math.round(compatibilityScore)}%</div>
+                                    <div className={styles.scoreBar} style={{ maxWidth: 200 }}>
+                                        <div className={styles.scoreFill} style={{ width: `${Math.min(100, Math.max(0, compatibilityScore))}%` }} />
+                                    </div>
+                                </div>
+                            ) : (
+                                !isAdmin && (
+                                    <button type="button" className={styles.cta} onClick={() => setModalOpen(true)}>
+                                        <ArrowUpRight className={styles.ctaArrow} />
+                                        <span className={styles.ctaLabel}>{t("upload.cvButton")}</span>
+                                        <span className={styles.ctaHint}>{t("jobInfo.stepScoreText")}</span>
+                                    </button>
+                                )
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div className={styles.body}>
+                <div className={styles.actionBar}>
+                    {!isAdmin && (
+                        <button type="button" className={styles.chip} aria-pressed={saved} onClick={handleSave}>
+                            {saved ? <IconBookmarkFilled size={16} /> : <IconBookmark size={16} />}
+                            {saved ? t("jobInfo.savedLabel") : t("jobInfo.save")}
+                        </button>
+                    )}
+                    <button type="button" className={styles.chip} onClick={handleShare}>
+                        <IconLink size={16} />
+                        {t("jobInfo.share")}
+                    </button>
+                </div>
+
+                <div className={styles.detailLayout}>
+                    <article ref={descriptionRef}>
+                        {sections.map((section, index) => (
+                            <section key={section.title} className={styles.section}>
+                                <h2 className={styles.sectionHeading}>
+                                    <span className={styles.sectionNumber}>{String(index + 1).padStart(2, "0")}</span>
+                                    {section.title}
+                                </h2>
+                                {section.paragraph ? (
+                                    <p className={styles.prose}>{section.paragraph}</p>
+                                ) : (
+                                    <ul className={styles.bulletList}>
+                                        {section.items?.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ul>
+                                )}
+                            </section>
+                        ))}
+                    </article>
+
+                    {!isAdmin && (
+                        <aside className={styles.aside}>
+                            <div className={styles.asideTitle}>{t("jobInfo.aiTitle")}</div>
+
+                            <div className={styles.step}>
+                                <span className={styles.stepNumber}>01</span>
+                                <span className={styles.stepTitle}>{t("jobInfo.stepRead")}</span>
+                                <p className={styles.stepText}>{t("jobInfo.stepReadText")}</p>
+                                <button type="button" className={`${styles.chip} ${styles.chipSmall} ${styles.stepAction}`} onClick={scrollToDescription}>
+                                    {t("jobInfo.stepReadButton")}
+                                    <IconArrowDown size={14} />
+                                </button>
+                            </div>
+
+                            <div className={styles.step}>
+                                <span className={styles.stepNumber}>02</span>
+                                <span className={styles.stepTitle}>{t("upload.cvButton")}</span>
+                                <p className={styles.stepText}>{cvUploaded ? t("jobInfo.stepCvDoneText") : t("jobInfo.stepCvText")}</p>
+                                <button
+                                    type="button"
+                                    className={`${styles.chip} ${styles.chipSmall} ${styles.stepAction} ${cvUploaded ? "" : styles.chipSolid}`}
+                                    onClick={() => setModalOpen(true)}
                                 >
-                                    <Stack gap="md">
-                                        <Group justify="apart" align="center">
-                                            <Box
-                                                style={{
-                                                    width: 34,
-                                                    height: 34,
-                                                    borderRadius: "50%",
-                                                    backgroundColor: BROWN,
-                                                    color: "#ffffff",
-                                                    display: "grid",
-                                                    placeItems: "center",
-                                                    fontWeight: 700,
-                                                    paddingTop: 1,
-                                                }}
-                                            >
-                                                {card.number}
-                                            </Box>
-                                        </Group>
-                                        <Stack gap={4}>
-                                            <Text size="sm" style={{ fontWeight: 700, color: BROWN, textTransform: "uppercase" }}>
-                                                {card.title}
-                                            </Text>
-                                            <Text color="dimmed" size="sm">
-                                                {card.description}
-                                            </Text>
-                                        </Stack>
-                                    </Stack>
-                                    <Button radius="xl"
-                                            style={{ backgroundColor: BROWN, borderColor: BROWN, marginTop: 16 }}
-                                            onClick={card.onClick}
-                                            className={styles.jobStepCardButton}
-                                    >
-                                        {card.button}
-                                    </Button>
-                                </Paper>
-                            ))}
-                        </Group>
+                                    {cvUploaded ? t("jobInfo.reuploadCv") : t("upload.cvButton")}
+                                </button>
+                            </div>
 
-                        <Paper withBorder radius="xl" p="xl" style={{ backgroundColor: "#ffffff", borderColor: "rgba(119, 67, 38, 0.16)" }}>
-                            <Stack gap="lg">
-                                <Group justify="apart" align="center" wrap="wrap">
-                                    <Group align="center" gap="md" wrap="nowrap" style={{ flex: "1 1 520px", minWidth: 0 }}>
-                                        <Box
-                                            style={{
-                                                width: 128,
-                                                height: 128,
-                                                minWidth: 128,
-                                                borderRadius: 24,
-                                                backgroundColor: "#f6f1ee",
-                                                display: "grid",
-                                                placeItems: "center",
-                                                color: BROWN,
-                                                fontWeight: 700,
-                                                fontSize: 38,
-                                                flexShrink: 0,
-                                            }}
-                                        >
-                                            {job.company_name
-                                                .split(" ")
-                                                .filter(Boolean)
-                                                .slice(0, 2)
-                                                .map((part) => part[0])
-                                                .join("")}
-                                        </Box>
-                                        <Stack gap={4}>
-                                            <Text size="xl" style={{ fontWeight: 700 }}>
-                                                {job.position}
-                                            </Text>
-                                            <Text color="dimmed" size="xs">
-                                                {job.company_name} • {job.date}
-                                            </Text>
-
-                                            <Group gap="xs" mt="sm">
-                                                <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                                                    {job.location}
-                                                </Badge>
-                                                <Badge radius="lg" size="lg" variant="outline" style={{ borderColor: BROWN, color: BROWN }}>
-                                                    {job.type}
-                                                </Badge>
-                                            </Group>
-                                        </Stack>
-                                    </Group>
-
-                                    <Group gap="md" ref={matchScoreRef}>
-                                        {compatibilityScore !== null && (
-                                            <RingProgress
-                                                size={130}
-                                                thickness={11}
-                                                roundCaps
-                                                label={
-                                                    <Stack gap={0} align="center">
-                                                        <Text
-                                                            size="sm"
-                                                            ta="center"
-                                                            style={{ pointerEvents: 'none' }}
-                                                            fw={700}
-                                                        >
-                                                            {compatibilityScore}%
-                                                        </Text>
-
-                                                        <Text size="xs">{t("jobInfo.match")}</Text>
-                                                    </Stack>
-                                                }
-                                                sections={[
-                                                    {
-                                                        value: compatibilityScore,
-                                                        color: compatibilityScore >= 70
-                                                            ? '#34C759'
-                                                            : compatibilityScore >= 50
-                                                            ? '#FAB005'
-                                                            : '#FF383C',
-                                                    },
-                                                ]}
-                                            />
-                                        )}
-
-                                        <Stack gap="sm" justify="flex-end">
-                                            {!isAdmin && (
-                                                <CVUploadButton onClick={() => setModalOpen(true)} style={{ width: 260, flexShrink: 0 }} />
-                                            )}
-                                            <Group grow>
-                                                {!isAdmin && (
-                                                    <Button
-                                                        variant={Saved ? "filled" : "light"}
-                                                        size="sm"
-                                                        color={BROWN}
-                                                        onClick={handleSave}
-                                                    >
-                                                        {Saved ? t("jobInfo.savedLabel") : t("jobInfo.save")}
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    variant="light"
-                                                    size="sm"
-                                                    color={BROWN}
-                                                    onClick={handleShare}
-                                                >
-                                                    {t("jobInfo.share")}
-                                                </Button>
-                                            </Group>
-                                        </Stack>
-                                    </Group>
-                                </Group>
-
-                                <Divider />
-
-                                <Stack gap="sm" ref={jobDescriptionRef}>
-                                    <Text size="lg" style={{ fontWeight: 700 }}>
-                                        Job description
-                                    </Text>
-                                    <Text color="dimmed" size="sm">
-                                        {job.overview}
-                                    </Text>
-
-                                    <Text size="sm" style={{ fontWeight: 600 }}>
-                                        Key Responsibilities:
-                                    </Text>
-                                    <Stack gap={4}>
-                                        {responsibilities.map((item, index) => (
-                                            <Text key={index} color="dimmed" size="sm" component="div">
-                                                • {item}
-                                            </Text>
-                                        ))}
-                                    </Stack>
-
-                                    <Text size="sm" style={{ fontWeight: 600 }}>
-                                        Candidate Requirements:
-                                    </Text>
-                                    <Stack gap={4}>
-                                        {requirements.map((item, index) => (
-                                            <Text key={index} color="dimmed" size="sm" component="div">
-                                                • {item}
-                                            </Text>
-                                        ))}
-                                    </Stack>
-
-                                    <Text size="sm" style={{ fontWeight: 600 }}>
-                                        Benefits & Compensation:
-                                    </Text>
-                                    <Stack gap={4}>
-                                        {benefits.map((item, index) => (
-                                            <Text key={index} color="dimmed" size="sm" component="div">
-                                                • {item}
-                                            </Text>
-                                        ))}
-                                    </Stack>
-
-                                    <Text size="sm" style={{ fontWeight: 600 }}>
-                                        Notes:
-                                    </Text>
-                                    <Stack gap={4}>
-                                        {notes.map((item, index) => (
-                                            <Text key={index} color="dimmed" size="sm" component="div">
-                                                • {item}
-                                            </Text>
-                                        ))}
-                                    </Stack>
-                                </Stack>
-                            </Stack>
-                        </Paper>
-                    </Stack>
-                </Paper>
-            </Container>
+                            <div className={styles.step}>
+                                <span className={styles.stepNumber}>03</span>
+                                <span className={styles.stepTitle}>{t("jobInfo.stepScore")}</span>
+                                {compatibilityScore !== null ? (
+                                    <div className={`${styles.score} ${styles.stepScore}`}>
+                                        <div className={styles.scoreValue}>{Math.round(compatibilityScore)}%</div>
+                                        <div className={styles.scoreBar}>
+                                            <div className={styles.scoreFill} style={{ width: `${Math.min(100, Math.max(0, compatibilityScore))}%` }} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className={styles.stepText}>{t("jobInfo.stepScoreText")}</p>
+                                )}
+                            </div>
+                        </aside>
+                    )}
+                </div>
+            </div>
 
             <CVUploadModal
                 opened={modalOpen}
-                onClose={(results: CvConfirmReturn[] | undefined) => {
+                onClose={(results, cvName) => {
                     setModalOpen(false);
 
                     if (!results || results.length === 0) return;
 
-                    const existing: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem("jobScores") ?? "[]");
+                    const existing: CvConfirmReturn[] = JSON.parse(sessionStorage.getItem(SCORE_STORAGE_KEY) ?? "[]");
                     const merged = new Map(existing.map((r) => [r.job_id, r.compatibility_score]));
                     results.forEach((r) => merged.set(r.job_id, r.compatibility_score));
                     sessionStorage.setItem(
-                        "jobScores",
-                        JSON.stringify(Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({ job_id, compatibility_score })))
+                        SCORE_STORAGE_KEY,
+                        JSON.stringify(Array.from(merged.entries()).map(([job_id, compatibility_score]) => ({ job_id, compatibility_score }))),
                     );
+                    // Lets the job search page show this CV too.
+                    if (cvName) sessionStorage.setItem(CV_NAME_STORAGE_KEY, cvName);
 
-                    const match = results?.find(
-                        (r) => r.job_id === job.id
-                    );
-
-                    setCompatibilityScore(
-                        match?.compatibility_score ?? null
-                    );
+                    setCvUploaded(true);
+                    setCompatibilityScore(results.find((r) => r.job_id === job.id)?.compatibility_score ?? null);
                 }}
             />
-            <Modal
-                opened={shareOpened}
-                onClose={() => setShareOpened(false)}
-                centered
-                title={t("jobSearch.shareJobTitle")}
-            >
-                <Stack>
-                    <Text>
-                        {t("jobSearch.linkCopied")}
-                    </Text>
 
-                    <Button
-                        radius="xl"
-                        color={BROWN}
-                        onClick={() => setShareOpened(false)}
-                    >
+            <Modal opened={shareOpened} onClose={() => setShareOpened(false)} centered radius={0} title={t("jobSearch.shareJobTitle")}>
+                <Stack>
+                    <Text>{t("jobSearch.linkCopied")}</Text>
+                    <Button radius={0} color="dark" onClick={() => setShareOpened(false)}>
                         {t("common.ok")}
                     </Button>
                 </Stack>
             </Modal>
-        </Box>
+        </div>
     );
 }

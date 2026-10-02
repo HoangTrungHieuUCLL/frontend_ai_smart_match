@@ -1,0 +1,17 @@
+/* Editorial look shared by the header, job search and job info pages. */
+:root {
+    --ink: #15110d;
+    --ink-soft: rgba(21, 17, 13, 0.62);
+    --ink-faint: rgba(21, 17, 13, 0.16);
+    --paper: #f7f3ee;
+    --mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Warm grain gradient */
+    --base: #f2d9bd;
+    --c1: #e48f5a;
+    --c2: #f3c766;
+    --c3: #fbecd6;
+    --c4: #b5582f;
+    --c5: #8fbfb0;
+    --c6: #efa98f;
+}

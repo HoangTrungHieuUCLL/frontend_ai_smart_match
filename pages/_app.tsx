@@ -7,6 +7,8 @@ import { Footer } from "../components/footer";
 import { I18nProvider } from "../contexts/I18nContext";
 import { Notifications } from "@mantine/notifications";
 import "@mantine/notifications/styles.css";
+import "../styles/tokens.css";
+import { plexMono } from "../utils/fonts";
 
 export default function App({ Component, pageProps }: any) {
   return (
@@ -14,6 +16,8 @@ export default function App({ Component, pageProps }: any) {
       <Notifications position="bottom-right"  />
       <Head>
         <title>HRNEXT.vn</title>
+        {/* On :root (not a wrapper class) so portalled modals and drawers get the font too. */}
+        <style>{`:root { --font-plex-mono: ${plexMono.style.fontFamily}; }`}</style>
         <meta
           name="viewport"
           content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"

@@ -1,29 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import {
-  ActionIcon,
-  Box,
   Button,
-  Container,
+  Drawer,
   Group,
-  Image,
   Modal,
   Select,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
+import { IconAdjustmentsHorizontal, IconArrowLeft, IconArrowRight, IconSearch } from "@tabler/icons-react";
 import JobListing from "../components/JobListing";
+import JobSearchHero from "../components/JobSearchHero";
+import styles from "../styles/editorial.module.css";
 import { Job, JobFilterOptions } from "../types";
 import JobService from "../services/JobService";
 import JobFilterPanel, { EMPTY_FILTERS, hasActiveFilters, JobFilters, matchesJobFilters } from "../components/JobFilterPanel";
-import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
 import CvService, { CvConfirmReturn } from "../services/CvService";
 import { clearStoredProfileCv, getStoredProfileCv } from "../utils/profileStorage";
 import { notifications } from "@mantine/notifications";
-import { IconTrash } from "@tabler/icons-react";
 import { getGuestSavedJobs } from "../utils/savedJobs";
 import ProfileService from "../services/ProfileService";
 import AddJobModal from "../components/AddJobModal";
@@ -33,7 +31,7 @@ import { isAdminToken } from "../utils/auth";
 type SortOption = "best_match" | "newest_first" | "company_az";
 
 const JOBS_PER_PAGE = 10;
-const BROWN = "#774326";
+const INK = "#15110d";
 
 const SCORE_STORAGE_KEY = "jobScores";
 const CV_NAME_STORAGE_KEY = "cvName";
@@ -90,6 +88,8 @@ export default function JobSearchWithAIPage() {
   const [filterOptions, setFilterOptions] = useState<JobFilterOptions>({ category_l2: [], category_l3: [], location: [] });
   const [uploadedCvName, setUploadedCvName] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("newest_first");
+
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [compareMode, setCompareMode] = useState(false);
   const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
@@ -337,243 +337,180 @@ export default function JobSearchWithAIPage() {
     setShareOpened(true);
   };
 
-    return (
-        <Box style={{ minHeight: "100vh", backgroundColor: "#f7f2ef", padding: "28px 0" }}>
-            <Container size="1360px">
-                <Group justify="flex-end" gap="xs" align="center" style={{ marginBottom: 24 }}>
-                    {!isAdmin && (
-                        <CVUploadButton
-                            label={uploadedCvName ?? undefined}
-                            onClick={() => setModalOpen(true)} />
-                    )}
-                    {!isAdmin && uploadedCvName && (
-                        <ActionIcon
-                            variant="subtle"
-                            color="red"
-                            radius="xl"
-                            size={40}
-                            aria-label={t("profile.deleteCv")}
-                            title={t("profile.deleteCv")}
-                            onClick={() => setDeleteCvOpen(true)}
-                        >
-                            <IconTrash size={18} />
-                        </ActionIcon>
-                    )}
+  const companyCount = useMemo(() => new Set(jobs.map((job) => job.company_name).filter(Boolean)).size, [jobs]);
+  const locationCount = useMemo(() => new Set(jobs.map((job) => job.location).filter(Boolean)).size, [jobs]);
 
-                    <TextInput
-                        placeholder={t("jobSearch.searchPlaceholder")}
-                        value={search}
-                        onChange={(e) => setSearch(e.currentTarget.value)}
-                        radius="xl"
-                        h={40}
-                        styles={{
-                            input: {
-                                height: 40,
-                                minHeight: 40,
-                                borderColor: BROWN,
-                                color: BROWN,
-                                backgroundColor: "#f7f2ef",
-                            },
-                        }}
-                    />
-                    {!isAdmin && (
-                        <>
-                            <Button
-                                radius="xl"
-                                variant={showSavedOnly ? "filled" : "light"}
-                                h={40}
-                                style={{
-                                    backgroundColor: showSavedOnly ? BROWN : "transparent",
-                                    border: `1px solid ${BROWN}`,
-                                    color: showSavedOnly ? "#fff" : BROWN,
-                                    whiteSpace: "nowrap",
-                                    flexShrink: 0,
-                                }}
-                                onClick={() => setShowSavedOnly((prev) => !prev)}
-                            >
-                                {t("jobSearch.savedJobsButton")}
-                            </Button>
+  const filterPanel = <JobFilterPanel filters={filters} onChange={setFilters} filterOptions={filterOptions} />;
 
-                            <Button
-                                radius="xl"
-                                variant={compareMode ? "filled" : "light"}
-                                h={40}
-                                style={{
-                                    backgroundColor: compareMode ? BROWN : "transparent",
-                                    border: `1px solid ${BROWN}`,
-                                    color: compareMode ? "#fff" : BROWN,
-                                    whiteSpace: "nowrap",
-                                    flexShrink: 0,
-                                }}
-                                onClick={handleToggleCompareMode}
-                            >
-                                {t("jobSearch.compareJobsButton")}
-                            </Button>
-                        </>
-                    )}
+  return (
+    <div className={styles.page}>
+      <JobSearchHero
+        jobCount={jobs.length}
+        companyCount={companyCount}
+        locationCount={locationCount}
+        isAdmin={isAdmin}
+        uploadedCvName={uploadedCvName}
+        onUploadCv={() => setModalOpen(true)}
+        onDeleteCv={() => setDeleteCvOpen(true)}
+        onAddJob={() => setAddJobOpen(true)}
+      />
 
-                    {isAdmin && (
-                        <Button
-                            radius="xl"
-                            h={40}
-                            px={10}
-                            style={{
-                                backgroundColor: BROWN,
-                                borderColor: BROWN,
-                                color: "#ffffff",
-                                whiteSpace: "nowrap",
-                                flexShrink: 0,
-                            }}
-                            styles={{
-                                inner: { width: "100%" },
-                                label: { width: "100%" },
-                            }}
-                            onClick={() => {
-                                setAddJobOpen(true);
-                            }}
-                        >
-                            <Group gap={10} align="center" wrap="nowrap">
-                                <Image src="/add.png" alt="" w={24} h={24} fit="cover" />
-                                <Text component="span" size="sm" fw={700} c="#ffffff">
-                                    {t("jobSearch.addNewJob")}
-                                </Text>
-                            </Group>
-                        </Button>
-                    )}
+      <div className={styles.body}>
+        <div className={styles.toolbar}>
+          <TextInput
+            placeholder={t("jobSearch.searchPlaceholder")}
+            aria-label={t("jobSearch.searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+            leftSection={<IconSearch size={16} color={INK} />}
+            classNames={{ root: styles.searchRoot, input: styles.searchInput }}
+          />
 
-                    <Select
-                        value={sortOption}
-                        onChange={(val) => {
-                            if (val) setSortOption(val as SortOption);
-                        }}
-                        data={[
-                            {
-                                value: "best_match",
-                                label: t("jobSearch.bestMatch"),
-                                disabled: !jobs.some(j => j.compatibility_score),
-                            },
-                            { value: "newest_first", label: t("jobSearch.newestFirst") },
-                            { value: "company_az", label: t("jobSearch.companyAZ") },
-                        ]}
-                        radius="xl"
-                        w={180}
-                        styles={{
-                            input: {
-                                height: 40,
-                                minHeight: 40,
-                                borderColor: BROWN,
-                                color: BROWN,
-                                backgroundColor: "#f7f2ef",
-                                fontWeight: 600,
-                            },
-                            option: {
-                                color: BROWN,
-                            },
-                        }}
-                    />
-                </Group>
+          <button
+            type="button"
+            className={`${styles.chip} ${styles.filterToggle}`}
+            onClick={() => setFiltersOpen(true)}
+          >
+            <IconAdjustmentsHorizontal size={16} />
+            {t("jobFilter.title")}
+          </button>
 
-                <Box style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-                    <Box
-                        style={{
-                            width: 280,
-                            flexShrink: 0,
-                            backgroundColor: "#fff",
-                            borderRadius: 16,
-                            padding: 16,
-                            border: `1px solid rgba(119, 67, 38, 0.18)`,
-                        }}
-                    >
-                        <JobFilterPanel filters={filters} onChange={setFilters} filterOptions={filterOptions} />
-                    </Box>
+          {!isAdmin && (
+            <>
+              <button
+                type="button"
+                className={styles.chip}
+                aria-pressed={showSavedOnly}
+                onClick={() => setShowSavedOnly((prev) => !prev)}
+              >
+                {t("jobSearch.savedJobsButton")}
+              </button>
+              <button
+                type="button"
+                className={styles.chip}
+                aria-pressed={compareMode}
+                onClick={handleToggleCompareMode}
+              >
+                {t("jobSearch.compareJobsButton")}
+              </button>
+            </>
+          )}
 
-                    <Box style={{ flex: 1, minWidth: 0 }}>
-                        {showEmptyState ? (
-                            <Box
-                                style={{
-                                    minHeight: 200,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <Stack align="center" gap="sm">
-                                    <Text fw={700} size="lg">
-                                        {emptyStateContent.title}
-                                    </Text>
+          <Select
+            value={sortOption}
+            onChange={(val) => {
+              if (val) setSortOption(val as SortOption);
+            }}
+            data={[
+              {
+                value: "best_match",
+                label: t("jobSearch.bestMatch"),
+                disabled: !jobs.some((j) => j.compatibility_score),
+              },
+              { value: "newest_first", label: t("jobSearch.newestFirst") },
+              { value: "company_az", label: t("jobSearch.companyAZ") },
+            ]}
+            w={190}
+            radius={0}
+            allowDeselect={false}
+            classNames={{ input: styles.sortInput, option: styles.sortOption }}
+          />
+        </div>
 
-                                    <Text
-                                        c="dimmed"
-                                        ta="center"
-                                        maw={420}
-                                    >
-                                        {emptyStateContent.description}
-                                    </Text>
+        <div className={styles.layout}>
+          <aside className={styles.filters}>{filterPanel}</aside>
 
-                                    {emptyStateContent.showClearFilters && (
-                                        <Button
-                                            radius="xl"
-                                            variant="outline"
-                                            style={{
-                                                borderColor: BROWN,
-                                                color: BROWN,
-                                            }}
-                                            onClick={clearFilters}
-                                        >
-                                            {t("jobSearch.clearFilters")}
-                                        </Button>
-                                    )}
-                                </Stack>
-                            </Box>
-                        ) : (
-                            <Stack gap="md">
-                                {isLoading ? (
-                                    Array.from({ length: 5 }).map((_, i) => (
-                                        <JobListingSkeleton key={i} />
-                                    ))
-                                ) : (
-                                    currentJobs.map((job) => (
-                                        <JobListing
-                                            key={job.id}
-                                            job={job}
-                                            onShare={handleShare}
-                                            isSelected={selectedJobs.has(job.id)}
-                                            onToggleSelect={compareMode ? () => handleToggleSelect(job.id) : undefined}
-                                            selectDisabled={selectedJobs.size >= MAX_COMPARE}
-                                            showSelectControl={compareMode}
-                                            hideSaveAction={isAdmin}
-                                        />
-                                    ))
-                                )}
-                            </Stack>
-                        )}
+          <div style={{ minWidth: 0 }}>
+            <div className={styles.resultsHeader}>
+              <span>{t("jobSearch.resultsCount", { count: filteredJobs.length })}</span>
+              {sortOption === "best_match" && <span>{t("jobSearch.matchLabel")} ↓</span>}
+            </div>
 
-                        <Group justify="center" gap="xs" mt={24}>
-                            {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
-                                <Button
-                                    key={pageNumber}
-                                    radius="xl"
-                                    size="sm"
-                                    variant={page === pageNumber ? "filled" : "outline"}
-                                    style={
-                                        page === pageNumber
-                                            ? { backgroundColor: BROWN, borderColor: BROWN }
-                                            : { borderColor: BROWN, color: BROWN }
-                                    }
-                                    onClick={() => setPage(pageNumber)}
-                                >
-                                    {pageNumber}
-                                </Button>
-                            ))}
-                        </Group>
+            {showEmptyState ? (
+              <div className={styles.empty}>
+                <div className={styles.emptyTitle}>{emptyStateContent.title}</div>
+                {emptyStateContent.description && <p className={styles.emptyText}>{emptyStateContent.description}</p>}
+                {emptyStateContent.showClearFilters && (
+                  <button type="button" className={styles.chip} onClick={clearFilters}>
+                    {t("jobSearch.clearFilters")}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <ul className={styles.list}>
+                {isLoading
+                  ? Array.from({ length: 5 }).map((_, i) => <JobListingSkeleton key={i} />)
+                  : currentJobs.map((job, i) => (
+                      <JobListing
+                        key={job.id}
+                        job={job}
+                        index={(page - 1) * JOBS_PER_PAGE + i + 1}
+                        onShare={handleShare}
+                        isSelected={selectedJobs.has(job.id)}
+                        onToggleSelect={compareMode ? () => handleToggleSelect(job.id) : undefined}
+                        selectDisabled={selectedJobs.size >= MAX_COMPARE}
+                        showSelectControl={compareMode}
+                        hideSaveAction={isAdmin}
+                      />
+                    ))}
+              </ul>
+            )}
 
-                        <Text size="xs" c="dimmed" mt={12}>
-                            {t("jobSearch.pageStatus", { page, pageCount, jobsPerPage: JOBS_PER_PAGE })}
-                        </Text>
-                    </Box>
-                </Box>
-            </Container>
+            {pageCount > 1 && (
+              <nav className={styles.pager} aria-label={t("jobSearch.pageStatus", { page, pageCount, jobsPerPage: JOBS_PER_PAGE })}>
+                <button
+                  type="button"
+                  className={styles.pageButton}
+                  aria-label={t("jobSearch.previousPage")}
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <IconArrowLeft size={16} />
+                </button>
+                {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    className={styles.pageButton}
+                    aria-current={page === pageNumber ? "page" : undefined}
+                    onClick={() => setPage(pageNumber)}
+                  >
+                    {String(pageNumber).padStart(2, "0")}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={styles.pageButton}
+                  aria-label={t("jobSearch.nextPage")}
+                  disabled={page === pageCount}
+                  onClick={() => setPage(page + 1)}
+                >
+                  <IconArrowRight size={16} />
+                </button>
+              </nav>
+            )}
 
+            <p className={styles.pageStatus}>
+              {t("jobSearch.pageStatus", { page, pageCount, jobsPerPage: JOBS_PER_PAGE })}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Drawer
+        opened={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        aria-label={t("jobFilter.title")}
+        closeButtonProps={{ "aria-label": t("common.close") }}
+        padding="md"
+        size="sm"
+        radius={0}
+        styles={{ content: { background: "#f7f3ee" }, header: { background: "#f7f3ee", minHeight: 0, paddingBottom: 0 } }}
+      >
+        <div className={styles.page} style={{ minHeight: 0 }}>
+          {filterPanel}
+        </div>
+      </Drawer>
 
       <CVUploadModal
         opened={modalOpen}
@@ -613,10 +550,10 @@ export default function JobSearchWithAIPage() {
         <Stack gap="md">
           <Text>{t("profile.confirmDeleteCv", { filename: uploadedCvName ?? "" })}</Text>
           <Group justify="flex-end">
-            <Button variant="light" color={BROWN} onClick={() => setDeleteCvOpen(false)} disabled={isDeletingCv}>
+            <Button variant="default" radius={0} onClick={() => setDeleteCvOpen(false)} disabled={isDeletingCv}>
               {t("common.cancel")}
             </Button>
-            <Button color="red" loading={isDeletingCv} onClick={handleDeleteCv}>
+            <Button color="red" radius={0} loading={isDeletingCv} onClick={handleDeleteCv}>
               {t("common.delete")}
             </Button>
           </Group>
@@ -633,8 +570,8 @@ export default function JobSearchWithAIPage() {
           <Text>{t("jobSearch.linkCopied")}</Text>
 
           <Button
-            radius="xl"
-            color={BROWN}
+            radius={0}
+            color={INK}
             onClick={() => setShareOpened(false)}
           >
             {t("common.ok")}
@@ -652,45 +589,16 @@ export default function JobSearchWithAIPage() {
         }}
       />
 
-      {/* Sticky compare bar */}
       {selectedJobs.size >= 2 && (
-        <Box
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            display: "flex",
-            justifyContent: "center",
-            padding: "16px 24px",
-            backgroundColor: "rgba(255, 255, 255, 0.92)",
-            backdropFilter: "blur(8px)",
-            borderTop: `1px solid rgba(119, 67, 38, 0.18)`,
-            boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
-          }}
-        >
-          <Group gap="md" align="center">
-            <Button
-              radius="xl"
-              size="md"
-              style={{ backgroundColor: BROWN, minWidth: 160 }}
-              onClick={handleCompare}
-            >
-              {t("jobSearch.compareCount", { count: selectedJobs.size })}
-            </Button>
-            <Button
-              radius="xl"
-              size="md"
-              variant="subtle"
-              style={{ color: BROWN }}
-              onClick={() => setSelectedJobs(new Set())}
-            >
-              {t("jobSearch.clear")}
-            </Button>
-          </Group>
-        </Box>
+        <div className={styles.compareBar}>
+          <button type="button" className={`${styles.chip} ${styles.chipSolid}`} onClick={handleCompare}>
+            {t("jobSearch.compareCount", { count: selectedJobs.size })}
+          </button>
+          <button type="button" className={styles.chip} onClick={() => setSelectedJobs(new Set())}>
+            {t("jobSearch.clear")}
+          </button>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

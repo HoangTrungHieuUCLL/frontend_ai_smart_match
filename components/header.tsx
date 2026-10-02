@@ -1,13 +1,12 @@
-import {Avatar, Button, Group, Image, Text, Modal, Popover, Stack, Menu} from "@mantine/core";
-import { IconChevronDown } from "@tabler/icons-react";
+import { Burger, Drawer, Image, Menu, Modal, Popover } from "@mantine/core";
+import { IconArrowUpRight, IconChevronDown } from "@tabler/icons-react";
+import Link from "next/link";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+
 import { useTranslation } from "../contexts/I18nContext";
 import styles from "../styles/header.module.css";
-import {useEffect, useState} from "react";
 import Login from "./Login";
-
-const BROWN = "#774326";
-const MENU_BUTTON_WIDTH = 160;
 
 export const Header = () => {
     const router = useRouter();
@@ -15,20 +14,15 @@ export const Header = () => {
     const [loginOpened, setLoginOpened] = useState(false);
     const [loggedInEmail, setLoggedInEmail] = useState<string>("");
     const [loggedInRole, setLoggedInRole] = useState<string>("");
-    const [logoutOpened, setLogoutOpened] = useState(false);
+    const [accountOpened, setAccountOpened] = useState(false);
+    const [menuOpened, setMenuOpened] = useState(false);
 
-    const leftNavItems = [
-        { label: t("nav.homepage"), href: "/" },
-    ];
-    const rightNavItems = [
-        { label: t("nav.team"), href: "/team" },
-        { label: t("nav.library"), href: "#" }
-    ];
     const serviceItems = [
         t("nav.servicesHr"),
         t("nav.servicesManagement"),
         t("nav.servicesFinance"),
     ];
+
     const syncAuth = () => {
         const email = localStorage.getItem("email");
         const token = localStorage.getItem("access_token");
@@ -40,14 +34,11 @@ export const Header = () => {
             setLoggedInRole("");
         }
     };
-    const handleNavClick = (href: string) => {
-        if (href !== "#") {
-            router.push(href);
-        }
-    };
 
-    const handleJobSearchClick = () => {
-        router.push("/job-search-with-ai");
+    const go = (href: string) => {
+        setAccountOpened(false);
+        setMenuOpened(false);
+        router.push(href);
     };
 
     const handleLogout = async () => {
@@ -56,7 +47,8 @@ export const Header = () => {
         localStorage.removeItem("email");
         setLoggedInEmail("");
         setLoggedInRole("");
-        setLogoutOpened(false);
+        setAccountOpened(false);
+        setMenuOpened(false);
         window.dispatchEvent(new Event("auth-change"));
         await router.push("/");
     };
@@ -72,238 +64,191 @@ export const Header = () => {
             window.removeEventListener("auth-change", syncAuth);
         };
     }, []);
-    return (
-        <Group 
-            justify="space-between" 
-            align="center"
-            px="lg" 
-            py="md" 
-            wrap="nowrap"
-            style={{ borderBottom: "1px solid #e0e0e0", backgroundColor: "#ffffff" }}
-        >
-            {/* Logo */}
-            <Image 
-                src={"/logo-hr-nextvn.svg"}
-                alt={"HRNEXT logo"} 
-                h={70} 
-                w="auto"
-                style={{ flexShrink: 0, minWidth: 120 }}
-            />
 
-            {/* Navigation Items */}
-            <Group gap="lg" justify="center" style={{ flex: 1, minWidth: 0 }}>
-                {leftNavItems.map((item) => (
-                    <Text
-                        key={item.label}
-                        fw={router.pathname === item.href ? 700 : 400}
-                        c={router.pathname === item.href ? "#1a1a1a" : BROWN}
-                        size="md"
-                        style={{
-                            cursor: "pointer",
-                            whiteSpace: "nowrap",
-                            transition: "color 0.2s"
-                        }}
-                        onClick={() => handleNavClick(item.href)}
-                        className="nav-item"
-                    >
-                        {item.label}
-                    </Text>
-                ))}
+    useEffect(() => {
+        const close = () => setMenuOpened(false);
+        router.events.on("routeChangeStart", close);
+        return () => router.events.off("routeChangeStart", close);
+    }, [router.events]);
 
-                <Group gap={4} wrap="nowrap" className="nav-item">
-                    <Text
-                        fw={router.pathname === "/services" ? 700 : 400}
-                        c={router.pathname === "/services" ? "#1a1a1a" : BROWN}
-                        size="md"
-                        style={{ cursor: "pointer", whiteSpace: "nowrap" }}
-                        onClick={() => router.push("/services")}
-                    >
-                        {t("nav.services")}
-                    </Text>
-                    <Menu shadow="md" width={240} position="bottom-start" withinPortal={false}>
-                        <Menu.Target>
-                            <IconChevronDown size={14} color={BROWN} style={{ cursor: "pointer" }} />
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                            {serviceItems.map((label) => (
-                                <Menu.Item key={label}>{label}</Menu.Item>
-                            ))}
-                        </Menu.Dropdown>
-                    </Menu>
-                </Group>
+    const isActive = (href: string) =>
+        href === "/" ? router.pathname === "/" : router.pathname.startsWith(href);
 
-                {rightNavItems.map((item) => (
-                    <Text
-                        key={item.label}
-                        fw={router.pathname === item.href ? 700 : 400}
-                        c={router.pathname === item.href ? "#1a1a1a" : BROWN}
-                        size="md"
-                        style={{
-                            cursor: "pointer",
-                            whiteSpace: "nowrap",
-                            transition: "color 0.2s"
-                        }}
-                        onClick={() => handleNavClick(item.href)}
-                        className="nav-item"
-                    >
-                        {item.label}
-                    </Text>
-                ))}
-            </Group>
+    const navLink = (href: string, label: string) => (
+        <Link key={href} href={href} className={styles.navLink} aria-current={isActive(href) ? "page" : undefined}>
+            {label}
+        </Link>
+    );
 
-            {/* Right Section: Button, User, Language */}
-            <Group gap="md" align="center" style={{ flexShrink: 0 }}>
-                <Button
-                    fw={600}
-                    size="md"
-                    px="lg"
-                    radius="xl"
-                    style={{
-                        backgroundColor: "#774326",
-                        whiteSpace: "nowrap"
-                    }}
-                    onClick={handleJobSearchClick}
+    const navLinks = (
+        <>
+            {navLink("/", t("nav.homepage"))}
+            <span className={styles.navGroup}>
+                {navLink("/services", t("nav.services"))}
+                <Menu shadow="md" width={260} position="bottom-start" radius={0}>
+                    <Menu.Target>
+                        <button type="button" className={styles.chevron} aria-label={t("nav.services")}>
+                            <IconChevronDown size={14} />
+                        </button>
+                    </Menu.Target>
+                    <Menu.Dropdown className={styles.dropdown}>
+                        {serviceItems.map((label) => (
+                            <Menu.Item key={label} className={styles.dropdownItem} onClick={() => go("/services")}>
+                                {label}
+                            </Menu.Item>
+                        ))}
+                    </Menu.Dropdown>
+                </Menu>
+            </span>
+            {navLink("/team", t("nav.team"))}
+            <span className={`${styles.navLink} ${styles.navDisabled}`} aria-disabled="true">
+                {t("nav.library")}
+            </span>
+        </>
+    );
+
+    const languageSwitch = (
+        <div className={styles.language} role="group" aria-label="Language">
+            {(["VN", "EN"] as const).map((code) => (
+                <button
+                    key={code}
+                    type="button"
+                    className={styles.languageButton}
+                    aria-pressed={language === code}
+                    onClick={() => setLanguage(code)}
                 >
+                    {code === "VN" ? "VI" : "EN"}
+                </button>
+            ))}
+        </div>
+    );
+
+    const accountActions = (
+        <>
+            <button type="button" className={styles.menuButton} onClick={() => go("/profile")}>
+                {t("nav.myProfile")}
+            </button>
+            {loggedInRole === "admin" && (
+                <button type="button" className={styles.menuButton} onClick={() => go("/executive-view")}>
+                    {t("nav.executiveView")}
+                </button>
+            )}
+            <button type="button" className={`${styles.menuButton} ${styles.menuButtonSolid}`} onClick={handleLogout}>
+                {t("profile.logOut")}
+            </button>
+        </>
+    );
+
+    return (
+        <header className={styles.header}>
+            <Link href="/" className={styles.logo} aria-label="HRNEXT">
+                <Image src="/logo-hr-nextvn.svg" alt="HRNEXT logo" h={56} w="auto" />
+            </Link>
+
+            <nav className={styles.nav} aria-label="Main">
+                {navLinks}
+            </nav>
+
+            <div className={styles.actions}>
+                <Link href="/job-search-with-ai" className={styles.cta}>
                     {t("nav.jobSearch")}
-                </Button>
+                    <IconArrowUpRight size={16} />
+                </Link>
 
                 {loggedInEmail ? (
-                    <Popover
-                        opened={logoutOpened}
-                        onChange={setLogoutOpened}
-                        position="bottom"
-                        offset={12}
-                        withinPortal={false}
-                        shadow="md"
-                    >
+                    <Popover opened={accountOpened} onChange={setAccountOpened} position="bottom-end" offset={8} radius={0} shadow="md">
                         <Popover.Target>
-                            <Button
-                                variant="subtle"
-                                radius="xl"
-                                px={6}
-                                leftSection={
-                                    <Avatar
-                                        radius="xl"
-                                        styles={{
-                                            root: {
-                                                backgroundColor: "#f4dfc6",
-                                                color: BROWN,
-                                            },
-                                        }}
-                                    >
-                                        {loggedInEmail.slice(0, 1).toUpperCase()}
-                                    </Avatar>
-                                }
-                                style={{
-                                    color: "#111",
-                                }}
-                                onClick={() => setLogoutOpened((opened) => !opened)}
+                            <button
+                                type="button"
+                                className={styles.account}
+                                aria-expanded={accountOpened}
+                                onClick={() => setAccountOpened((opened) => !opened)}
                             >
-                                <Text
-                                    c="black"
-                                    className={styles.adminGreeting}
-                                >
-                                    Hello, {loggedInEmail}!
-                                </Text>
-                            </Button>
+                                <span className={styles.avatar}>{loggedInEmail.slice(0, 1).toUpperCase()}</span>
+                                <span className={styles.accountEmail}>{loggedInEmail}</span>
+                                <IconChevronDown size={14} />
+                            </button>
                         </Popover.Target>
-                        <Popover.Dropdown className={styles.logoutPopover}>
-                            <Stack align="center" gap={8}>
-                                <Button
-                                    radius="xl"
-                                    size="sm"
-                                    w={MENU_BUTTON_WIDTH}
-                                    variant="outline"
-                                    color={BROWN}
-                                    onClick={() => {
-                                        setLogoutOpened(false);
-                                        router.push("/profile");
-                                    }}
-                                >
-                                    My profile
-                                </Button>
-                                {loggedInRole === "admin" && (
-                                    <Button
-                                        radius="xl"
-                                        size="sm"
-                                        w={MENU_BUTTON_WIDTH}
-                                        variant="outline"
-                                        color={BROWN}
-                                        onClick={() => {
-                                            setLogoutOpened(false);
-                                            router.push("/executive-view");
-                                        }}
-                                    >
-                                        Executive view
-                                    </Button>
-                                )}
-                                <Button
-                                    radius="xl"
-                                    size="sm"
-                                    w={MENU_BUTTON_WIDTH}
-                                    className={styles.logoutButton}
-                                    onClick={handleLogout}
-                                >
-                                    Log out
-                                </Button>
-                            </Stack>
+                        <Popover.Dropdown className={styles.dropdown}>
+                            <div className={styles.menuStack}>{accountActions}</div>
                         </Popover.Dropdown>
                     </Popover>
                 ) : (
-                    // Log in button
-                    <Button
-                        className={styles.loginButton}
-                        fw={500}
-                        size="sm"
-                        radius="xl"
-                        onClick={() => setLoginOpened(true)}
-                    >
+                    <button type="button" className={styles.login} onClick={() => setLoginOpened(true)}>
                         {t("nav.login")}
-                    </Button>
+                    </button>
                 )}
 
-                {/* Language Selector */}
-                <Group gap={6} wrap="nowrap" style={{ flexShrink: 0 }}>
-                    <Text
-                        size="md"
-                        fw={language === "VN" ? 700 : 400}
-                        c={language === "VN" ? "#1a1a1a" : BROWN}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setLanguage("VN")}
-                    >
-                        VI
-                    </Text>
-                    <Text size="md" c={BROWN}>|</Text>
-                    <Text
-                        size="md"
-                        fw={language === "EN" ? 700 : 400}
-                        c={language === "EN" ? "#1a1a1a" : BROWN}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setLanguage("EN")}
-                    >
-                        EN
-                    </Text>
-                </Group>
-            </Group>
+                {languageSwitch}
+            </div>
+
+            <Burger
+                className={styles.burger}
+                opened={menuOpened}
+                onClick={() => setMenuOpened((opened) => !opened)}
+                size="sm"
+                color="var(--ink)"
+                aria-label={t("nav.menu")}
+            />
+
+            <Drawer
+                opened={menuOpened}
+                onClose={() => setMenuOpened(false)}
+                position="right"
+                size="100%"
+                radius={0}
+                padding="lg"
+                closeButtonProps={{ "aria-label": t("common.close") }}
+                styles={{ content: { background: "var(--paper)" }, header: { background: "var(--paper)" } }}
+            >
+                <div className={styles.mobileMenu}>
+                    <nav className={styles.mobileNav} aria-label="Main">
+                        {navLinks}
+                    </nav>
+                    <Link href="/job-search-with-ai" className={styles.cta}>
+                        {t("nav.jobSearch")}
+                        <IconArrowUpRight size={16} />
+                    </Link>
+                    {loggedInEmail ? (
+                        <div className={styles.menuStack}>
+                            <span className={styles.accountEmail}>{loggedInEmail}</span>
+                            {accountActions}
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            className={styles.login}
+                            onClick={() => {
+                                setMenuOpened(false);
+                                setLoginOpened(true);
+                            }}
+                        >
+                            {t("nav.login")}
+                        </button>
+                    )}
+                    {languageSwitch}
+                </div>
+            </Drawer>
 
             <Modal
                 opened={loginOpened}
                 onClose={() => setLoginOpened(false)}
                 centered
                 withCloseButton={false}
-                radius="lg"
+                radius={0}
                 padding="lg"
                 size={450}
             >
-                <Login onSuccess={(email: string) => {
+                <Login
+                    onSuccess={(email: string) => {
                         setLoggedInEmail(email);
                         setLoginOpened(false);
-                    }} 
+                    }}
                     onClose={() => setLoginOpened(false)}
                 />
             </Modal>
-        </Group>
+        </header>
     );
-}
+};
 
 export default Header;
