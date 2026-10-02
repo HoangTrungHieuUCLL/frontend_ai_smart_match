@@ -53,7 +53,6 @@ export const en: TranslationDictionary = {
   "jobListing.share": "Share",
   "jobSearch.heroLine1": "Jobs that",
   "jobSearch.heroLine2": "fit you",
-  "jobSearch.ticker": "AI job matching · upload your CV · see how well you fit every job ·",
   "jobSearch.statJobs": "Open jobs",
   "jobSearch.statCompanies": "Companies",
   "jobSearch.statLocations": "Locations",

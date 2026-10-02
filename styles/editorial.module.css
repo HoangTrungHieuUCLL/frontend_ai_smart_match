@@ -47,38 +47,11 @@
     }
 }
 
-.ticker {
-    overflow: hidden;
-    padding: 14px 0;
-    font-family: var(--mono);
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.tickerTrack {
-    display: inline-flex;
-    animation: marquee 40s linear infinite;
-}
-
-.tickerTrack span {
-    padding-right: 32px;
-}
-
-@keyframes marquee {
-    from {
-        transform: translateX(0);
-    }
-    to {
-        transform: translateX(-50%);
-    }
-}
-
 .heroInner {
     position: relative;
     max-width: 1360px;
     margin: 0 auto;
-    padding: 24px 32px 0;
+    padding: 32px 32px 0;
 }
 
 .heroTop {
@@ -1181,8 +1154,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .gradient,
-    .tickerTrack {
+    .gradient {
         animation: none;
     }
 

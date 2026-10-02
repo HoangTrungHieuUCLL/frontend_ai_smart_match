@@ -57,7 +57,6 @@ export type TranslationKey =
   | "jobListing.share"
   | "jobSearch.heroLine1"
   | "jobSearch.heroLine2"
-  | "jobSearch.ticker"
   | "jobSearch.statJobs"
   | "jobSearch.statCompanies"
   | "jobSearch.statLocations"

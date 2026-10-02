@@ -26,19 +26,10 @@ export default function JobSearchHero({
     onAddJob,
 }: Props) {
     const { t } = useTranslation();
-    const ticker = t("jobSearch.ticker");
 
     return (
         <section className={styles.hero}>
             <GradientBackdrop />
-
-            <div className={styles.ticker} aria-hidden="true">
-                <div className={styles.tickerTrack}>
-                    {Array.from({ length: 6 }, (_, i) => (
-                        <span key={i}>{ticker}</span>
-                    ))}
-                </div>
-            </div>
 
             <div className={styles.heroInner}>
                 <div className={styles.heroTop}>

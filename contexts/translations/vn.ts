@@ -53,7 +53,6 @@ export const vn: TranslationDictionary = {
   "jobListing.share": "Chia sẻ",
   "jobSearch.heroLine1": "Việc làm",
   "jobSearch.heroLine2": "vừa với bạn",
-  "jobSearch.ticker": "tìm việc với AI · tải CV lên · xem độ phù hợp với từng công việc ·",
   "jobSearch.statJobs": "Việc đang tuyển",
   "jobSearch.statCompanies": "Công ty",
   "jobSearch.statLocations": "Địa điểm",
