@@ -44,7 +44,15 @@ export const saveStoredProfileCv = (cv: CV, email?: string | null) => {
     sessionStorage.setItem(getProfileCvKey(email || getCvEmail(cv)), JSON.stringify(cv));
 };
 
-export const getAccountCreatedAt = (email?: string | null) => {
+export const clearStoredProfileCv = (email?: string | null) => {
+    if (typeof window === "undefined") return;
+
+    sessionStorage.removeItem(getProfileCvKey(email));
+    // getStoredProfileCv falls back to the unscoped key, so clear it too.
+    sessionStorage.removeItem(PROFILE_CV_STORAGE_KEY);
+};
+
+export const getAccountCreatedAt =(email?: string | null) => {
     if (typeof window === "undefined") return null;
 
     return sessionStorage.getItem(getAccountCreatedAtKey(email)) ?? sessionStorage.getItem(ACCOUNT_CREATED_AT_STORAGE_KEY);

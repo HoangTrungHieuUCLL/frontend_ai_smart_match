@@ -393,6 +393,7 @@ export function toConfirmationCv(
     return {
         id: response.cv_id,
         filename,
+        delete_token: response.delete_token,
         uploaded_at: new Date().toISOString(),
         candidate_profile: {
             id: profileId,

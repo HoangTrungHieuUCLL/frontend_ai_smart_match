@@ -16,6 +16,7 @@ export interface CvConfirmReturn {
 export type ParsedCvResponse = {
     message: string;
     cv_id: number;
+    delete_token?: string;
     profile_id: number;
     cv_file_name?: string;
     compatibility_scores?: CvConfirmReturn[];
@@ -142,13 +143,18 @@ const updateExtractedData = async (profileId: number, cvData: unknown): Promise<
     });
 };
 
-const deleteCv = async (id: number, token: string): Promise<{ message: string; cv_id: number }> => {
+const deleteCv = async (
+    id: number,
+    token?: string | null,
+    deleteToken?: string,
+): Promise<{ message: string; cv_id: number }> => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    if (deleteToken) headers["X-CV-Delete-Token"] = deleteToken;
+
     const response = await fetch(`${API_URL}/cv/${id}`, {
         method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
+        headers,
     });
 
     if (!response.ok) {

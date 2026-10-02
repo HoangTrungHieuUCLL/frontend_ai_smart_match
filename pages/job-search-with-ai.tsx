@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import {
+  ActionIcon,
   Box,
   Button,
   Container,
@@ -19,7 +20,10 @@ import JobFilterPanel, { EMPTY_FILTERS, hasActiveFilters, JobFilters, matchesJob
 import CVUploadButton from "../components/CVUploadButton";
 import CVUploadModal from "../components/CVUploadModal";
 import { useTranslation } from "../contexts/I18nContext";
-import { CvConfirmReturn } from "../services/CvService";
+import CvService, { CvConfirmReturn } from "../services/CvService";
+import { clearStoredProfileCv, getStoredProfileCv } from "../utils/profileStorage";
+import { notifications } from "@mantine/notifications";
+import { IconTrash } from "@tabler/icons-react";
 import { getGuestSavedJobs } from "../utils/savedJobs";
 import ProfileService from "../services/ProfileService";
 import AddJobModal from "../components/AddJobModal";
@@ -74,6 +78,8 @@ export default function JobSearchWithAIPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteCvOpen, setDeleteCvOpen] = useState(false);
+  const [isDeletingCv, setIsDeletingCv] = useState(false);
   const [addJobOpen, setAddJobOpen] = useState(false);
   const [adminToken, setAdminToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -292,6 +298,33 @@ export default function JobSearchWithAIPage() {
     return filteredJobs.slice((page - 1) * JOBS_PER_PAGE, page * JOBS_PER_PAGE);
   }, [filteredJobs, page]);
 
+  const handleDeleteCv = async () => {
+    const storedCv = getStoredProfileCv(localStorage.getItem("email"));
+    if (!storedCv?.id) return;
+
+    setIsDeletingCv(true);
+    try {
+      await CvService.deleteCv(storedCv.id, localStorage.getItem("access_token"), storedCv.delete_token);
+
+      clearStoredProfileCv(localStorage.getItem("email"));
+      sessionStorage.removeItem(CV_NAME_STORAGE_KEY);
+      sessionStorage.removeItem(SCORE_STORAGE_KEY);
+      setUploadedCvName(null);
+      setSortOption("newest_first");
+      setJobs((prevJobs) => prevJobs.map((job) => ({ ...job, compatibility_score: null })));
+      setDeleteCvOpen(false);
+      notifications.show({ color: "green", message: t("profile.cvDeleted") });
+    } catch (error) {
+      console.error("CV delete error:", error);
+      notifications.show({
+        color: "red",
+        message: error instanceof Error && error.message ? error.message : t("profile.cvDeleteFailed"),
+      });
+    } finally {
+      setIsDeletingCv(false);
+    }
+  };
+
   const handleShare = async (jobId: number) => {
     const url = `${window.location.origin}/job-info/${jobId}`;
 
@@ -309,6 +342,19 @@ export default function JobSearchWithAIPage() {
                         <CVUploadButton
                             label={uploadedCvName ?? undefined}
                             onClick={() => setModalOpen(true)} />
+                    )}
+                    {!isAdmin && uploadedCvName && (
+                        <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            radius="xl"
+                            size={40}
+                            aria-label={t("profile.deleteCv")}
+                            title={t("profile.deleteCv")}
+                            onClick={() => setDeleteCvOpen(true)}
+                        >
+                            <IconTrash size={18} />
+                        </ActionIcon>
                     )}
 
                     <TextInput
@@ -552,6 +598,27 @@ export default function JobSearchWithAIPage() {
           );
         }}
       />
+
+      <Modal
+        opened={deleteCvOpen}
+        onClose={() => {
+          if (!isDeletingCv) setDeleteCvOpen(false);
+        }}
+        title={t("profile.deleteCv")}
+        centered
+      >
+        <Stack gap="md">
+          <Text>{t("profile.confirmDeleteCv", { filename: uploadedCvName ?? "" })}</Text>
+          <Group justify="flex-end">
+            <Button variant="light" color={BROWN} onClick={() => setDeleteCvOpen(false)} disabled={isDeletingCv}>
+              {t("common.cancel")}
+            </Button>
+            <Button color="red" loading={isDeletingCv} onClick={handleDeleteCv}>
+              {t("common.delete")}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
 
       <Modal
         opened={shareOpened}

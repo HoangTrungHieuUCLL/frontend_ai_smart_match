@@ -17,7 +17,7 @@ import {
     TextInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconCamera, IconEdit, IconLogout, IconPlus, IconX } from "@tabler/icons-react";
+import { IconCamera, IconEdit, IconLogout, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 
 import CVUploadModal from "../components/CVUploadModal";
@@ -25,6 +25,7 @@ import AuthService from "../services/AuthService";
 import CvService, { CvConfirmReturn } from "../services/CvService";
 import type { CV, Profile } from "../types";
 import {
+    clearStoredProfileCv,
     ensureAccountCreatedAt,
     getAccountCreatedAt,
     getStoredProfileCv,
@@ -117,6 +118,8 @@ export default function ProfilePage() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [deleteCvOpen, setDeleteCvOpen] = useState(false);
+    const [isDeletingCv, setIsDeletingCv] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("access_token");
@@ -310,6 +313,35 @@ export default function ProfilePage() {
         setSkillInput("");
     };
 
+    const handleDeleteCv = async () => {
+        const cvId = savedCv?.id;
+        const token = localStorage.getItem("access_token");
+        if (!cvId) return;
+
+        setIsDeletingCv(true);
+        try {
+            await CvService.deleteCv(cvId, token, savedCv?.delete_token);
+
+            clearStoredProfileCv(email);
+            sessionStorage.removeItem(SCORE_STORAGE_KEY);
+            const blankCv = emptyCv(email);
+            setSavedCv(blankCv);
+            setDraftCv(cloneCv(blankCv));
+            setIsEditing(false);
+            setSkillInput("");
+            setDeleteCvOpen(false);
+            notifications.show({ color: "green", message: t("profile.cvDeleted") });
+        } catch (error) {
+            console.error("CV delete error:", error);
+            notifications.show({
+                color: "red",
+                message: error instanceof Error && error.message ? error.message : t("profile.cvDeleteFailed"),
+            });
+        } finally {
+            setIsDeletingCv(false);
+        }
+    };
+
     const cvLabel = draftCv?.filename || t("profile.clickToUpload");
 
     return (
@@ -456,6 +488,19 @@ export default function ProfilePage() {
                                         >
                                             {cvLabel}
                                         </Text>
+                                        {savedCv?.id ? (
+                                            <ActionIcon
+                                                variant="subtle"
+                                                color="red"
+                                                radius="xl"
+                                                size="lg"
+                                                aria-label={t("profile.deleteCv")}
+                                                title={t("profile.deleteCv")}
+                                                onClick={() => setDeleteCvOpen(true)}
+                                            >
+                                                <IconTrash size={18} />
+                                            </ActionIcon>
+                                        ) : null}
                                     </Group>
 
                                     <Paper
@@ -607,6 +652,32 @@ export default function ProfilePage() {
                     >
                         {t("profile.savePassword")}
                     </Button>
+                </Stack>
+            </Modal>
+
+            <Modal
+                opened={deleteCvOpen}
+                onClose={() => {
+                    if (!isDeletingCv) setDeleteCvOpen(false);
+                }}
+                title={t("profile.deleteCv")}
+                centered
+            >
+                <Stack gap="md">
+                    <Text>{t("profile.confirmDeleteCv", { filename: savedCv?.filename ?? "" })}</Text>
+                    <Group justify="flex-end">
+                        <Button
+                            variant="light"
+                            color={BROWN}
+                            onClick={() => setDeleteCvOpen(false)}
+                            disabled={isDeletingCv}
+                        >
+                            {t("common.cancel")}
+                        </Button>
+                        <Button color="red" loading={isDeletingCv} onClick={handleDeleteCv}>
+                            {t("common.delete")}
+                        </Button>
+                    </Group>
                 </Stack>
             </Modal>
 

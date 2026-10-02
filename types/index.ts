@@ -58,6 +58,8 @@ export interface CV {
     id: number;
     filename: string;
     uploaded_at: string;
+    // Returned on upload; lets the uploader (incl. guests) delete this CV.
+    delete_token?: string;
 
     candidate_profile: Profile | null;
     compatibility_scores: CompatibilityScore[];
