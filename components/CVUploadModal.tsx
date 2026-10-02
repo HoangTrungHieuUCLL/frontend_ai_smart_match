@@ -1,4 +1,4 @@
-import {useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {Modal, Stack, Text, TextInput} from "@mantine/core";
 import {Dropzone} from "@mantine/dropzone";
 import {IconArrowUpRight, IconFileTypePdf, IconUpload, IconX} from "@tabler/icons-react";
@@ -6,7 +6,7 @@ import {useTranslation} from "../contexts/I18nContext";
 import CvService, {CvConfirmReturn, ParsedCvResponse} from "../services/CvService";
 import {CV, Certification, Education, Experience, Language, Project} from "../types";
 import {getCvFormErrors, isCvFormValid} from "../utils/cvValidation";
-import { saveStoredProfileCv } from "../utils/profileStorage";
+import { getStoredProfileCv, saveStoredProfileCv } from "../utils/profileStorage";
 import CVUploadConfirmation from "./CVUploadConfirmation";
 import styles from "../styles/editorial.module.css";
 
@@ -97,6 +97,26 @@ export default function CVUploadModal({opened, onClose}: Props) {
         }),
         [t],
     );
+    // Replacing a CV: reuse the details from the stored one so they aren't retyped.
+    useEffect(() => {
+        if (!opened) return;
+
+        const loginEmail = localStorage.getItem("email");
+        const profile = getStoredProfileCv(loginEmail)?.candidate_profile;
+        const known: CvFormData = {
+            familyName: profile?.family_name ?? "",
+            middleName: profile?.middle_name ?? "",
+            givenName: profile?.given_name ?? "",
+            email: profile?.email || loginEmail || "",
+        };
+
+        setFormData(known);
+        setTouched({});
+        setStep(isCvFormValid(known, validationMessages) ? "upload" : "form");
+        // Only on open; later edits to the form must not be overwritten.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [opened]);
+
     const formErrors = getCvFormErrors(formData, validationMessages);
     const canContinue = isCvFormValid(formData, validationMessages);
 
@@ -252,6 +272,20 @@ export default function CVUploadModal({opened, onClose}: Props) {
                 </Stack>
             ) : (
                 <Stack gap="md">
+                    <div className={styles.fileRow} style={{background: "transparent"}}>
+                        <span className={styles.fileName}>
+                            <span className={styles.dropzoneHint}>{t("upload.uploadingAs")} </span>
+                            {[formData.givenName, formData.middleName, formData.familyName].filter(Boolean).join(" ")} · {formData.email}
+                        </span>
+                        <button
+                            type="button"
+                            className={`${styles.chip} ${styles.chipSmall}`}
+                            onClick={() => setStep("form")}
+                        >
+                            {t("upload.changeDetails")}
+                        </button>
+                    </div>
+
                     <Dropzone
                         className={styles.dropzone}
                         onDrop={handleFileDrop}

@@ -6,6 +6,8 @@ import { MantineProvider } from "@mantine/core";
 import CVUploadModal from "../../components/CVUploadModal";
 import { I18nProvider } from "../../contexts/I18nContext";
 import CvService from "../../services/CvService";
+import { getStoredProfileCv } from "../../utils/profileStorage";
+import type { CV } from "../../types";
 
 jest.mock("../../services/CvService", () => ({
     __esModule: true,
@@ -18,6 +20,7 @@ jest.mock("../../services/CvService", () => ({
 
 jest.mock("../../utils/profileStorage", () => ({
     saveStoredProfileCv: jest.fn(),
+    getStoredProfileCv: jest.fn(() => null),
 }));
 
 const parsedCvResponse = {
@@ -88,6 +91,18 @@ describe("CVUploadModal", () => {
         renderModal();
 
         expect(screen.getByText("Upload your CV")).toBeInTheDocument();
+    });
+
+    it("skips the details step when replacing a CV that is already stored", () => {
+        jest.mocked(getStoredProfileCv).mockReturnValueOnce({
+            candidate_profile: { given_name: "Alex", middle_name: null, family_name: "Morgan", email: "alex@example.com" },
+        } as unknown as CV);
+
+        renderModal();
+
+        expect(screen.getByText("Upload your PDF")).toBeInTheDocument();
+        expect(screen.getByText(/Alex Morgan · alex@example.com/)).toBeInTheDocument();
+        expect(screen.queryByPlaceholderText("Enter your family name")).not.toBeInTheDocument();
     });
 
     it("selecting a PDF shows the filename and enables the submit button", async () => {

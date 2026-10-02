@@ -21,6 +21,7 @@ import { IconCamera, IconEdit, IconLogout, IconPlus, IconTrash, IconX } from "@t
 import { useRouter } from "next/router";
 
 import CVUploadModal from "../components/CVUploadModal";
+import DeleteCvModal from "../components/DeleteCvModal";
 import AuthService from "../services/AuthService";
 import CvService, { CvConfirmReturn } from "../services/CvService";
 import type { CV, Profile } from "../types";
@@ -655,31 +656,13 @@ export default function ProfilePage() {
                 </Stack>
             </Modal>
 
-            <Modal
+            <DeleteCvModal
                 opened={deleteCvOpen}
-                onClose={() => {
-                    if (!isDeletingCv) setDeleteCvOpen(false);
-                }}
-                title={t("profile.deleteCv")}
-                centered
-            >
-                <Stack gap="md">
-                    <Text>{t("profile.confirmDeleteCv", { filename: savedCv?.filename ?? "" })}</Text>
-                    <Group justify="flex-end">
-                        <Button
-                            variant="light"
-                            color={BROWN}
-                            onClick={() => setDeleteCvOpen(false)}
-                            disabled={isDeletingCv}
-                        >
-                            {t("common.cancel")}
-                        </Button>
-                        <Button color="red" loading={isDeletingCv} onClick={handleDeleteCv}>
-                            {t("common.delete")}
-                        </Button>
-                    </Group>
-                </Stack>
-            </Modal>
+                filename={savedCv?.filename}
+                deleting={isDeletingCv}
+                onCancel={() => setDeleteCvOpen(false)}
+                onConfirm={handleDeleteCv}
+            />
 
             <CVUploadModal
                 opened={cvUploadOpen}

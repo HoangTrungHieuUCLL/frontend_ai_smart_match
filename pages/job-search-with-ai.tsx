@@ -18,6 +18,7 @@ import { Job, JobFilterOptions } from "../types";
 import JobService from "../services/JobService";
 import JobFilterPanel, { EMPTY_FILTERS, hasActiveFilters, JobFilters, matchesJobFilters } from "../components/JobFilterPanel";
 import CVUploadModal from "../components/CVUploadModal";
+import DeleteCvModal from "../components/DeleteCvModal";
 import { useTranslation } from "../contexts/I18nContext";
 import CvService, { CvConfirmReturn } from "../services/CvService";
 import { clearStoredProfileCv, getStoredProfileCv } from "../utils/profileStorage";
@@ -544,26 +545,13 @@ export default function JobSearchWithAIPage() {
         }}
       />
 
-      <Modal
+      <DeleteCvModal
         opened={deleteCvOpen}
-        onClose={() => {
-          if (!isDeletingCv) setDeleteCvOpen(false);
-        }}
-        title={t("profile.deleteCv")}
-        centered
-      >
-        <Stack gap="md">
-          <Text>{t("profile.confirmDeleteCv", { filename: uploadedCvName ?? "" })}</Text>
-          <Group justify="flex-end">
-            <Button variant="default" radius={0} onClick={() => setDeleteCvOpen(false)} disabled={isDeletingCv}>
-              {t("common.cancel")}
-            </Button>
-            <Button color="red" radius={0} loading={isDeletingCv} onClick={handleDeleteCv}>
-              {t("common.delete")}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+        filename={uploadedCvName}
+        deleting={isDeletingCv}
+        onCancel={() => setDeleteCvOpen(false)}
+        onConfirm={handleDeleteCv}
+      />
 
       <Modal
         opened={shareOpened}

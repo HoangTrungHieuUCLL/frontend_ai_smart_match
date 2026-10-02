@@ -814,6 +814,32 @@
     cursor: default;
 }
 
+.modalHeaderDanger {
+    background: #fbe3df;
+}
+
+.dangerTitle {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.dangerButton {
+    border-color: #c92a2a;
+    background: #c92a2a;
+    color: #fff;
+}
+
+.dangerButton:hover {
+    border-color: #a61e1e;
+    background: #a61e1e;
+}
+
+.chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .steps {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
