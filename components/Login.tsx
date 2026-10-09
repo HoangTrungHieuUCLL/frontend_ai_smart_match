@@ -1,21 +1,16 @@
 import {
   Anchor,
   Button,
-  Divider,
-  Group,
   PasswordInput,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
-import { IconBrandLinkedin } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import AuthService from "../services/AuthService";
 import { ensureAccountCreatedAt } from "../utils/profileStorage";
 import { useTranslation } from "../contexts/I18nContext";
-
-const LINKEDIN_BLUE = "#0A66C2";
 
 export const Login = ({
   onSuccess,
@@ -31,22 +26,6 @@ export const Login = ({
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const params = new URLSearchParams(window.location.search);
-    const linkedinLogin = params.get("linkedinLogin");
-
-    if (linkedinLogin === "not_found") {
-      setError(t("login.linkedinNotFound"));
-    } else if (linkedinLogin === "missing_email") {
-      setError(t("login.linkedinMissingEmail"));
-    } else if (linkedinLogin === "failed") {
-      setError(t("login.linkedinFailed"));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const getRoleFromToken = (token: string) => {
     const payload = JSON.parse(atob(token.split(".")[0]));
@@ -83,10 +62,6 @@ export const Login = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleLinkedInLogin = () => {
-    window.location.href = AuthService.getLinkedInLoginUrl();
   };
 
   return (
@@ -137,26 +112,6 @@ export const Login = ({
         }}
       >
         {t("login.submit")}
-      </Button>
-      <Divider label={t("login.or")} labelPosition="center" />
-      <Button
-        radius="xl"
-        type="button"
-        size="lg"
-        fullWidth
-        onClick={handleLinkedInLogin}
-        styles={{
-          root: {
-            backgroundColor: LINKEDIN_BLUE,
-          },
-        }}
-      >
-        <Group justify="center" gap="xs" wrap="nowrap">
-          <IconBrandLinkedin size={22} aria-hidden="true" />
-          <Text component="span" fw={700} size="sm" c="#ffffff">
-            {t("login.continueWithLinkedin")}
-          </Text>
-        </Group>
       </Button>
       <Text size="sm" ta="center" mt="md" c="black">
         {t("login.noAccount")}{" "}
