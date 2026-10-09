@@ -18,11 +18,11 @@ export const Header = () => {
     const [logoutOpened, setLogoutOpened] = useState(false);
 
     const leftNavItems = [
-        { label: t("nav.homepage"), href: "/" },
+        { label: t("nav.homepage"), href: "https://hrnext.vn/" },
     ];
     const rightNavItems = [
-        { label: t("nav.team"), href: "/team" },
-        { label: t("nav.library"), href: "#" }
+        { label: t("nav.team"), href: "https://hrnext.vn/doi-ngu/" },
+        { label: t("nav.library"), href: "https://hrnext.vn/thu-vien-hr-next-vn/" }
     ];
     const serviceItems = [
         t("nav.servicesHr"),
@@ -42,7 +42,7 @@ export const Header = () => {
     };
     const handleNavClick = (href: string) => {
         if (href !== "#") {
-            router.push(href);
+            window.location.href = href;
         }
     };
 
@@ -116,7 +116,7 @@ export const Header = () => {
                         c={router.pathname === "/services" ? "#1a1a1a" : BROWN}
                         size="md"
                         style={{ cursor: "pointer", whiteSpace: "nowrap" }}
-                        onClick={() => router.push("/services")}
+                        onClick={() => handleNavClick("https://hrnext.vn/dich-vu-cot-loi/")}
                     >
                         {t("nav.services")}
                     </Text>
